@@ -1,24 +1,61 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wilf Workout</title>
+
+    <title>Workout App</title>
 
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <h1>Workout App</h1>
+    <header>
+        <h1>Workout App</h1>
+    </header>
 
-    <div id="exercise-list"></div>
+    <main>
 
+        <section id="exercise-browser">
+
+            <h2>Exercices</h2>
+
+            <input
+                type="text"
+                id="search-input"
+                placeholder="Rechercher un exercice..."
+            >
+
+            <div id="type-filters">
+
+                <button data-type="all">Tous</button>
+                <button data-type="Push">Push</button>
+                <button data-type="Pull">Pull</button>
+                <button data-type="Isométrique">Isométrique</button>
+
+            </div>
+
+            <div id="exercise-list"></div>
+
+        </section>
+
+        <section id="exercise-details">
+
+            <h2>Détails</h2>
+
+            <div id="details-content">
+                <p>Sélectionne un exercice.</p>
+            </div>
+
+        </section>
+
+    </main>
 
     <script src="data/exercises.js"></script>
-    
     <script src="js/app.js"></script>
 
-
 </body>
+
 </html>
