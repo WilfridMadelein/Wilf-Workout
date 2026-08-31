@@ -1111,3 +1111,35 @@ setupTypeButtons();
 setupCategoryButtons();
 
 displayExercises();
+
+/* ========================================
+   ONGLETS PRINCIPAUX
+======================================== */
+
+const tabExercises = document.getElementById("tab-exercises");
+const tabPlans = document.getElementById("tab-plans");
+
+const pageExercises = document.getElementById("page-exercises");
+const pagePlans = document.getElementById("page-plans");
+
+
+tabExercises.addEventListener("click", () => {
+
+    tabExercises.classList.add("active");
+    tabPlans.classList.remove("active");
+
+    pageExercises.style.display = "block";
+    pagePlans.style.display = "none";
+
+});
+
+
+tabPlans.addEventListener("click", () => {
+
+    tabPlans.classList.add("active");
+    tabExercises.classList.remove("active");
+
+    pageExercises.style.display = "none";
+    pagePlans.style.display = "block";
+
+});

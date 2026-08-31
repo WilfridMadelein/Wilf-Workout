@@ -10,15 +10,33 @@
     <link rel="stylesheet" href="style.css">
 </head>
 
-<body>
+ 
 
-    <header>
-        <h1>Workout App</h1>
-    </header>
+<body>
 
     <main>
 
-        <section id="exercise-browser">
+        <header>
+        <h1>Workout App</h1>
+    </header>
+
+    <div class="app-header">
+
+    <button id="tab-exercises" class="main-tab active">
+        Trouver des exercices
+    </button>
+
+    <button id="tab-plans" class="main-tab">
+        Construire un plan
+    </button>
+
+</div>
+
+   
+
+        <div id="page-exercises">
+
+<section id="exercise-browser">
 
             <h2>Exercices</h2>
 
@@ -157,6 +175,16 @@
             </div>
 
         </section>
+
+        </div>
+
+        <section id="page-plans">
+
+    <h2>Construire un plan</h2>
+
+    <p>La construction de plans sera ajoutée ici.</p>
+
+</section>
 
     </main>
 
