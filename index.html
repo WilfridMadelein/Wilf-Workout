@@ -28,32 +28,143 @@
                 placeholder="Rechercher un exercice..."
             >
 
-            <div id="type-filters">
 
-                <button data-type="all">Tous</button>
-                <button data-type="Push">Push</button>
-                <button data-type="Pull">Pull</button>
-                <button data-type="Isométrique">Isométrique</button>
+            <!-- TYPE -->
+
+            <div class="filter-section">
+
+                <h3>Type</h3>
+
+                <div id="type-filters" class="filter-buttons">
+
+                    <button
+    class="filter-button active"
+    data-type="all"
+>
+    Tous
+</button>
+
+<button
+    class="filter-button"
+    data-type="Push"
+>
+    Push
+</button>
+
+<button
+    class="filter-button"
+    data-type="Pull"
+>
+    Pull
+</button>
+
+<button
+    class="filter-button"
+    data-type="Isométrique"
+>
+    Isométrique
+</button>
+
+                </div>
 
             </div>
+
+
+            <!-- MUSCLE -->
+
+            <div class="filter-section">
+
+                <h3>Muscle</h3>
+
+                <div id="muscle-filters" class="filter-buttons"></div>
+
+                <div id="submuscle-filters"></div>
+
+            </div>
+
+
+            <!-- ÉQUIPEMENT -->
+
+            <div class="filter-section">
+
+                <h3>Équipement</h3>
+
+                <div id="equipment-filters" class="filter-buttons">
+
+    <button
+        class="filter-button active"
+        data-equipment="all"
+    >
+        Tous
+    </button>
+
+    <button
+        class="filter-button"
+        data-equipment="none"
+    >
+        Aucun
+    </button>
+
+</div>
+
+            </div>
+
+
+            <!-- CATÉGORIE -->
+
+            <div class="filter-section">
+
+                <h3>Catégorie</h3>
+
+                <div id="category-filters" class="filter-buttons">
+
+                    <button
+                        class="filter-button active"
+                        data-category="cali"
+                    >
+                        Cali
+                    </button>
+
+                    <button
+                        class="filter-button active"
+                        data-category="gym"
+                    >
+                        Gym
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- LISTE DES EXERCICES -->
 
             <div id="exercise-list"></div>
 
         </section>
+
+
+        <!-- DÉTAILS -->
 
         <section id="exercise-details">
 
             <h2>Détails</h2>
 
             <div id="details-content">
+
                 <p>Sélectionne un exercice.</p>
+
             </div>
 
         </section>
 
     </main>
 
+
     <script src="data/exercises.js"></script>
+    <script src="data/muscles.js"></script>
+    <script src="data/equipement.js"></script>
+    
     <script src="js/app.js"></script>
 
 </body>

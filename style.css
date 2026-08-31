@@ -17,36 +17,97 @@ main {
     width: 100%;
     box-sizing: border-box;
     padding: 12px;
-    margin-bottom: 15px;
+    margin-bottom: 25px;
     font-size: 16px;
 }
 
-#type-filters {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
+.filter-section {
+    margin-bottom: 25px;
 }
 
-#type-filters button {
-    padding: 10px 15px;
-    cursor: pointer;
+.filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 }
+
+.filter-button {
+    padding: 10px 15px;
+    border: 1px solid #999;
+    background-color: white;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.filter-button.active {
+    background-color: #333;
+    color: white;
+}
+
+.filter-button:hover {
+    opacity: 0.8;
+}
+
+
+/* ==============================
+   SOUS-MUSCLES
+============================== */
+
+.submuscle-container {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 10px 15px;
+    border-left: 3px solid #999;
+    min-width: 150px;
+}
+
+.submuscle-title {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+.submuscle-option {
+    display: block;
+    margin: 8px 0;
+}
+
+.submuscle-option input {
+    margin-right: 8px;
+}
+
+#submuscle-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+/* ==============================
+   EXERCICES
+============================== */
 
 #exercise-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    margin-top: 30px;
 }
 
 .exercise-item {
     padding: 15px;
     border: 1px solid #ccc;
     cursor: pointer;
+    border-radius: 5px;
 }
 
 .exercise-item:hover {
     background-color: #f5f5f5;
 }
+
+
+/* ==============================
+   DÉTAILS
+============================== */
 
 #exercise-details {
     margin-top: 40px;
