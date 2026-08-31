@@ -457,44 +457,38 @@ function setupEquipmentAllButton() {
 
 
     // TOUS
-    allButton.addEventListener(
-        "click",
-        () => {
+   allButton.addEventListener(
+    "click",
+    () => {
 
-            equipmentOptions.forEach(
-                equipment => {
+        equipmentOptions.forEach(
+            equipment => {
 
-                    selectedEquipment.add(
-                        equipment
-                    );
+                selectedEquipment.add(
+                    equipment
+                );
 
-                }
-            );
-
-
-            equipmentFilters
-                .querySelectorAll(
-                    ".filter-button"
-                )
-                .forEach(button => {
-
-                    button.classList.remove(
-                        "active"
-                    );
-
-                });
+            }
+        );
 
 
-            allButton.classList.add(
-                "active"
-            );
+        equipmentFilters
+            .querySelectorAll(
+                ".filter-button"
+            )
+            .forEach(button => {
+
+                button.classList.add(
+                    "active"
+                );
+
+            });
 
 
-            displayExercises();
+        displayExercises();
 
-        }
-    );
-
+    }
+);
 
     // AUCUN
     noneButton.addEventListener(
