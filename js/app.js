@@ -1,6 +1,17 @@
 const exerciseList = document.getElementById("exercise-list");
 const searchInput = document.getElementById("search-input");
 
+const exerciseBrowser =
+    document.getElementById("exercise-browser");
+
+const pageExercises =
+    document.getElementById("page-exercises");
+
+const planExerciseBrowserContainer =
+    document.getElementById(
+        "plan-exercise-browser-container"
+    );
+
 const typeFilters = document.getElementById("type-filters");
 const muscleFilters = document.getElementById("muscle-filters");
 const submuscleFilters = document.getElementById("submuscle-filters");
@@ -953,9 +964,11 @@ if (
                 "click",
                 () => {
 
-                    displayExerciseDetails(
-                        exercise
-                    );
+                 displayExerciseDetails(
+                    exercise
+                );
+
+                exerciseBrowser.style.display = "none";
 
                 }
             );
@@ -1119,7 +1132,6 @@ displayExercises();
 const tabExercises = document.getElementById("tab-exercises");
 const tabPlans = document.getElementById("tab-plans");
 
-const pageExercises = document.getElementById("page-exercises");
 const pagePlans = document.getElementById("page-plans");
 
 
@@ -1131,6 +1143,13 @@ tabExercises.addEventListener("click", () => {
     pageExercises.style.display = "block";
     pagePlans.style.display = "none";
 
+    pageExercises.insertBefore(
+        exerciseBrowser,
+        document.getElementById("exercise-details")
+    );
+
+    exerciseBrowser.style.display = "block";
+
 });
 
 
@@ -1141,5 +1160,149 @@ tabPlans.addEventListener("click", () => {
 
     pageExercises.style.display = "none";
     pagePlans.style.display = "block";
+
+});
+
+/* ========================================
+   CRÉATION D'UN PLAN
+======================================== */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const newPlanButton =
+        document.getElementById("new-plan-button");
+
+    const createPlanButton =
+        document.getElementById("create-plan-button");
+
+    const cancelPlanButton =
+        document.getElementById("cancel-plan-button");
+
+    const planHome =
+        document.getElementById("plan-home");
+
+    const planCreator =
+        document.getElementById("plan-creator");
+
+    const planNameInput =
+        document.getElementById("plan-name");
+
+    const plansList =
+        document.getElementById("plans-list");
+    
+    const planEditor =
+        document.getElementById("plan-editor");
+
+    const currentPlanName =
+        document.getElementById("current-plan-name");
+
+    const backToPlansButton =
+        document.getElementById("back-to-plans-button");   
+
+    const addExerciseButton =
+        document.getElementById("add-exercise-button");
+
+addExerciseButton.addEventListener("click", () => {
+
+    planExerciseBrowserContainer.appendChild(
+        exerciseBrowser
+    );
+
+    exerciseBrowser.style.display = "block";
+
+});
+
+    /* Ouvrir la création d'un plan */
+
+    newPlanButton.addEventListener("click", () => {
+
+        planHome.style.display = "none";
+        planCreator.style.display = "block";
+
+        planNameInput.value = "";
+        planNameInput.focus();
+
+    });
+
+
+    /* Annuler */
+
+    cancelPlanButton.addEventListener("click", () => {
+
+        planCreator.style.display = "none";
+        planHome.style.display = "block";
+
+    });
+
+
+    /* Créer le plan */
+
+    createPlanButton.addEventListener("click", () => {
+
+        const planName =
+            planNameInput.value.trim();
+
+
+        if (planName === "") {
+
+            alert("Veuillez entrer un nom de plan.");
+
+            return;
+
+        }
+
+
+        const plan = {
+
+            id: Date.now(),
+
+            name: planName,
+
+            exercises: []
+
+        };
+
+
+        plansList.innerHTML = `
+    <div class="plan-card">
+
+        <h3>${plan.name}</h3>
+
+        <p>0 exercice</p>
+
+        <button class="open-plan-button">
+            Ouvrir le plan
+        </button>
+
+    </div>
+`;
+        const openPlanButton =
+    document.querySelector(".open-plan-button");
+
+
+openPlanButton.addEventListener("click", () => {
+
+    planHome.style.display = "none";
+
+    planEditor.style.display = "block";
+
+    currentPlanName.textContent =
+        plan.name;
+
+});
+
+
+        planCreator.style.display = "none";
+        planHome.style.display = "block";
+
+backToPlansButton.addEventListener("click", () => {
+
+    planEditor.style.display = "none";
+
+    planHome.style.display = "block";
+
+});
+
+    });
 
 });

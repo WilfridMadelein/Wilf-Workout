@@ -176,16 +176,107 @@ main {
     display: block;
 }
 
-.main-tab {
-    padding: 10px 20px;
-    margin: 5px;
-    cursor: pointer;
-}
-
-.main-tab.active {
-    font-weight: bold;
-}
-
 #page-plans {
     display: none;
 }
+/* ========================================
+   CONSTRUCTION DE PLAN
+======================================== */
+
+#page-plans {
+    padding: 20px;
+}
+
+
+#plan-home,
+#plan-creator {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+
+#new-plan-button,
+#create-plan-button,
+#cancel-plan-button {
+    padding: 10px 16px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+
+#plan-name {
+    display: block;
+    width: 100%;
+    max-width: 500px;
+    padding: 10px;
+    margin-top: 8px;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+}
+
+.plan-card {
+    margin-top: 25px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+/* ========================================
+   ÉDITEUR DE PLAN
+======================================== */
+
+#plan-editor {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+
+.plan-settings {
+    display: flex;
+    gap: 40px;
+    margin-top: 25px;
+    margin-bottom: 35px;
+}
+
+
+.plan-setting-group {
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+
+.plan-setting-group h3 {
+    margin-top: 0;
+}
+
+
+.plan-option-button {
+    padding: 8px 14px;
+    margin: 3px;
+    cursor: pointer;
+}
+
+
+.plan-option-button.active {
+    font-weight: bold;
+}
+
+
+.plan-exercises {
+    margin-top: 20px;
+}
+
+
+#add-exercise-button {
+    padding: 10px 16px;
+    margin-top: 15px;
+    cursor: pointer;
+}
+
+
+#back-to-plans-button {
+    padding: 7px 12px;
+    cursor: pointer;
+}
+

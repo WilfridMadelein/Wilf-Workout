@@ -180,9 +180,113 @@
 
         <section id="page-plans">
 
-    <h2>Construire un plan</h2>
+    <div id="plan-home">
 
-    <p>La construction de plans sera ajoutée ici.</p>
+        <h2>Mes plans</h2>
+
+        <button id="new-plan-button">
+            + Nouveau plan
+        </button>
+
+        <div id="plans-list"></div>
+
+    </div>
+
+
+    <div id="plan-creator" style="display: none;">
+
+        <h2>Nouveau plan</h2>
+
+        <label for="plan-name">
+            Nom du plan
+        </label>
+
+        <input
+            type="text"
+            id="plan-name"
+            placeholder="Ex : Jour 1 - Leg Day"
+        >
+
+        <button id="create-plan-button">
+            Créer le plan
+        </button>
+
+        <button id="cancel-plan-button">
+            Annuler
+        </button>
+
+    </div>
+
+    <div id="plan-editor" style="display: none;">
+
+    <h2 id="current-plan-name"></h2>
+
+    <button id="back-to-plans-button">
+    ← Retour aux plans
+</button>
+
+    <div class="plan-settings">
+
+        <div class="plan-setting-group">
+
+            <h3>Cali / Gym</h3>
+
+            <button
+                id="plan-cali-button"
+                class="plan-option-button active"
+            >
+                Cali
+            </button>
+
+            <button
+                id="plan-gym-button"
+                class="plan-option-button active"
+            >
+                Gym
+            </button>
+
+        </div>
+
+
+        <div class="plan-setting-group">
+
+            <h3>Équipement</h3>
+
+            <button
+                id="equipment-general-button"
+                class="plan-option-button active"
+            >
+                Général
+            </button>
+
+            <button
+                id="equipment-custom-button"
+                class="plan-option-button"
+            >
+                Personnalisé
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <div class="plan-exercises">
+
+        <h3>Exercices</h3>
+
+        <div id="plan-exercise-list"></div>
+
+        <button id="add-exercise-button">
+        + Ajouter un exercice
+        </button>
+
+        <div id="plan-exercise-browser-container"></div>
+
+    </div>
+
+</div>
+
 
 </section>
 
