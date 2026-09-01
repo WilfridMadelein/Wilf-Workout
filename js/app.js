@@ -472,7 +472,7 @@ function exerciseMatchesProgression(exercise) {
     return true;
 }
 
-// Recherche
+ // Recherche
 function normalizeSearchText(text) {
     return String(text || "")
         .trim()
@@ -508,47 +508,6 @@ function getProgressionDisplay(exercise) {
     return progression;
 }
 
-function getTextMatchRank(text, term) {
-    const normalizedText = normalizeSearchText(text);
-
-    if (!normalizedText) {
-        return 0;
-    }
-
-    const words = normalizedText
-        .split(/\s+/)
-        .filter(Boolean);
-
-    // Le texte entier correspond exactement
-    if (normalizedText === term) {
-        return 5;
-    }
-
-    // Le premier mot commence par le terme
-    if (words[0].startsWith(term)) {
-        return 4;
-    }
-
-    // Un autre mot commence par le terme
-    if (words.some((word, index) =>
-        index > 0 && word.startsWith(term)
-    )) {
-        return 3;
-    }
-
-    // Le terme correspond exactement à un mot
-    if (words.some(word => word === term)) {
-        return 2;
-    }
-
-    // Le terme apparaît seulement à l'intérieur d'un mot
-    if (normalizedText.includes(term)) {
-        return 1;
-    }
-
-    return 0;
-}
-
 function findTermMatches(text, term) {
     const normalizedText = normalizeSearchText(text);
     const matches = [];
@@ -560,7 +519,10 @@ function findTermMatches(text, term) {
     let startIndex = 0;
 
     while (true) {
-        const index = normalizedText.indexOf(term, startIndex);
+        const index = normalizedText.indexOf(
+            term,
+            startIndex
+        );
 
         if (index === -1) {
             break;
@@ -592,7 +554,11 @@ function findValidTermCombination(text, searchTerms) {
         return null;
     }
 
-    function search(termIndex, usedRanges, selectedMatches) {
+    function search(
+        termIndex,
+        usedRanges,
+        selectedMatches
+    ) {
         if (termIndex === searchTerms.length) {
             return selectedMatches;
         }
@@ -624,88 +590,279 @@ function findValidTermCombination(text, searchTerms) {
     return search(0, [], []);
 }
 
-function getExerciseSearchScore(exercise, searchTerms) {
-    if (searchTerms.length === 0) {
+function getMatchQuality(text, term, match) {
+    const normalizedText = normalizeSearchText(text);
+
+    const before = normalizedText[match.start - 1];
+    const after = normalizedText[match.end];
+
+    const startsWord =
+        match.start === 0 ||
+        /\s/.test(before);
+
+    const endsWord =
+        match.end === normalizedText.length ||
+        /\s/.test(after);
+
+    // Le mot entier correspond exactement
+    if (startsWord && endsWord) {
+        return 5;
+    }
+
+    // Le match commence au début d'un mot
+    if (startsWord) {
+        return 4;
+    }
+
+    // Le match est à l'intérieur d'un mot
+    return 2;
+}
+
+function getMatchPosition(text, match) {
+    const normalizedText = normalizeSearchText(text);
+
+    if (match.start === 0) {
         return 0;
     }
 
-    const exerciseName = normalizeSearchText(exercise.nom);
-    const progressionName = normalizeSearchText(
-        getProgressionName(exercise)
+    const textBeforeMatch = normalizedText.slice(
+        0,
+        match.start
     );
 
-    const exerciseMatches = findValidTermCombination(
-        exerciseName,
+    return textBeforeMatch.split(/\s+/).length - 1;
+}
+
+function getSearchCriteria(text, searchTerms) {
+    const matches = findValidTermCombination(
+        text,
         searchTerms
     );
 
-    const progressionMatches = findValidTermCombination(
-        progressionName,
+    if (!matches) {
+        return null;
+    }
+
+    let bestQuality = 0;
+    let bestPosition = Infinity;
+
+    matches.forEach((match, index) => {
+        const term = searchTerms[index];
+
+        const quality = getMatchQuality(
+            text,
+            term,
+            match
+        );
+
+        const position = getMatchPosition(
+            text,
+            match
+        );
+
+        bestQuality = Math.max(
+            bestQuality,
+            quality
+        );
+
+        bestPosition = Math.min(
+            bestPosition,
+            position
+        );
+    });
+
+    const allTermsExact =
+        matches.length === searchTerms.length &&
+        matches.every((match, index) =>
+            getMatchQuality(
+                text,
+                searchTerms[index],
+                match
+            ) === 5
+        );
+
+    const allTermsAtWordStart =
+        matches.every((match, index) =>
+            getMatchQuality(
+                text,
+                searchTerms[index],
+                match
+            ) >= 4
+        );
+
+    return {
+        matches,
+        quality: bestQuality,
+        position: bestPosition,
+        allTermsExact,
+        allTermsAtWordStart
+    };
+}
+
+function compareSearchCriteria(a, b) {
+    if (a.quality !== b.quality) {
+        return b.quality - a.quality;
+    }
+
+    if (a.position !== b.position) {
+        return a.position - b.position;
+    }
+
+    if (a.allTermsExact !== b.allTermsExact) {
+        return b.allTermsExact - a.allTermsExact;
+    }
+
+    if (a.allTermsAtWordStart !== b.allTermsAtWordStart) {
+        return b.allTermsAtWordStart - a.allTermsAtWordStart;
+    }
+
+    return 0;
+}
+
+function getExerciseSearchRanking(
+    exercise,
+    searchTerms
+) {
+    if (searchTerms.length === 0) {
+        return {
+            exerciseCriteria: null,
+            progressionCriteria: null
+        };
+    }
+
+    const exerciseCriteria = getSearchCriteria(
+        exercise.nom,
         searchTerms
     );
+
+    const progressionCriteria = getSearchCriteria(
+        getProgressionName(exercise),
+        searchTerms
+    );
+
+    if (!exerciseCriteria && !progressionCriteria) {
+        return null;
+    }
+
+    return {
+        exerciseCriteria,
+        progressionCriteria
+    };
+}
+
+function compareExercisesBySearch(a, b) {
+    const aRanking = a.searchRanking;
+    const bRanking = b.searchRanking;
 
     /*
-     * Aucun moyen de faire correspondre tous les termes
-     * sans réutiliser les mêmes caractères.
+     * Sans recherche :
+     * progression alphabétique,
+     * puis ordre de progression,
+     * puis nom.
      */
-    if (!exerciseMatches && !progressionMatches) {
+    if (
+        !aRanking.exerciseCriteria &&
+        !aRanking.progressionCriteria &&
+        !bRanking.exerciseCriteria &&
+        !bRanking.progressionCriteria
+    ) {
+        const progressionComparison =
+            getProgressionName(a.exercise).localeCompare(
+                getProgressionName(b.exercise),
+                "fr",
+                { sensitivity: "base" }
+            );
+
+        if (progressionComparison !== 0) {
+            return progressionComparison;
+        }
+
+        const orderA = Number(a.exercise.prog_ordre);
+        const orderB = Number(b.exercise.prog_ordre);
+
+        if (!Number.isNaN(orderA) && !Number.isNaN(orderB)) {
+            if (orderA !== orderB) {
+                return orderA - orderB;
+            }
+        }
+
+        return a.exercise.nom.localeCompare(
+            b.exercise.nom,
+            "fr",
+            { sensitivity: "base" }
+        );
+    }
+
+    /*
+     * Le nom de l'exercice est toujours prioritaire.
+     */
+    if (
+        aRanking.exerciseCriteria &&
+        !bRanking.exerciseCriteria
+    ) {
         return -1;
     }
 
-    let exerciseScore = 0;
-    let progressionScore = 0;
-
-    if (exerciseMatches) {
-        searchTerms.forEach((term, index) => {
-            const match = exerciseMatches[index];
-
-            const wordStart =
-                match.start === 0 ||
-                /\s/.test(exerciseName[match.start - 1]);
-
-            const exactWord =
-                wordStart &&
-                (
-                    match.end === exerciseName.length ||
-                    /\s/.test(exerciseName[match.end])
-                );
-
-            if (exactWord) {
-                exerciseScore += 500;
-            } else if (wordStart) {
-                exerciseScore += 400;
-            } else {
-                exerciseScore += 100;
-            }
-        });
+    if (
+        !aRanking.exerciseCriteria &&
+        bRanking.exerciseCriteria
+    ) {
+        return 1;
     }
 
-    if (progressionMatches) {
-        searchTerms.forEach((term, index) => {
-            const match = progressionMatches[index];
+    if (
+        aRanking.exerciseCriteria &&
+        bRanking.exerciseCriteria
+    ) {
+        const exerciseComparison =
+            compareSearchCriteria(
+                aRanking.exerciseCriteria,
+                bRanking.exerciseCriteria
+            );
 
-            const wordStart =
-                match.start === 0 ||
-                /\s/.test(progressionName[match.start - 1]);
-
-            const exactWord =
-                wordStart &&
-                (
-                    match.end === progressionName.length ||
-                    /\s/.test(progressionName[match.end])
-                );
-
-            if (exactWord) {
-                progressionScore += 50;
-            } else if (wordStart) {
-                progressionScore += 40;
-            } else {
-                progressionScore += 10;
-            }
-        });
+        if (exerciseComparison !== 0) {
+            return exerciseComparison;
+        }
     }
 
-    return exerciseScore + progressionScore;
+    /*
+     * Si le nom donne une qualité similaire,
+     * la progression départage les résultats.
+     */
+    if (
+        aRanking.progressionCriteria &&
+        !bRanking.progressionCriteria
+    ) {
+        return -1;
+    }
+
+    if (
+        !aRanking.progressionCriteria &&
+        bRanking.progressionCriteria
+    ) {
+        return 1;
+    }
+
+    if (
+        aRanking.progressionCriteria &&
+        bRanking.progressionCriteria
+    ) {
+        const progressionComparison =
+            compareSearchCriteria(
+                aRanking.progressionCriteria,
+                bRanking.progressionCriteria
+            );
+
+        if (progressionComparison !== 0) {
+            return progressionComparison;
+        }
+    }
+
+    return a.exercise.nom.localeCompare(
+        b.exercise.nom,
+        "fr",
+        { sensitivity: "base" }
+    );
 }
 
 function escapeHtml(text) {
@@ -754,7 +911,7 @@ function displayExercises() {
     const filteredExercises = exercises
         .map(exercise => ({
             exercise,
-            searchScore: getExerciseSearchScore(
+            searchRanking: getExerciseSearchRanking(
                 exercise,
                 searchTerms
             )
@@ -762,7 +919,10 @@ function displayExercises() {
         .filter(item => {
             const exercise = item.exercise;
 
-            if (item.searchScore === -1) {
+            if (
+                searchTerms.length > 0 &&
+                !item.searchRanking
+            ) {
                 return false;
             }
 
@@ -802,17 +962,7 @@ function displayExercises() {
             return true;
         });
 
-    filteredExercises.sort((a, b) => {
-        if (b.searchScore !== a.searchScore) {
-            return b.searchScore - a.searchScore;
-        }
-
-        return a.exercise.nom.localeCompare(
-            b.exercise.nom,
-            "fr",
-            { sensitivity: "base" }
-        );
-    });
+    filteredExercises.sort(compareExercisesBySearch);
 
     const exerciseCount = filteredExercises.length;
     const exerciseTitle = document.querySelector(
