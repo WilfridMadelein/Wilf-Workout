@@ -1171,42 +1171,72 @@ if (
     exerciseList.innerHTML = "";
 
 
-    filteredExercises.forEach(
-        exercise => {
+filteredExercises.forEach(
+    exercise => {
 
-            const element =
-                document.createElement(
-                    "div"
+        const element =
+            document.createElement("div");
+
+
+        element.classList.add(
+            "exercise-item"
+        );
+
+
+        const exerciseName =
+            document.createElement("span");
+
+        exerciseName.classList.add(
+            "exercise-name"
+        );
+
+        exerciseName.textContent =
+            exercise.nom;
+
+
+        const exerciseProgression =
+            document.createElement("span");
+
+        exerciseProgression.classList.add(
+            "exercise-progression"
+        );
+
+
+        if (exercise.prog_group) {
+
+            exerciseProgression.textContent =
+                `${exercise.prog_group} ${exercise.prog_ordre}`;
+
+        }
+
+
+        element.appendChild(
+            exerciseName
+        );
+
+        element.appendChild(
+            exerciseProgression
+        );
+
+
+        element.addEventListener(
+            "click",
+            () => {
+
+                displayExerciseDetails(
+                    exercise
                 );
 
-
-            element.classList.add(
-                "exercise-item"
-            );
+            }
+        );
 
 
-            element.textContent =
-                exercise.nom;
-
-
-            element.addEventListener(
-    "click",
-    () => {
-
-        displayExerciseDetails(
-            exercise
+        exerciseList.appendChild(
+            element
         );
 
     }
 );
-
-
-            exerciseList.appendChild(
-                element
-            );
-
-        }
-    );
 
 }
 
@@ -1725,11 +1755,19 @@ tabExercises.addEventListener("click", () => {
     pageExercises.style.display = "block";
     pagePlans.style.display = "none";
 
-    exerciseBrowserContainer.appendChild(
-        exerciseBrowser
-    );
+    tabExercises.classList.add("active");
+    tabPlans.classList.remove("active");
 
-    exerciseBrowser.style.display = "block";
+});
+
+
+tabPlans.addEventListener("click", () => {
+
+    pageExercises.style.display = "none";
+    pagePlans.style.display = "block";
+
+    tabExercises.classList.remove("active");
+    tabPlans.classList.add("active");
 
 });
 
