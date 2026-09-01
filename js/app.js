@@ -1075,21 +1075,45 @@ function displayExercises() {
     const searchText =
         searchInput.value.toLowerCase();
 
+const searchWords =
+    searchInput.value
+        .trim()
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(word => word !== "");
+
 
     const filteredExercises =
         exercises.filter(exercise => {
 
 
             // Recherche
-            if (
-                !exercise.nom
-                    .toLowerCase()
-                    .includes(searchText)
-            ) {
 
-                return false;
 
-            }
+
+const exerciseName =
+    (exercise.nom || "").toLowerCase();
+
+
+const progressionName =
+    (exercise.prog_group || "").toLowerCase();
+
+
+const searchableText =
+    `${exerciseName} ${progressionName}`;
+
+
+// Chaque mot recherché doit être présent
+// dans le nom OU dans la progression.
+const matchesSearch =
+    searchWords.every(word =>
+        searchableText.includes(word)
+    );
+
+
+if (!matchesSearch) {
+    return false;
+}
 
 
             // Type
@@ -1167,6 +1191,21 @@ if (
 
         });
 
+        /* Compteur */
+
+    const exerciseCount =
+        document.getElementById(
+            "exercise-count"
+        );
+
+
+    exerciseCount.textContent =
+        `${filteredExercises.length} ${
+            filteredExercises.length === 1
+                ? "exercice"
+                : "exercices"
+        }`;
+
 
     exerciseList.innerHTML = "";
 
@@ -1186,12 +1225,15 @@ filteredExercises.forEach(
         const exerciseName =
             document.createElement("span");
 
-        exerciseName.classList.add(
+            exerciseName.classList.add(
             "exercise-name"
-        );
+            );
 
-        exerciseName.textContent =
-            exercise.nom;
+            exerciseName.innerHTML =
+            highlightSearchMatches(
+                exercise.nom,
+                searchWords
+            );
 
 
         const exerciseProgression =
@@ -1204,10 +1246,16 @@ filteredExercises.forEach(
 
         if (exercise.prog_group) {
 
-            exerciseProgression.textContent =
+            const progressionText =
                 `${exercise.prog_group} ${exercise.prog_ordre}`;
 
-        }
+            exerciseProgression.innerHTML =
+                highlightSearchMatches(
+                    progressionText,
+                    searchWords
+                );
+
+}
 
 
         element.appendChild(
@@ -1240,6 +1288,41 @@ filteredExercises.forEach(
 
 }
 
+function highlightSearchMatches(text, searchWords) {
+
+    if (!text) {
+        return "";
+    }
+
+    if (searchWords.length === 0) {
+        return text;
+    }
+
+
+    // Échapper les caractères spéciaux
+    // pour pouvoir les utiliser dans une RegExp.
+    const escapedWords =
+        searchWords.map(word =>
+            word.replace(
+                /[.*+?^${}()|[\]\\]/g,
+                "\\$&"
+            )
+        );
+
+
+    const regex =
+        new RegExp(
+            `(${escapedWords.join("|")})`,
+            "gi"
+        );
+
+
+    return text.replace(
+        regex,
+        "<mark>$1</mark>"
+    );
+
+}
 
 /* ========================================
    DÉTAILS
