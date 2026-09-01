@@ -4,6 +4,11 @@ const searchInput = document.getElementById("search-input");
 const exerciseBrowser =
     document.getElementById("exercise-browser");
 
+const exerciseBrowserContainer =
+    document.getElementById(
+        "exercise-browser-container"
+    );
+
 const pageExercises =
     document.getElementById("page-exercises");
 
@@ -27,6 +32,10 @@ const detailsContent = document.getElementById("details-content");
 
 // TYPES
 const selectedTypes = new Set();
+
+const selectedProgressionsInclude = new Set();
+
+const selectedProgressionsExclude = new Set();
 
 
 // MUSCLES
@@ -845,12 +854,223 @@ function exerciseMatchesMuscle(
 
 }
 
+/* ========================================
+   PROGRESSION
+======================================== */
+
+function getProgressionOptions() {
+
+    const progressions = new Set();
+
+    exercises.forEach(exercise => {
+
+        if (
+            exercise.prog_group &&
+            exercise.prog_group.trim() !== ""
+        ) {
+
+            progressions.add(
+                exercise.prog_group
+            );
+
+        }
+
+    });
+
+    return [...progressions].sort();
+
+}
+
+
+function createProgressionOptions() {
+
+    const includeContainer =
+        document.getElementById(
+            "progression-include-options"
+        );
+
+    const excludeContainer =
+        document.getElementById(
+            "progression-exclude-options"
+        );
+
+    includeContainer.innerHTML = "";
+    excludeContainer.innerHTML = "";
+
+
+    const progressions =
+        getProgressionOptions();
+
+
+    progressions.forEach(progression => {
+
+        createProgressionButton(
+            progression,
+            includeContainer,
+            selectedProgressionsInclude,
+            selectedProgressionsExclude
+        );
+
+        createProgressionButton(
+            progression,
+            excludeContainer,
+            selectedProgressionsExclude,
+            selectedProgressionsInclude
+        );
+
+    });
+
+}
+
+
+function createProgressionButton(
+    progression,
+    container,
+    selectedSet,
+    oppositeSet
+) {
+
+    const button =
+        document.createElement("button");
+
+    button.classList.add(
+        "filter-button"
+    );
+
+    button.textContent =
+        progression;
+
+    if (
+        selectedSet.has(progression)
+    ) {
+
+        button.classList.add("active");
+
+    }
+
+
+    button.addEventListener("click", () => {
+
+        if (
+            selectedSet.has(progression)
+        ) {
+
+            selectedSet.delete(progression);
+
+            button.classList.remove("active");
+
+        }
+
+        else {
+
+            // Une progression ne peut pas
+            // être à la fois Include et Exclude
+            oppositeSet.delete(progression);
+
+            selectedSet.add(progression);
+
+            button.classList.add("active");
+
+            updateProgressionButtons();
+
+        }
+
+        displayExercises();
+
+    });
+
+
+    container.appendChild(button);
+
+}
+
+
+function updateProgressionButtons() {
+
+    document
+        .querySelectorAll(
+            "#progression-include-options .filter-button"
+        )
+        .forEach(button => {
+
+            const progression =
+                button.textContent;
+
+            button.classList.toggle(
+                "active",
+                selectedProgressionsInclude.has(
+                    progression
+                )
+            );
+
+        });
+
+
+    document
+        .querySelectorAll(
+            "#progression-exclude-options .filter-button"
+        )
+        .forEach(button => {
+
+            const progression =
+                button.textContent;
+
+            button.classList.toggle(
+                "active",
+                selectedProgressionsExclude.has(
+                    progression
+                )
+            );
+
+        });
+
+}
+
+
+function exerciseMatchesProgression(
+    exercise
+) {
+
+    const progression =
+        exercise.prog_group;
+
+
+    // INCLUDE
+    if (
+        selectedProgressionsInclude.size > 0 &&
+        !selectedProgressionsInclude.has(
+            progression
+        )
+    ) {
+
+        return false;
+
+    }
+
+
+    // EXCLUDE
+    if (
+        selectedProgressionsExclude.has(
+            progression
+        )
+    ) {
+
+        return false;
+
+    }
+
+
+    return true;
+
+}
 
 /* ========================================
    AFFICHER LES EXERCICES
 ======================================== */
 
 function displayExercises() {
+
+    updateFilterSummaries();
 
     const searchText =
         searchInput.value.toLowerCase();
@@ -921,6 +1141,15 @@ if (
 
             }
 
+            // Progression
+if (
+    !exerciseMatchesProgression(exercise)
+) {
+
+    return false;
+
+}
+
 
             // Équipement
             if (
@@ -961,17 +1190,15 @@ if (
 
 
             element.addEventListener(
-                "click",
-                () => {
+    "click",
+    () => {
 
-                 displayExerciseDetails(
-                    exercise
-                );
+        displayExerciseDetails(
+            exercise
+        );
 
-                exerciseBrowser.style.display = "none";
-
-                }
-            );
+    }
+);
 
 
             exerciseList.appendChild(
@@ -1098,6 +1325,379 @@ function displayExerciseDetails(
 
 }
 
+/* ========================================
+   OUVRIR / FERMER LES FILTRES
+======================================== */
+
+function setupFilterRows() {
+
+    const filterTitles =
+        document.querySelectorAll(".filter-title");
+
+    filterTitles.forEach(title => {
+
+        title.addEventListener("click", () => {
+
+            const filterName =
+                title.dataset.filter;
+
+            const options =
+                document.getElementById(
+                    `${filterName}-filter-options`
+                );
+
+            const arrow =
+                title.querySelector(".filter-arrow");
+
+            if (!options) return;
+
+            const isOpen =
+                options.classList.contains("open");
+
+            // Fermer toutes les autres sections
+            document
+                .querySelectorAll(".filter-options.open")
+                .forEach(otherOptions => {
+
+                    otherOptions.classList.remove("open");
+
+                });
+
+            // Remettre toutes les flèches vers le bas
+            document
+                .querySelectorAll(".filter-arrow")
+                .forEach(otherArrow => {
+
+                    otherArrow.textContent = "▼";
+
+                });
+
+            // Si celle-ci était fermée → on l'ouvre
+            if (!isOpen) {
+
+                options.classList.add("open");
+
+                arrow.textContent = "▲";
+
+            }
+
+        });
+
+    });
+
+}
+
+
+/* ========================================
+   RÉSUMÉS DES FILTRES
+======================================== */
+
+function updateFilterSummaries() {
+
+
+    /* =====================================
+       FONCTION POUR CRÉER UN FAUX BOUTON
+    ===================================== */
+
+    function createSummaryButton(
+    text,
+    removeFunction = null
+) {
+
+    const button =
+        document.createElement("span");
+
+    button.classList.add(
+        "summary-button"
+    );
+
+
+    const label =
+        document.createElement("span");
+
+    label.textContent = text;
+
+    button.appendChild(label);
+
+
+    if (removeFunction) {
+
+        const remove =
+            document.createElement("button");
+
+        remove.classList.add(
+            "summary-remove"
+        );
+
+        remove.textContent = "−";
+
+        remove.addEventListener(
+            "click",
+            event => {
+
+                event.stopPropagation();
+
+                removeFunction();
+
+            }
+        );
+
+        button.appendChild(remove);
+
+    }
+
+
+    return button;
+
+}
+
+
+    /* =====================================
+       CATÉGORIE
+    ===================================== */
+
+    const categorySummary =
+        document.getElementById(
+            "category-summary"
+        );
+
+
+    categorySummary.innerHTML = "";
+
+
+    if (
+        selectedCategories.has("cali")
+    ) {
+
+        categorySummary.appendChild(
+            createSummaryButton("Cali")
+        );
+
+    }
+
+
+    if (
+        selectedCategories.has("gym")
+    ) {
+
+        categorySummary.appendChild(
+            createSummaryButton("Gym")
+        );
+
+    }
+
+
+    /* =====================================
+       TYPE
+    ===================================== */
+
+    const typeSummary =
+        document.getElementById(
+            "type-summary"
+        );
+
+
+    typeSummary.innerHTML = "";
+
+
+    const allTypes = [
+        "Push",
+        "Pull",
+        "Isométrique"
+    ];
+
+
+    if (
+        selectedTypes.size === 0
+    ) {
+
+        typeSummary.appendChild(
+            createSummaryButton("Tous")
+        );
+
+    }
+
+    else {
+
+        allTypes.forEach(type => {
+
+            if (
+                selectedTypes.has(type)
+            ) {
+
+                typeSummary.appendChild(
+                    createSummaryButton(
+                        type
+                    )
+                );
+
+            }
+
+        });
+
+    }
+
+
+    /* =====================================
+       MUSCLES
+    ===================================== */
+
+    const muscleSummary =
+        document.getElementById(
+            "muscle-summary"
+        );
+
+
+    muscleSummary.innerHTML = "";
+
+
+    if (
+        selectedMuscleFamilies.size === 0
+    ) {
+
+        muscleSummary.appendChild(
+            createSummaryButton("Tous")
+        );
+
+    }
+
+    else {
+
+        [...selectedMuscleFamilies]
+            .forEach(family => {
+
+                muscleSummary.appendChild(
+                    createSummaryButton(
+                        family
+                    )
+                );
+
+            });
+
+    }
+
+
+    /* =====================================
+       ÉQUIPEMENTS
+    ===================================== */
+
+    const equipmentSummary =
+        document.getElementById(
+            "equipment-summary"
+        );
+
+
+    equipmentSummary.innerHTML = "";
+
+
+    if (
+        selectedEquipment.size ===
+        equipmentOptions.length
+    ) {
+
+        equipmentSummary.appendChild(
+            createSummaryButton("Tous")
+        );
+
+    }
+
+    else if (
+        selectedEquipment.size === 0
+    ) {
+
+        equipmentSummary.appendChild(
+            createSummaryButton("Aucun")
+        );
+
+    }
+
+    else {
+
+        [...selectedEquipment]
+            .forEach(equipment => {
+
+                equipmentSummary.appendChild(
+                    createSummaryButton(
+                        equipment
+                    )
+                );
+
+            });
+
+    }
+
+/* =====================================
+   PROGRESSION
+===================================== */
+
+const progressionIncludeSummary =
+    document.getElementById(
+        "progression-include-summary"
+    );
+
+const progressionExcludeSummary =
+    document.getElementById(
+        "progression-exclude-summary"
+    );
+
+
+progressionIncludeSummary.innerHTML = "";
+
+progressionExcludeSummary.innerHTML = "";
+
+
+selectedProgressionsInclude.forEach(
+    progression => {
+
+        progressionIncludeSummary.appendChild(
+
+            createSummaryButton(
+                progression,
+                () => {
+
+                    selectedProgressionsInclude.delete(
+                        progression
+                    );
+
+                    updateProgressionButtons();
+
+                    displayExercises();
+
+                }
+            )
+
+        );
+
+    }
+);
+
+
+selectedProgressionsExclude.forEach(
+    progression => {
+
+        progressionExcludeSummary.appendChild(
+
+            createSummaryButton(
+                progression,
+                () => {
+
+                    selectedProgressionsExclude.delete(
+                        progression
+                    );
+
+                    updateProgressionButtons();
+
+                    displayExercises();
+
+                }
+            )
+
+        );
+
+    }
+);
+
+}
 
 /* ========================================
    RECHERCHE
@@ -1109,21 +1709,6 @@ searchInput.addEventListener(
 );
 
 
-/* ========================================
-   INITIALISATION
-======================================== */
-
-createMuscleButtons();
-
-createEquipmentButtons();
-
-setupEquipmentAllButton();
-
-setupTypeButtons();
-
-setupCategoryButtons();
-
-displayExercises();
 
 /* ========================================
    ONGLETS PRINCIPAUX
@@ -1137,15 +1722,11 @@ const pagePlans = document.getElementById("page-plans");
 
 tabExercises.addEventListener("click", () => {
 
-    tabExercises.classList.add("active");
-    tabPlans.classList.remove("active");
-
     pageExercises.style.display = "block";
     pagePlans.style.display = "none";
 
-    pageExercises.insertBefore(
-        exerciseBrowser,
-        document.getElementById("exercise-details")
+    exerciseBrowserContainer.appendChild(
+        exerciseBrowser
     );
 
     exerciseBrowser.style.display = "block";
@@ -1154,9 +1735,6 @@ tabExercises.addEventListener("click", () => {
 
 
 tabPlans.addEventListener("click", () => {
-
-    tabPlans.classList.add("active");
-    tabExercises.classList.remove("active");
 
     pageExercises.style.display = "none";
     pagePlans.style.display = "block";
@@ -1306,3 +1884,25 @@ backToPlansButton.addEventListener("click", () => {
     });
 
 });
+
+/* ========================================
+   INITIALISATION
+======================================== */
+
+createMuscleButtons();
+
+createEquipmentButtons();
+
+setupEquipmentAllButton();
+
+setupTypeButtons();
+
+setupCategoryButtons();
+
+createProgressionOptions();
+
+setupFilterRows();
+
+displayExercises();
+
+updateFilterSummaries();

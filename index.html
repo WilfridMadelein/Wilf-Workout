@@ -34,149 +34,350 @@
 
    
 
-        <div id="page-exercises">
+<div id="page-exercises">
+
+<div id="exercise-browser-container">
 
 <section id="exercise-browser">
 
-            <h2>Exercices</h2>
+<div class="exercise-search-area">
 
-            <input
-                type="text"
-                id="search-input"
-                placeholder="Rechercher un exercice..."
-            >
+    <section class="exercise-results">
 
+        <h2>Exercices</h2>
 
-            <!-- TYPE -->
+        <input
+            type="text"
+            id="search-input"
+            placeholder="Rechercher un exercice..."
+        >
 
-            <div class="filter-section">
+        <div id="exercise-list"></div>
 
-                <h3>Type</h3>
-
-                <div id="type-filters" class="filter-buttons">
-
-                    <button
-    class="filter-button active"
-    data-type="all"
->
-    Tous
-</button>
-
-<button
-    class="filter-button"
-    data-type="Push"
->
-    Push
-</button>
-
-<button
-    class="filter-button"
-    data-type="Pull"
->
-    Pull
-</button>
-
-<button
-    class="filter-button"
-    data-type="Isométrique"
->
-    Isométrique
-</button>
-
-                </div>
-
-            </div>
+    </section>
 
 
-            <!-- MUSCLE -->
+    <section id="exercise-details">
 
-            <div class="filter-section">
+        <h2>Détails</h2>
 
-                <h3>Muscle</h3>
+        <div id="details-content">
 
-                <div id="muscle-filters" class="filter-buttons"></div>
+            <p>Sélectionne un exercice.</p>
 
-                <div id="submuscle-filters"></div>
+        </div>
 
-            </div>
-
-
-            <!-- ÉQUIPEMENT -->
-
-            <div class="filter-section">
-
-                <h3>Équipement</h3>
-
-                <div id="equipment-filters" class="filter-buttons">
-
-    <button
-        class="filter-button active"
-        data-equipment="all"
-    >
-        Tous
-    </button>
-
-    <button
-        class="filter-button"
-        data-equipment="none"
-    >
-        Aucun
-    </button>
+    </section>
 
 </div>
 
-            </div>
 
+<!-- ==============================
+     FILTRES
+================================ -->
 
-            <!-- CATÉGORIE -->
+<section id="exercise-filters">
 
-            <div class="filter-section">
+    <!-- ==============================
+         CATÉGORIE
+    =============================== -->
 
-                <h3>Catégorie</h3>
+    <div class="filter-row">
 
-                <div id="category-filters" class="filter-buttons">
+        <button
+            class="filter-title"
+            data-filter="category"
+        >
+            <span>Catégorie</span>
+            <span class="filter-arrow">▼</span>
+        </button>
 
-                    <button
-                        class="filter-button active"
-                        data-category="cali"
-                    >
-                        Cali
-                    </button>
+        <div
+            id="category-summary"
+            class="filter-summary"
+        ></div>
 
-                    <button
-                        class="filter-button active"
-                        data-category="gym"
-                    >
-                        Gym
-                    </button>
+    </div>
 
-                </div>
+    <div
+        id="category-filter-options"
+        class="filter-options"
+    >
 
-            </div>
+        <div
+            id="category-filters"
+            class="filter-buttons"
+        >
 
+            <button
+                class="filter-button active"
+                data-category="cali"
+            >
+                Cali
+            </button>
 
-            <!-- LISTE DES EXERCICES -->
-
-            <div id="exercise-list"></div>
-
-        </section>
-
-
-        <!-- DÉTAILS -->
-
-        <section id="exercise-details">
-
-            <h2>Détails</h2>
-
-            <div id="details-content">
-
-                <p>Sélectionne un exercice.</p>
-
-            </div>
-
-        </section>
+            <button
+                class="filter-button active"
+                data-category="gym"
+            >
+                Gym
+            </button>
 
         </div>
+
+    </div>
+
+
+    <!-- ==============================
+         TYPE
+    =============================== -->
+
+    <div class="filter-row">
+
+        <button
+            class="filter-title"
+            data-filter="type"
+        >
+            <span>Type</span>
+            <span class="filter-arrow">▼</span>
+        </button>
+
+        <div
+            id="type-summary"
+            class="filter-summary"
+        ></div>
+
+    </div>
+
+    <div
+        id="type-filter-options"
+        class="filter-options"
+    >
+
+        <div
+            id="type-filters"
+            class="filter-buttons"
+        >
+
+            <button
+                class="filter-button active"
+                data-type="all"
+            >
+                Tous
+            </button>
+
+            <button
+                class="filter-button"
+                data-type="Push"
+            >
+                Push
+            </button>
+
+            <button
+                class="filter-button"
+                data-type="Pull"
+            >
+                Pull
+            </button>
+
+            <button
+                class="filter-button"
+                data-type="Isométrique"
+            >
+                Isométrique
+            </button>
+
+        </div>
+
+    </div>
+
+
+    <!-- ==============================
+         MUSCLES
+    =============================== -->
+
+    <div class="filter-row">
+
+        <button
+            class="filter-title"
+            data-filter="muscle"
+        >
+            <span>Muscles</span>
+            <span class="filter-arrow">▼</span>
+        </button>
+
+        <div
+            id="muscle-summary"
+            class="filter-summary"
+        ></div>
+
+    </div>
+
+    <div
+        id="muscle-filter-options"
+        class="filter-options"
+    >
+
+        <div
+            id="muscle-filters"
+            class="filter-buttons"
+        ></div>
+
+        <div
+            id="submuscle-filters"
+        ></div>
+
+    </div>
+
+
+    <!-- ==============================
+         PROGRESSION
+    =============================== -->
+
+    <div class="filter-row">
+
+        <button
+            class="filter-title"
+            data-filter="progression"
+        >
+            <span>Progression</span>
+            <span class="filter-arrow">▼</span>
+        </button>
+
+        <div
+            class="filter-summary progression-summary"
+        >
+
+            <div class="progression-summary-row">
+
+                <span>Include</span>
+
+                <div
+                    id="progression-include-summary"
+                    class="selected-items"
+                ></div>
+
+                <button
+                    id="progression-include-add"
+                    class="add-filter-button"
+                >
+                    +
+                </button>
+
+            </div>
+
+
+            <div class="progression-summary-row">
+
+                <span>Exclude</span>
+
+                <div
+                    id="progression-exclude-summary"
+                    class="selected-items"
+                ></div>
+
+                <button
+                    id="progression-exclude-add"
+                    class="add-filter-button"
+                >
+                    +
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+<div
+    id="progression-filter-options"
+    class="filter-options"
+>
+
+    <div class="progression-filter-panel">
+
+        <div class="progression-filter-column">
+
+            <strong>Include</strong>
+
+            <div
+                id="progression-include-options"
+                class="progression-options"
+            ></div>
+
+        </div>
+
+
+        <div class="progression-filter-column">
+
+            <strong>Exclude</strong>
+
+            <div
+                id="progression-exclude-options"
+                class="progression-options"
+            ></div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+    <!-- ==============================
+         ÉQUIPEMENTS
+    =============================== -->
+
+    <div class="filter-row">
+
+        <button
+            class="filter-title"
+            data-filter="equipment"
+        >
+            <span>Équipements</span>
+            <span class="filter-arrow">▼</span>
+        </button>
+
+        <div
+            id="equipment-summary"
+            class="filter-summary"
+        ></div>
+
+    </div>
+
+    <div
+        id="equipment-filter-options"
+        class="filter-options"
+    >
+
+        <div
+            id="equipment-filters"
+            class="filter-buttons"
+        >
+
+            <button
+                class="filter-button active"
+                data-equipment="all"
+            >
+                Tous
+            </button>
+
+            <button
+                class="filter-button"
+                data-equipment="none"
+            >
+                Aucun
+            </button>
+
+        </div>
+
+    </div>
+
+</section>
+
+</div>
+
+</div>
 
         <section id="page-plans">
 
