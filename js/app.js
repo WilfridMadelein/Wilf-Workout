@@ -508,29 +508,120 @@ function getProgressionDisplay(exercise) {
     return progression;
 }
 
-function getWordMatchScore(text, term) {
+function getTextMatchRank(text, term) {
     const normalizedText = normalizeSearchText(text);
+
+    if (!normalizedText) {
+        return 0;
+    }
+
     const words = normalizedText
         .split(/\s+/)
         .filter(Boolean);
 
+    // Le texte entier correspond exactement
     if (normalizedText === term) {
-        return 1000;
+        return 5;
     }
 
+    // Le premier mot commence par le terme
+    if (words[0].startsWith(term)) {
+        return 4;
+    }
+
+    // Un autre mot commence par le terme
+    if (words.some((word, index) =>
+        index > 0 && word.startsWith(term)
+    )) {
+        return 3;
+    }
+
+    // Le terme correspond exactement à un mot
     if (words.some(word => word === term)) {
-        return 900;
+        return 2;
     }
 
-    if (words.some(word => word.startsWith(term))) {
-        return 700;
-    }
-
+    // Le terme apparaît seulement à l'intérieur d'un mot
     if (normalizedText.includes(term)) {
-        return 500;
+        return 1;
     }
 
     return 0;
+}
+
+function findTermMatches(text, term) {
+    const normalizedText = normalizeSearchText(text);
+    const matches = [];
+
+    if (!normalizedText || !term) {
+        return matches;
+    }
+
+    let startIndex = 0;
+
+    while (true) {
+        const index = normalizedText.indexOf(term, startIndex);
+
+        if (index === -1) {
+            break;
+        }
+
+        matches.push({
+            start: index,
+            end: index + term.length
+        });
+
+        startIndex = index + 1;
+    }
+
+    return matches;
+}
+
+function findValidTermCombination(text, searchTerms) {
+    const normalizedText = normalizeSearchText(text);
+
+    if (!normalizedText || searchTerms.length === 0) {
+        return null;
+    }
+
+    const matchesByTerm = searchTerms.map(term =>
+        findTermMatches(normalizedText, term)
+    );
+
+    if (matchesByTerm.some(matches => matches.length === 0)) {
+        return null;
+    }
+
+    function search(termIndex, usedRanges, selectedMatches) {
+        if (termIndex === searchTerms.length) {
+            return selectedMatches;
+        }
+
+        for (const match of matchesByTerm[termIndex]) {
+            const overlaps = usedRanges.some(range =>
+                match.start < range.end &&
+                match.end > range.start
+            );
+
+            if (overlaps) {
+                continue;
+            }
+
+            const result = search(
+                termIndex + 1,
+                [...usedRanges, match],
+                [...selectedMatches, match]
+            );
+
+            if (result) {
+                return result;
+            }
+        }
+
+        return null;
+    }
+
+    return search(0, [], []);
 }
 
 function getExerciseSearchScore(exercise, searchTerms) {
@@ -543,49 +634,78 @@ function getExerciseSearchScore(exercise, searchTerms) {
         getProgressionName(exercise)
     );
 
-    let totalScore = 0;
-
-    for (const term of searchTerms) {
-        const exerciseScore = getWordMatchScore(
-            exerciseName,
-            term
-        );
-
-        const progressionScore = getWordMatchScore(
-            progressionName,
-            term
-        );
-
-        if (
-            exerciseScore === 0 &&
-            progressionScore === 0
-        ) {
-            return -1;
-        }
-
-        if (progressionScore > 0) {
-            totalScore += progressionScore + 50;
-        } else {
-            totalScore += exerciseScore;
-        }
-    }
-
-    if (
-        searchTerms.length === 1 &&
-        exerciseName === searchTerms[0]
-    ) {
-        totalScore += 2000;
-    }
-
-    const allTermsInExercise = searchTerms.every(term =>
-        exerciseName.includes(term)
+    const exerciseMatches = findValidTermCombination(
+        exerciseName,
+        searchTerms
     );
 
-    if (allTermsInExercise) {
-        totalScore += 300;
+    const progressionMatches = findValidTermCombination(
+        progressionName,
+        searchTerms
+    );
+
+    /*
+     * Aucun moyen de faire correspondre tous les termes
+     * sans réutiliser les mêmes caractères.
+     */
+    if (!exerciseMatches && !progressionMatches) {
+        return -1;
     }
 
-    return totalScore;
+    let exerciseScore = 0;
+    let progressionScore = 0;
+
+    if (exerciseMatches) {
+        searchTerms.forEach((term, index) => {
+            const match = exerciseMatches[index];
+
+            const wordStart =
+                match.start === 0 ||
+                /\s/.test(exerciseName[match.start - 1]);
+
+            const exactWord =
+                wordStart &&
+                (
+                    match.end === exerciseName.length ||
+                    /\s/.test(exerciseName[match.end])
+                );
+
+            if (exactWord) {
+                exerciseScore += 500;
+            } else if (wordStart) {
+                exerciseScore += 400;
+            } else {
+                exerciseScore += 100;
+            }
+        });
+    }
+
+    if (progressionMatches) {
+        searchTerms.forEach((term, index) => {
+            const match = progressionMatches[index];
+
+            const wordStart =
+                match.start === 0 ||
+                /\s/.test(progressionName[match.start - 1]);
+
+            const exactWord =
+                wordStart &&
+                (
+                    match.end === progressionName.length ||
+                    /\s/.test(progressionName[match.end])
+                );
+
+            if (exactWord) {
+                progressionScore += 50;
+            } else if (wordStart) {
+                progressionScore += 40;
+            } else {
+                progressionScore += 10;
+            }
+        });
+    }
+
+    return exerciseScore + progressionScore;
 }
 
 function escapeHtml(text) {
