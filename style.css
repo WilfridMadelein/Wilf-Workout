@@ -1,3 +1,7 @@
+/* ==============================
+   GÉNÉRAL
+============================== */
+
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -13,94 +17,15 @@ main {
     margin: auto;
 }
 
-#search-input {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 12px;
-    margin-bottom: 25px;
-    font-size: 16px;
-}
-
-.filter-section {
-    margin-bottom: 25px;
-}
-
-.filter-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.filter-button {
-    padding: 10px 15px;
-    border: 1px solid #999;
-    background-color: white;
-    cursor: pointer;
-    border-radius: 5px;
-}
-
-.filter-button.active {
-    background-color: #333;
-    color: white;
-}
-
-.filter-button:hover {
-    opacity: 0.8;
-}
-
 
 /* ==============================
-   SOUS-MUSCLES
+   ONGLETS
 ============================== */
-
-.submuscle-container {
-    margin-top: 10px;
-    margin-bottom: 10px;
-    padding: 10px 15px;
-    border-left: 3px solid #999;
-    min-width: 150px;
-}
-
-.submuscle-title {
-    margin-top: 0;
-    margin-bottom: 8px;
-}
-
-.submuscle-option {
-    display: block;
-    margin: 8px 0;
-}
-
-.submuscle-option input {
-    margin-right: 8px;
-}
-
-#submuscle-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 15px;
-    align-items: flex-start;
-}
-
-
-/* ==============================
-   TAB
-============================== */
-
-/* ========================================
-   PAGE D'ACCUEIL / ONGLETS PRINCIPAUX
-======================================== */
 
 .app-header {
     text-align: center;
     margin-bottom: 25px;
 }
-
-
-.app-header h1 {
-    margin-bottom: 20px;
-}
-
 
 .main-tabs {
     display: flex;
@@ -108,7 +33,6 @@ main {
     gap: 10px;
     margin-bottom: 25px;
 }
-
 
 .main-tab {
     padding: 12px 20px;
@@ -119,11 +43,9 @@ main {
     font-size: 16px;
 }
 
-
 .main-tab:hover {
     background: #e9e9e9;
 }
-
 
 .main-tab.active {
     background: #333;
@@ -131,36 +53,29 @@ main {
     border-color: #333;
 }
 
-
-/* Pages */
-
 .app-page {
     display: none;
 }
-
 
 .app-page.active {
     display: block;
 }
 
+
+/* ==============================
+   PAGE PLANS
+============================== */
+
 #page-plans {
     display: none;
-}
-/* ========================================
-   CONSTRUCTION DE PLAN
-======================================== */
-
-#page-plans {
     padding: 20px;
 }
-
 
 #plan-home,
 #plan-creator {
     max-width: 900px;
     margin: 0 auto;
 }
-
 
 #new-plan-button,
 #create-plan-button,
@@ -169,7 +84,6 @@ main {
     margin-top: 10px;
     cursor: pointer;
 }
-
 
 #plan-name {
     display: block;
@@ -188,15 +102,15 @@ main {
     border-radius: 8px;
 }
 
-/* ========================================
+
+/* ==============================
    ÉDITEUR DE PLAN
-======================================== */
+============================== */
 
 #plan-editor {
     max-width: 1000px;
     margin: 0 auto;
 }
-
 
 .plan-settings {
     display: flex;
@@ -205,18 +119,15 @@ main {
     margin-bottom: 35px;
 }
 
-
 .plan-setting-group {
     padding: 15px;
     border: 1px solid #ccc;
     border-radius: 8px;
 }
 
-
 .plan-setting-group h3 {
     margin-top: 0;
 }
-
 
 .plan-option-button {
     padding: 8px 14px;
@@ -224,23 +135,19 @@ main {
     cursor: pointer;
 }
 
-
 .plan-option-button.active {
     font-weight: bold;
 }
 
-
 .plan-exercises {
     margin-top: 20px;
 }
-
 
 #add-exercise-button {
     padding: 10px 16px;
     margin-top: 15px;
     cursor: pointer;
 }
-
 
 #back-to-plans-button {
     padding: 7px 12px;
@@ -251,9 +158,10 @@ main {
     margin-top: 20px;
 }
 
-/* ========================================
-   RECHERCHE : EXERCICES + DÉTAILS
-======================================== */
+
+/* ==============================
+   EXERCICES : RECHERCHE + DÉTAILS
+============================== */
 
 .exercise-search-area {
     display: grid;
@@ -268,15 +176,25 @@ main {
     min-width: 0;
 }
 
-.exercise-results-header {
+.exercise-results h2 {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-top: 0;
 }
 
-.exercise-results-header h2 {
-    margin-top: 0;
-    margin-bottom: 0;
+#search-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+.exercise-count {
+    font-size: 14px;
+    font-weight: normal;
+    color: #777;
 }
 
 #exercise-count {
@@ -284,48 +202,27 @@ main {
     font-size: 14px;
 }
 
-/* ========================================
+
+/* ==============================
    LISTE DES EXERCICES
-======================================== */
-
-.exercise-results {
-
-    min-width: 0;
-
-}
-
-
-.exercise-results h2 {
-
-    margin-top: 0;
-
-}
-
+============================== */
 
 #exercise-list {
-
     height: 400px;
-
+    max-height: 500px;
     overflow-y: auto;
-
     border: 1px solid #ccc;
-
     border-radius: 8px;
-
     margin-top: 10px;
-
 }
 
 .exercise-item {
     display: flex;
-    align-items: center;
     justify-content: space-between;
+    align-items: center;
     gap: 15px;
-
     padding: 10px 12px;
-
     border-bottom: 1px solid #eee;
-
     cursor: pointer;
 }
 
@@ -340,387 +237,147 @@ main {
 
 .exercise-progression {
     flex-shrink: 0;
-
-    color: #888;
-    font-size: 12px;
+    margin-left: auto;
+    color: #999;
+    font-size: 13px;
     font-weight: normal;
-
+    white-space: nowrap;
     text-align: right;
 }
 
 .exercise-item mark {
-    padding: 1px 0px;
+    background-color: #ffe58a;
+    color: inherit;
     border-radius: 2px;
+    padding: 0 1px;
 }
 
-/* ========================================
+.exercise-empty {
+    padding: 20px;
+    text-align: center;
+    color: #777;
+}
+
+
+/* ==============================
    DÉTAILS
-======================================== */
+============================== */
 
 #exercise-details {
-
-    min-width: 0;
-
     height: 530px;
-
     overflow-y: auto;
-
     border: 1px solid #ccc;
-
     border-radius: 8px;
-
     padding: 15px;
-
     box-sizing: border-box;
-
 }
-
 
 #exercise-details h2 {
-
     margin-top: 0;
-
-}
-
-/* Liste défilante */
-
-#exercise-list {
-    max-height: 500px;
-    overflow-y: auto;
 }
 
 
-/* Petit écran */
-
-@media (max-width: 800px) {
-
-    .exercise-search-area {
-        grid-template-columns: 1fr;
-    }
-
-}
-
-
-/* ========================================
+/* ==============================
    FILTRES
-======================================== */
+============================== */
 
 #exercise-filters {
-
     border-top: 1px solid #ccc;
-
 }
-
-
-/* ========================================
-   LIGNE PRINCIPALE DU FILTRE
-======================================== */
 
 .filter-row {
-
     display: flex;
-
     align-items: center;
-
     min-height: 48px;
-
     border-bottom: 1px solid #ddd;
-
 }
-
-
-/* Nom du filtre + flèche */
 
 .filter-title {
-
     width: 150px;
-
     min-width: 150px;
-
     height: 48px;
-
     display: flex;
-
     justify-content: space-between;
-
     align-items: center;
-
     border: none;
-
     background: transparent;
-
     padding: 10px;
-
     font-weight: bold;
-
     cursor: pointer;
-
     text-align: left;
-
     font-size: 14px;
-
 }
-
 
 .filter-title:hover {
-
     background: #f5f5f5;
-
 }
-
 
 .filter-arrow {
-
     font-size: 12px;
-
 }
 
-
-/* ========================================
-   RÉSUMÉ
-======================================== */
-
 .filter-summary {
-
     flex: 1;
-
     min-width: 0;
-
     display: flex;
-
     align-items: center;
-
     gap: 6px;
-
     padding: 6px 10px;
-
     overflow: hidden;
-
-}
-
-
-/*
-    Les sélections affichées dans le résumé
-    ressemblent à des boutons MAIS ne sont
-    PAS cliquables.
-*/
-
-.summary-button {
-
-    display: inline-block;
-
-    padding: 6px 10px;
-
-    border: 1px solid #333;
-
-    border-radius: 6px;
-
-    background: #333;
-
-    color: white;
-
-    font-size: 13px;
-
     white-space: nowrap;
-
-    flex-shrink: 0;
-
 }
-
-
-/*
-    Quand il y en a trop, on garde une seule ligne.
-*/
-
-.filter-summary {
-
-    white-space: nowrap;
-
-}
-
-
-/* ========================================
-   OPTIONS OUVERTES
-======================================== */
 
 .filter-options {
-
     display: none;
-
     padding: 12px 10px 15px 160px;
-
     border-bottom: 1px solid #ddd;
-
 }
-
 
 .filter-options.open {
-
     display: block;
-
 }
-
-/* ========================================
-   BOUTONS FILTRES
-======================================== */
 
 .filter-buttons {
-
     display: flex;
-
     flex-wrap: wrap;
-
     gap: 8px;
-
 }
-
 
 .filter-button {
-
     padding: 7px 12px;
-
     border: 1px solid #ccc;
-
     border-radius: 6px;
-
     background: #f5f5f5;
-
     cursor: pointer;
-
 }
-
 
 .filter-button.active {
-
     background: #333;
-
     color: white;
-
     border-color: #333;
+}
 
+.filter-button:hover {
+    opacity: 0.8;
 }
 
 
-/* ========================================
-   SOUS-MUSCLES
-======================================== */
-
-#submuscle-filters {
-
-    display: flex;
-
-    flex-wrap: wrap;
-
-    gap: 15px;
-
-    margin-top: 15px;
-
-}
-
-
-.submuscle-container {
-
-    padding: 10px;
-
-    border: 1px solid #ddd;
-
-    border-radius: 6px;
-
-}
-
-
-.submuscle-option {
-
-    display: block;
-
-    margin-top: 5px;
-
-}
-
-
-/* ========================================
-   PROGRESSION
-======================================== */
-
-.progression-summary {
-
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 4px;
-
-    padding-top: 4px;
-
-    padding-bottom: 4px;
-
-}
-
-
-.progression-summary-row {
-
-    display: flex;
-
-    align-items: center;
-
-    gap: 8px;
-
-    min-height: 25px;
-
-}
-
-
-.selected-items {
-
-    flex: 1;
-
-    min-width: 0;
-
-    display: flex;
-
-    gap: 5px;
-
-    overflow: hidden;
-
-    white-space: nowrap;
-
-}
-
-
-.add-filter-button {
-
-    width: 25px;
-
-    min-width: 25px;
-
-    height: 25px;
-
-    border-radius: 50%;
-
-    border: 1px solid #aaa;
-
-    background: #f5f5f5;
-
-    cursor: pointer;
-
-    font-size: 16px;
-
-    line-height: 20px;
-
-}
-
-
-.add-filter-button:hover {
-
-    background: #e5e5e5;
-
-}
-
+/* ==============================
+   RÉSUMÉS DES FILTRES
+============================== */
 
 .summary-button {
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    padding: 6px 10px;
+    border: 1px solid #333;
+    border-radius: 6px;
+    background: #333;
+    color: white;
+    font-size: 13px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .summary-remove {
@@ -739,8 +396,82 @@ main {
 
 
 /* ==============================
-   PROGRESSION — OPTIONS
+   SOUS-MUSCLES
 ============================== */
+
+#submuscle-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 15px;
+    align-items: flex-start;
+}
+
+.submuscle-container {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    min-width: 150px;
+}
+
+.submuscle-title {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+.submuscle-option {
+    display: block;
+    margin-top: 5px;
+}
+
+.submuscle-option input {
+    margin-right: 8px;
+}
+
+
+/* ==============================
+   PROGRESSION
+============================== */
+
+.progression-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.progression-summary-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 25px;
+}
+
+.selected-items {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    gap: 5px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.add-filter-button {
+    width: 25px;
+    min-width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    border: 1px solid #aaa;
+    background: #f5f5f5;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 20px;
+}
+
+.add-filter-button:hover {
+    background: #e5e5e5;
+}
 
 .progression-filter-panel {
     display: flex;
@@ -762,4 +493,15 @@ main {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+}
+
+
+/* ==============================
+   RESPONSIVE
+============================== */
+
+@media (max-width: 800px) {
+    .exercise-search-area {
+        grid-template-columns: 1fr;
+    }
 }

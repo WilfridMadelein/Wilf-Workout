@@ -4,505 +4,413 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Workout App</title>
-
     <link rel="stylesheet" href="style.css">
 </head>
 
- 
-
 <body>
 
-    <main>
+<main>
 
-        <header>
+    <header>
         <h1>Workout App</h1>
     </header>
 
+    <!-- ONGLETS -->
     <div class="app-header">
-
-    <button id="tab-exercises" class="main-tab active">
-        Trouver des exercices
-    </button>
-
-    <button id="tab-plans" class="main-tab">
-        Construire un plan
-    </button>
-
-</div>
-
-   
-
-<div id="page-exercises">
-
-<div id="exercise-browser-container">
-
-<section id="exercise-browser">
-
-<div class="exercise-search-area">
-
-    <section class="exercise-results">
-
-        <div class="exercise-results-header">
-            <h2>Exercices</h2>
-            <span id="exercise-count">0 exercices</span>
-        </div>
-
-        <input
-            type="text"
-            id="search-input"
-            placeholder="Rechercher un exercice..."
-        >
-
-        <div id="exercise-list"></div>
-
-    </section>
-
-
-    <section id="exercise-details">
-
-        <h2>Détails</h2>
-
-        <div id="details-content">
-
-            <p>Sélectionne un exercice.</p>
-
-        </div>
-
-    </section>
-
-</div>
-
-
-<!-- ==============================
-     FILTRES
-================================ -->
-
-<section id="exercise-filters">
-
-    <!-- ==============================
-         CATÉGORIE
-    =============================== -->
-
-    <div class="filter-row">
-
-        <button
-            class="filter-title"
-            data-filter="category"
-        >
-            <span>Catégorie</span>
-            <span class="filter-arrow">▼</span>
+        <button id="tab-exercises" class="main-tab active">
+            Trouver des exercices
         </button>
 
-        <div
-            id="category-summary"
-            class="filter-summary"
-        ></div>
-
+        <button id="tab-plans" class="main-tab">
+            Construire un plan
+        </button>
     </div>
 
-    <div
-        id="category-filter-options"
-        class="filter-options"
-    >
+    <!-- PAGE EXERCICES -->
+    <div id="page-exercises">
 
-        <div
-            id="category-filters"
-            class="filter-buttons"
-        >
+        <div id="exercise-browser-container">
 
-            <button
-                class="filter-button active"
-                data-category="cali"
-            >
-                Cali
-            </button>
+            <section id="exercise-browser">
 
-            <button
-                class="filter-button active"
-                data-category="gym"
-            >
-                Gym
-            </button>
+                <div class="exercise-search-area">
+
+                    <!-- RÉSULTATS -->
+                    <section class="exercise-results">
+
+                        <div class="exercise-results-header">
+                            <h2>Exercices</h2>
+                        </div>
+
+                        <input
+                            type="text"
+                            id="search-input"
+                            placeholder="Rechercher un exercice..."
+                        >
+
+                        <div id="exercise-list"></div>
+
+                    </section>
+
+                    <!-- DÉTAILS -->
+                    <section id="exercise-details">
+
+                        <h2>Détails</h2>
+
+                        <div id="details-content">
+                            <p>Sélectionne un exercice.</p>
+                        </div>
+
+                    </section>
+
+                </div>
+
+                <!-- FILTRES -->
+                <section id="exercise-filters">
+
+                    <!-- CATÉGORIE -->
+                    <div class="filter-row">
+
+                        <button class="filter-title" data-filter="category">
+                            <span>Catégorie</span>
+                            <span class="filter-arrow">▼</span>
+                        </button>
+
+                        <div id="category-summary" class="filter-summary"></div>
+
+                    </div>
+
+                    <div id="category-filter-options" class="filter-options">
+
+                        <div id="category-filters" class="filter-buttons">
+
+                            <button
+                                class="filter-button active"
+                                data-category="cali"
+                            >
+                                Cali
+                            </button>
+
+                            <button
+                                class="filter-button active"
+                                data-category="gym"
+                            >
+                                Gym
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    <!-- TYPE -->
+                    <div class="filter-row">
+
+                        <button class="filter-title" data-filter="type">
+                            <span>Type</span>
+                            <span class="filter-arrow">▼</span>
+                        </button>
+
+                        <div id="type-summary" class="filter-summary"></div>
+
+                    </div>
+
+                    <div id="type-filter-options" class="filter-options">
+
+                        <div id="type-filters" class="filter-buttons">
+
+                            <button
+                                class="filter-button active"
+                                data-type="all"
+                            >
+                                Tous
+                            </button>
+
+                            <button
+                                class="filter-button"
+                                data-type="Push"
+                            >
+                                Push
+                            </button>
+
+                            <button
+                                class="filter-button"
+                                data-type="Pull"
+                            >
+                                Pull
+                            </button>
+
+                            <button
+                                class="filter-button"
+                                data-type="Isométrique"
+                            >
+                                Isométrique
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                    <!-- MUSCLES -->
+                    <div class="filter-row">
+
+                        <button class="filter-title" data-filter="muscle">
+                            <span>Muscles</span>
+                            <span class="filter-arrow">▼</span>
+                        </button>
+
+                        <div id="muscle-summary" class="filter-summary"></div>
+
+                    </div>
+
+                    <div id="muscle-filter-options" class="filter-options">
+
+                        <div id="muscle-filters" class="filter-buttons"></div>
+
+                        <div id="submuscle-filters"></div>
+
+                    </div>
+
+                    <!-- PROGRESSION -->
+                    <div class="filter-row">
+
+                        <button class="filter-title" data-filter="progression">
+                            <span>Progression</span>
+                            <span class="filter-arrow">▼</span>
+                        </button>
+
+                        <div class="filter-summary progression-summary">
+
+                            <div class="progression-summary-row">
+
+                                <span>Include</span>
+
+                                <div
+                                    id="progression-include-summary"
+                                    class="selected-items"
+                                ></div>
+
+                                <button
+                                    id="progression-include-add"
+                                    class="add-filter-button"
+                                >
+                                    +
+                                </button>
+
+                            </div>
+
+                            <div class="progression-summary-row">
+
+                                <span>Exclude</span>
+
+                                <div
+                                    id="progression-exclude-summary"
+                                    class="selected-items"
+                                ></div>
+
+                                <button
+                                    id="progression-exclude-add"
+                                    class="add-filter-button"
+                                >
+                                    +
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div id="progression-filter-options" class="filter-options">
+
+                        <div class="progression-filter-panel">
+
+                            <div class="progression-filter-column">
+
+                                <strong>Include</strong>
+
+                                <div
+                                    id="progression-include-options"
+                                    class="progression-options"
+                                ></div>
+
+                            </div>
+
+                            <div class="progression-filter-column">
+
+                                <strong>Exclude</strong>
+
+                                <div
+                                    id="progression-exclude-options"
+                                    class="progression-options"
+                                ></div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- ÉQUIPEMENTS -->
+                    <div class="filter-row">
+
+                        <button class="filter-title" data-filter="equipment">
+                            <span>Équipements</span>
+                            <span class="filter-arrow">▼</span>
+                        </button>
+
+                        <div id="equipment-summary" class="filter-summary"></div>
+
+                    </div>
+
+                    <div id="equipment-filter-options" class="filter-options">
+
+                        <div id="equipment-filters" class="filter-buttons">
+
+                            <button
+                                class="filter-button active"
+                                data-equipment="all"
+                            >
+                                Tous
+                            </button>
+
+                            <button
+                                class="filter-button"
+                                data-equipment="none"
+                            >
+                                Aucun
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+            </section>
 
         </div>
 
     </div>
 
+    <!-- PAGE PLANS -->
+    <section id="page-plans">
 
-    <!-- ==============================
-         TYPE
-    =============================== -->
+        <!-- ACCUEIL DES PLANS -->
+        <div id="plan-home">
 
-    <div class="filter-row">
+            <h2>Mes plans</h2>
 
-        <button
-            class="filter-title"
-            data-filter="type"
-        >
-            <span>Type</span>
-            <span class="filter-arrow">▼</span>
-        </button>
-
-        <div
-            id="type-summary"
-            class="filter-summary"
-        ></div>
-
-    </div>
-
-    <div
-        id="type-filter-options"
-        class="filter-options"
-    >
-
-        <div
-            id="type-filters"
-            class="filter-buttons"
-        >
-
-            <button
-                class="filter-button active"
-                data-type="all"
-            >
-                Tous
+            <button id="new-plan-button">
+                + Nouveau plan
             </button>
 
-            <button
-                class="filter-button"
-                data-type="Push"
+            <div id="plans-list"></div>
+
+        </div>
+
+        <!-- CRÉATION DU PLAN -->
+        <div id="plan-creator" style="display: none;">
+
+            <h2>Nouveau plan</h2>
+
+            <label for="plan-name">
+                Nom du plan
+            </label>
+
+            <input
+                type="text"
+                id="plan-name"
+                placeholder="Ex : Jour 1 - Leg Day"
             >
-                Push
+
+            <button id="create-plan-button">
+                Créer le plan
             </button>
 
-            <button
-                class="filter-button"
-                data-type="Pull"
-            >
-                Pull
-            </button>
-
-            <button
-                class="filter-button"
-                data-type="Isométrique"
-            >
-                Isométrique
+            <button id="cancel-plan-button">
+                Annuler
             </button>
 
         </div>
 
-    </div>
+        <!-- ÉDITION DU PLAN -->
+        <div id="plan-editor" style="display: none;">
 
+            <h2 id="current-plan-name"></h2>
 
-    <!-- ==============================
-         MUSCLES
-    =============================== -->
+            <button id="back-to-plans-button">
+                ← Retour aux plans
+            </button>
 
-    <div class="filter-row">
+            <div class="plan-settings">
 
-        <button
-            class="filter-title"
-            data-filter="muscle"
-        >
-            <span>Muscles</span>
-            <span class="filter-arrow">▼</span>
-        </button>
+                <div class="plan-setting-group">
 
-        <div
-            id="muscle-summary"
-            class="filter-summary"
-        ></div>
+                    <h3>Cali / Gym</h3>
 
-    </div>
+                    <button
+                        id="plan-cali-button"
+                        class="plan-option-button active"
+                    >
+                        Cali
+                    </button>
 
-    <div
-        id="muscle-filter-options"
-        class="filter-options"
-    >
+                    <button
+                        id="plan-gym-button"
+                        class="plan-option-button active"
+                    >
+                        Gym
+                    </button>
 
-        <div
-            id="muscle-filters"
-            class="filter-buttons"
-        ></div>
+                </div>
 
-        <div
-            id="submuscle-filters"
-        ></div>
+                <div class="plan-setting-group">
 
-    </div>
+                    <h3>Équipement</h3>
 
+                    <button
+                        id="equipment-general-button"
+                        class="plan-option-button active"
+                    >
+                        Général
+                    </button>
 
-    <!-- ==============================
-         PROGRESSION
-    =============================== -->
+                    <button
+                        id="equipment-custom-button"
+                        class="plan-option-button"
+                    >
+                        Personnalisé
+                    </button>
 
-    <div class="filter-row">
-
-        <button
-            class="filter-title"
-            data-filter="progression"
-        >
-            <span>Progression</span>
-            <span class="filter-arrow">▼</span>
-        </button>
-
-        <div
-            class="filter-summary progression-summary"
-        >
-
-            <div class="progression-summary-row">
-
-                <span>Include</span>
-
-                <div
-                    id="progression-include-summary"
-                    class="selected-items"
-                ></div>
-
-                <button
-                    id="progression-include-add"
-                    class="add-filter-button"
-                >
-                    +
-                </button>
+                </div>
 
             </div>
 
+            <div class="plan-exercises">
 
-            <div class="progression-summary-row">
+                <h3>Exercices</h3>
 
-                <span>Exclude</span>
+                <div id="plan-exercise-list"></div>
 
-                <div
-                    id="progression-exclude-summary"
-                    class="selected-items"
-                ></div>
-
-                <button
-                    id="progression-exclude-add"
-                    class="add-filter-button"
-                >
-                    +
+                <button id="add-exercise-button">
+                    + Ajouter un exercice
                 </button>
+
+                <div id="plan-exercise-browser-container"></div>
 
             </div>
 
         </div>
 
-    </div>
+    </section>
 
-<div
-    id="progression-filter-options"
-    class="filter-options"
->
+</main>
 
-    <div class="progression-filter-panel">
-
-        <div class="progression-filter-column">
-
-            <strong>Include</strong>
-
-            <div
-                id="progression-include-options"
-                class="progression-options"
-            ></div>
-
-        </div>
-
-
-        <div class="progression-filter-column">
-
-            <strong>Exclude</strong>
-
-            <div
-                id="progression-exclude-options"
-                class="progression-options"
-            ></div>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-    <!-- ==============================
-         ÉQUIPEMENTS
-    =============================== -->
-
-    <div class="filter-row">
-
-        <button
-            class="filter-title"
-            data-filter="equipment"
-        >
-            <span>Équipements</span>
-            <span class="filter-arrow">▼</span>
-        </button>
-
-        <div
-            id="equipment-summary"
-            class="filter-summary"
-        ></div>
-
-    </div>
-
-    <div
-        id="equipment-filter-options"
-        class="filter-options"
-    >
-
-        <div
-            id="equipment-filters"
-            class="filter-buttons"
-        >
-
-            <button
-                class="filter-button active"
-                data-equipment="all"
-            >
-                Tous
-            </button>
-
-            <button
-                class="filter-button"
-                data-equipment="none"
-            >
-                Aucun
-            </button>
-
-        </div>
-
-    </div>
-
-</section>
-
-</div>
-
-</div>
-
-        <section id="page-plans">
-
-    <div id="plan-home">
-
-        <h2>Mes plans</h2>
-
-        <button id="new-plan-button">
-            + Nouveau plan
-        </button>
-
-        <div id="plans-list"></div>
-
-    </div>
-
-
-    <div id="plan-creator" style="display: none;">
-
-        <h2>Nouveau plan</h2>
-
-        <label for="plan-name">
-            Nom du plan
-        </label>
-
-        <input
-            type="text"
-            id="plan-name"
-            placeholder="Ex : Jour 1 - Leg Day"
-        >
-
-        <button id="create-plan-button">
-            Créer le plan
-        </button>
-
-        <button id="cancel-plan-button">
-            Annuler
-        </button>
-
-    </div>
-
-    <div id="plan-editor" style="display: none;">
-
-    <h2 id="current-plan-name"></h2>
-
-    <button id="back-to-plans-button">
-    ← Retour aux plans
-</button>
-
-    <div class="plan-settings">
-
-        <div class="plan-setting-group">
-
-            <h3>Cali / Gym</h3>
-
-            <button
-                id="plan-cali-button"
-                class="plan-option-button active"
-            >
-                Cali
-            </button>
-
-            <button
-                id="plan-gym-button"
-                class="plan-option-button active"
-            >
-                Gym
-            </button>
-
-        </div>
-
-
-        <div class="plan-setting-group">
-
-            <h3>Équipement</h3>
-
-            <button
-                id="equipment-general-button"
-                class="plan-option-button active"
-            >
-                Général
-            </button>
-
-            <button
-                id="equipment-custom-button"
-                class="plan-option-button"
-            >
-                Personnalisé
-            </button>
-
-        </div>
-
-    </div>
-
-
-    <div class="plan-exercises">
-
-        <h3>Exercices</h3>
-
-        <div id="plan-exercise-list"></div>
-
-        <button id="add-exercise-button">
-        + Ajouter un exercice
-        </button>
-
-        <div id="plan-exercise-browser-container"></div>
-
-    </div>
-
-</div>
-
-
-</section>
-
-    </main>
-
-
-    <script src="data/exercises.js"></script>
-    <script src="data/muscles.js"></script>
-    <script src="data/equipement.js"></script>
-    
-    <script src="js/app.js"></script>
+<script src="data/exercises.js"></script>
+<script src="data/muscles.js"></script>
+<script src="data/equipement.js"></script>
+<script src="js/app.js"></script>
 
 </body>
-
 </html>
