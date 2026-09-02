@@ -423,14 +423,33 @@ main {
 
 /* Nom + navigation */
 
-.exercise-detail-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
 .exercise-detail-header h3 {
     margin: 0;
+}
+
+.exercise-detail-header {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 10px;
+}
+
+.progression-navigation {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+#details-exercise-name {
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+#add-exercise-to-plan-button {
+    justify-self: end;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 

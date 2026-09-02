@@ -31,6 +31,216 @@ const selectedCategories = new Set(["cali", "gym"]);
 const selectedPlanEquipment = new Set(equipmentOptions);
 const selectedPlanCategories = new Set(["cali", "gym"]);
 
+const searchPageState = {
+    search: "",
+    types: new Set(),
+    progressionsInclude: new Set(),
+    progressionsExclude: new Set(),
+    muscleFamilies: new Set(),
+    submuscles: new Map(),
+    equipment: new Set(equipmentOptions),
+    categories: new Set(["cali", "gym"])
+};
+
+const planSearchState = {
+    search: "",
+    types: new Set(),
+    progressionsInclude: new Set(),
+    progressionsExclude: new Set(),
+    muscleFamilies: new Set(),
+    submuscles: new Map(),
+    equipment: new Set(equipmentOptions),
+    categories: new Set(["cali", "gym"])
+};
+//------------
+// search filter state management
+//------------
+
+function cloneSubmuscles(source) {
+    const result = new Map();
+
+    source.forEach((submuscles, family) => {
+        result.set(family, new Set(submuscles));
+    });
+
+    return result;
+}
+
+function saveSearchState(state) {
+    state.search = searchInput.value;
+
+    state.types = new Set(selectedTypes);
+    state.progressionsInclude = new Set(selectedProgressionsInclude);
+    state.progressionsExclude = new Set(selectedProgressionsExclude);
+    state.muscleFamilies = new Set(selectedMuscleFamilies);
+    state.submuscles = cloneSubmuscles(selectedSubmuscles);
+    state.equipment = new Set(selectedEquipment);
+    state.categories = new Set(selectedCategories);
+}
+
+function loadSearchState(state) {
+    searchInput.value = state.search;
+
+    selectedTypes.clear();
+    state.types.forEach(type => {
+        selectedTypes.add(type);
+    });
+
+    selectedProgressionsInclude.clear();
+    state.progressionsInclude.forEach(progression => {
+        selectedProgressionsInclude.add(progression);
+    });
+
+    selectedProgressionsExclude.clear();
+    state.progressionsExclude.forEach(progression => {
+        selectedProgressionsExclude.add(progression);
+    });
+
+    selectedMuscleFamilies.clear();
+    state.muscleFamilies.forEach(family => {
+        selectedMuscleFamilies.add(family);
+    });
+
+    selectedSubmuscles.clear();
+    state.submuscles.forEach((submuscles, family) => {
+        selectedSubmuscles.set(
+            family,
+            new Set(submuscles)
+        );
+    });
+
+    selectedEquipment.clear();
+    state.equipment.forEach(equipment => {
+        selectedEquipment.add(equipment);
+    });
+
+    selectedCategories.clear();
+    state.categories.forEach(category => {
+        selectedCategories.add(category);
+    });
+
+    rebuildSearchFilterInterface();
+}
+
+function rebuildSearchFilterInterface() {
+    // Catégories
+    document
+        .querySelectorAll("#category-filters .filter-button")
+        .forEach(button => {
+            if (button.dataset.category) {
+                button.classList.toggle(
+                    "active",
+                    selectedCategories.has(
+                        button.dataset.category
+                    )
+                );
+            }
+        });
+
+    // Types
+    document
+        .querySelectorAll("#type-filters .filter-button")
+        .forEach(button => {
+            const type = button.dataset.type;
+
+            if (type === "all") {
+                button.classList.toggle(
+                    "active",
+                    selectedTypes.size === 0
+                );
+            } else {
+                button.classList.toggle(
+                    "active",
+                    selectedTypes.has(type)
+                );
+            }
+        });
+
+    // Équipements
+    document
+        .querySelectorAll("#equipment-filters .filter-button")
+        .forEach(button => {
+            const equipment = button.dataset.equipment;
+
+            if (
+                equipment === "all" ||
+                equipment === "none"
+            ) {
+                return;
+            }
+
+            button.classList.toggle(
+                "active",
+                selectedEquipment.has(equipment)
+            );
+        });
+
+    updateEquipmentAllButton();
+
+    // Muscles
+    document
+        .querySelectorAll("#muscle-filters .filter-button")
+        .forEach(button => {
+            const family = button.dataset.muscle;
+
+            if (family === "all") {
+                button.classList.toggle(
+                    "active",
+                    selectedMuscleFamilies.size === 0
+                );
+            } else {
+                button.classList.toggle(
+                    "active",
+                    selectedMuscleFamilies.has(family)
+                );
+            }
+        });
+
+    // Sous-muscles
+    submuscleFilters.innerHTML = "";
+
+    selectedMuscleFamilies.forEach(family => {
+        createSubmuscleButtons(family);
+
+        const selectedSubs =
+            selectedSubmuscles.get(family);
+
+        if (!selectedSubs) {
+            return;
+        }
+
+        const container =
+            submuscleFilters.querySelector(
+                `[data-family="${family}"]`
+            );
+
+        if (!container) {
+            return;
+        }
+
+        container
+            .querySelectorAll(
+                'input[type="checkbox"]'
+            )
+            .forEach(checkbox => {
+                const label =
+                    checkbox.parentElement;
+
+                const submuscle =
+                    label.textContent;
+
+                checkbox.checked =
+                    selectedSubs.has(submuscle);
+            });
+    });
+
+    // Progressions
+    updateProgressionButtons();
+
+    // Bulles
+    updateFilterSummaries();
+}
+
 // Muscles
 function createMuscleButtons() {
     const allButton = document.createElement("button");
@@ -113,7 +323,12 @@ function createSubmuscleButtons(family) {
         return;
     }
 
-    selectedSubmuscles.set(family, new Set(submuscles));
+    if (!selectedSubmuscles.has(family)) {
+    selectedSubmuscles.set(
+        family,
+        new Set(submuscles)
+    );
+    }
 
     const container = document.createElement("div");
     container.classList.add("submuscle-container");
@@ -913,6 +1128,11 @@ function displayExercises() {
     const searchTerms = getSearchTerms(searchInput.value);
     const isPlanContext = planEditor.style.display === "block";
 
+        if (!isPlanContext) {
+        removeAddButton();
+        currentDetailContext = "search";
+    }
+
     updateFilterSummaries();
 
     if (isPlanContext) {
@@ -1008,12 +1228,14 @@ let filteredExercises = exercises.filter(exercise => {
             element.appendChild(progressionElement);
         }
 
-        element.addEventListener("click", () => {
-            displayExerciseDetails(
-                exercise,
-                isPlanContext ? "plan" : "search"
-            );
-        });
+element.addEventListener("click", () => {
+    displayExerciseDetails(
+        exercise,
+        pagePlans.style.display === "block" && planEditor.style.display === "block"
+            ? "plan"
+            : "search"
+    );
+});
 
         exerciseList.appendChild(element);
     });
@@ -1101,46 +1323,29 @@ function getProgressionNeighbor(
 }
 
 
-function updateProgressionNavigation(
-    currentExercise,
-    context = "search"
-) {
-    const upButton =
-        document.getElementById(
-            "progression-up-button"
-        );
+function updateProgressionNavigation(currentExercise, context = "search") {
+    const upButton = document.getElementById("progression-up-button");
+    const downButton = document.getElementById("progression-down-button");
 
-    const downButton =
-        document.getElementById(
-            "progression-down-button"
-        );
+    if (!upButton || !downButton) return;
 
-    if (!upButton || !downButton) {
-        return;
-    }
+    const nextExercise = getProgressionNeighbor(
+        currentExercise,
+        1,
+        "search"
+    );
 
-    const nextExercise =
-        getProgressionNeighbor(
-            currentExercise,
-            1,
-            context
-        );
-
-    const previousExercise =
-        getProgressionNeighbor(
-            currentExercise,
-            -1,
-            context
-        );
+    const previousExercise = getProgressionNeighbor(
+        currentExercise,
+        -1,
+        "search"
+    );
 
     upButton.disabled = !nextExercise;
     downButton.disabled = !previousExercise;
 
     upButton.onclick = () => {
-
-        if (!nextExercise) {
-            return;
-        }
+        if (!nextExercise) return;
 
         displayExerciseDetails(
             nextExercise,
@@ -1149,10 +1354,7 @@ function updateProgressionNavigation(
     };
 
     downButton.onclick = () => {
-
-        if (!previousExercise) {
-            return;
-        }
+        if (!previousExercise) return;
 
         displayExerciseDetails(
             previousExercise,
@@ -1163,131 +1365,96 @@ function updateProgressionNavigation(
 
 // Détails
 
-function displayExerciseDetails(
-    exercise,
-    context = "search"
-) {
-    const nameElement =
-        document.getElementById(
-            "details-exercise-name"
-        );
+function removeAddButton() {
+    const addButton = document.getElementById("add-exercise-to-plan-button");
 
+    if (addButton) {
+        addButton.remove();
+    }
+}
+
+function displayExerciseDetails(exercise, context = "search") {
+    const nameElement = document.getElementById("details-exercise-name");
+    const infoElement = document.getElementById("details-exercise-info");
     const header = document.querySelector(".exercise-detail-header");
-let addButton = document.getElementById("add-exercise-to-plan-button");
 
-if (addButton) {
-    addButton.remove();
-}
+    if (!nameElement || !infoElement || !header) return;
 
-if (context === "plan") {
-    addButton = document.createElement("button");
-    addButton.id = "add-exercise-to-plan-button";
-    addButton.textContent = "Ajouter";
-    addButton.addEventListener("click", () => {
-        addExerciseToCurrentPlan(exercise);
-    });
-    header.appendChild(addButton);
-}
+    const isReallyInPlan =
+        pagePlans.style.display === "block" &&
+        planEditor.style.display === "block";
 
-    const infoElement =
-        document.getElementById(
-            "details-exercise-info"
-        );
-
-    if (!nameElement || !infoElement) {
-        return;
+    if (!isReallyInPlan) {
+        context = "search";
     }
 
     currentDetailExercise = exercise;
     currentDetailContext = context;
 
+    removeAddButton();
+
+    if (context === "plan") {
+        const addButton = document.createElement("button");
+
+        addButton.id = "add-exercise-to-plan-button";
+        addButton.textContent = "Ajouter";
+
+        addButton.addEventListener("click", () => {
+            if (
+                currentDetailContext !== "plan" ||
+                pagePlans.style.display !== "block" ||
+                planEditor.style.display !== "block"
+            ) {
+                return;
+            }
+
+            addExerciseToCurrentPlan(exercise);
+        });
+
+        header.appendChild(addButton);
+    }
+
     nameElement.textContent = exercise.nom;
 
-    const musclesPrincipaux =
-        exercise.muscles_principaux
-            .map(muscle => `
-                <li>
-                    ${muscle
-                        .filter(part => part !== "")
-                        .join(" — ")}
-                </li>
-            `)
-            .join("");
-
-    const musclesSecondaires =
-        exercise.muscles_secondaires
-            .map(muscle => `
-                <li>
-                    ${muscle
-                        .filter(part => part !== "")
-                        .join(" — ")}
-                </li>
-            `)
-            .join("");
-
-    const equipements =
-        exercise.equipement
-            .map(group => `
-                <li>
-                    ${group.join(" OU ")}
-                </li>
-            `)
-            .join("");
-
     infoElement.innerHTML = `
-        <p>
-            <strong>Type :</strong>
-            ${exercise.type}
-        </p>
+        <p><strong>Type :</strong> ${exercise.type}</p>
+        <p><strong>Catégorie :</strong> ${
+            exercise.cali && exercise.gym
+                ? "Calisthénie, Gym"
+                : exercise.cali
+                    ? "Calisthénie"
+                    : "Gym"
+        }</p>
+        <p><strong>Pronation :</strong> ${exercise.pronation || "—"}</p>
 
         <p>
-            <strong>Cali :</strong>
-            ${exercise.cali ? "Oui" : "Non"}
-        </p>
-
-        <p>
-            <strong>Gym :</strong>
-            ${exercise.gym ? "Oui" : "Non"}
-        </p>
-
-        <p>
-            <strong>Pronation :</strong>
-            ${
-                Array.isArray(exercise.pronation)
-                    ? exercise.pronation.join(", ")
-                    : exercise.pronation || ""
-            }
+            <strong>Équipement :</strong><br>
+            ${exercise.equipement
+                .map(group => group.join(" OU "))
+                .join(" ET ")}
         </p>
 
         <p>
             <strong>Progression :</strong>
-            ${exercise.prog_group}
-            ${exercise.prog_ordre}
+            ${getProgressionDisplay(exercise) || "—"}
         </p>
 
-        <h4>Équipement</h4>
+        <p>
+            <strong>Muscles principaux :</strong><br>
+            ${exercise.muscles_principaux
+                .map(muscle => `${muscle[0]} — ${muscle[1]}`)
+                .join("<br>")}
+        </p>
 
-        <ul>
-            ${equipements}
-        </ul>
-
-        <h4>Muscles principaux</h4>
-
-        <ul>
-            ${musclesPrincipaux}
-        </ul>
-
-        <h4>Muscles secondaires</h4>
-
-        <ul>
-            ${musclesSecondaires}
-        </ul>
+        <p>
+            <strong>Muscles secondaires :</strong><br>
+            ${exercise.muscles_secondaires
+                .map(muscle => `${muscle[0]} — ${muscle[1]}`)
+                .join("<br>")}
+        </p>
     `;
 
-    updateProgressionNavigation(
-        exercise,
-        "search"
-    );
+    updateProgressionNavigation(exercise, context);
 }
 
 function exerciseMatchesCategoryFilter(exercise) {
@@ -1499,14 +1666,32 @@ searchInput.addEventListener("input", displayExercises);
 
 // Onglets principaux
 tabExercises.addEventListener("click", () => {
+    saveSearchState(planSearchState);
+
     pageExercises.style.display = "block";
     pagePlans.style.display = "none";
 
+    pageExercises
+        .querySelector("#exercise-browser-container")
+        .appendChild(exerciseBrowser);
+
+    exerciseBrowser.style.display = "block";
+
+    loadSearchState(searchPageState);
+
     tabExercises.classList.add("active");
     tabPlans.classList.remove("active");
+
+    currentDetailContext = "search";
+
+    removeAddButton();
+
+    displayExercises();
 });
 
 tabPlans.addEventListener("click", () => {
+    saveSearchState(searchPageState);
+
     pageExercises.style.display = "none";
     pagePlans.style.display = "block";
 
@@ -1514,8 +1699,15 @@ tabPlans.addEventListener("click", () => {
     planCreator.style.display = "none";
     planEditor.style.display = "none";
 
+    planExerciseBrowserContainer.appendChild(exerciseBrowser);
+    exerciseBrowser.style.display = "block";
+
+    loadSearchState(planSearchState);
+
     tabExercises.classList.remove("active");
     tabPlans.classList.add("active");
+
+    displayExercises();
 });
 
 // Plans
@@ -1787,11 +1979,13 @@ title.addEventListener("click", () => {
 
 function syncPlanFiltersToSearch() {
     selectedCategories.clear();
+
     selectedPlanCategories.forEach(category => {
         selectedCategories.add(category);
     });
 
     selectedEquipment.clear();
+
     selectedPlanEquipment.forEach(equipment => {
         selectedEquipment.add(equipment);
     });
@@ -1799,30 +1993,42 @@ function syncPlanFiltersToSearch() {
     document
         .querySelectorAll("#category-filters .filter-button")
         .forEach(button => {
-            button.classList.toggle(
-                "active",
-                selectedCategories.has(button.dataset.category)
-            );
+            if (button.dataset.category) {
+                button.classList.toggle(
+                    "active",
+                    selectedCategories.has(
+                        button.dataset.category
+                    )
+                );
+            }
         });
 
     document
         .querySelectorAll("#equipment-filters .filter-button")
         .forEach(button => {
+            const equipment =
+                button.dataset.equipment;
+
             if (
-                button.dataset.equipment === "all" ||
-                button.dataset.equipment === "none"
+                equipment === "all" ||
+                equipment === "none"
             ) {
                 return;
             }
 
             button.classList.toggle(
                 "active",
-                selectedEquipment.has(button.dataset.equipment)
+                selectedEquipment.has(equipment)
             );
         });
 
     updateEquipmentAllButton();
     updateFilterSummaries();
+
+    // Le nouvel état de recherche du plan est sauvegardé
+    // avec les filtres du plan comme point de départ.
+    saveSearchState(planSearchState);
+
     displayExercises();
 }
 
@@ -1986,12 +2192,20 @@ createPlanButton.addEventListener("click", () => {
 
 openPlanButton.addEventListener("click", () => {
     currentPlan = plan;
+
     planHome.style.display = "none";
     planEditor.style.display = "block";
+
     currentPlanName.textContent = plan.name;
+
     renderPlanExercises();
+
     planExerciseBrowserContainer.appendChild(exerciseBrowser);
     exerciseBrowser.style.display = "block";
+
+    loadSearchState(planSearchState);
+
+    displayExercises();
 });
 
     planCreator.style.display = "none";
@@ -2001,12 +2215,6 @@ openPlanButton.addEventListener("click", () => {
 backToPlansButton.addEventListener("click", () => {
     planEditor.style.display = "none";
     planHome.style.display = "block";
-
-    const exerciseBrowserContainer =
-        document.getElementById("exercise-browser-container");
-
-    exerciseBrowserContainer.appendChild(exerciseBrowser);
-    exerciseBrowser.style.display = "block";
 
     currentDetailExercise = null;
     currentDetailContext = "search";
