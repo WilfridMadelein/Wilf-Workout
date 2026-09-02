@@ -54,17 +54,50 @@
                     </section>
 
                     <!-- DÉTAILS -->
-                    <section id="exercise-details">
 
-                        <h2>Détails</h2>
+<div class="exercise-details-panel">
 
-                        <div id="details-content">
-                            <p>Sélectionne un exercice.</p>
-                        </div>
+    <h2>Détails</h2>
 
-                    </section>
+    <section id="exercise-details">
+
+        <div id="details-content">
+
+            <div class="exercise-detail-header">
+
+                <div class="progression-navigation">
+
+                    <button
+                        id="progression-up-button"
+                        class="progression-nav-button"
+                        aria-label="Progression suivante"
+                    >
+                        ▲
+                    </button>
+
+                    <button
+                        id="progression-down-button"
+                        class="progression-nav-button"
+                        aria-label="Progression précédente"
+                    >
+                        ▼
+                    </button>
 
                 </div>
+
+                <h3 id="details-exercise-name">
+                    Sélectionne un exercice.
+                </h3>
+
+            </div>
+
+            <div id="details-exercise-info"></div>
+
+        </div>
+
+    </section>
+
+</div>
 
                 <!-- FILTRES -->
                 <section id="exercise-filters">

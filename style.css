@@ -263,8 +263,20 @@ main {
    DÉTAILS
 ============================== */
 
+.exercise-details-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.exercise-details-panel > h2 {
+    margin-top: 0;
+    flex-shrink: 0;
+}
+
 #exercise-details {
-    height: 530px;
+    height: 470px;
+    min-height: 0;
     overflow-y: auto;
     border: 1px solid #ccc;
     border-radius: 8px;
@@ -272,10 +284,44 @@ main {
     box-sizing: border-box;
 }
 
-#exercise-details h2 {
-    margin-top: 0;
+
+/* Nom + navigation */
+
+.exercise-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
+.exercise-detail-header h3 {
+    margin: 0;
+}
+
+
+/* Navigation entre les progressions */
+
+.progression-navigation {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.progression-nav-button {
+    width: 24px;
+    height: 18px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+}
+
+.progression-nav-button:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
 
 /* ==============================
    FILTRES

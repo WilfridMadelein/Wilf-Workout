@@ -16,6 +16,9 @@ const tabExercises = document.getElementById("tab-exercises");
 const tabPlans = document.getElementById("tab-plans");
 const pagePlans = document.getElementById("page-plans");
 
+let currentDetailExercise = null;
+let currentDetailContext = "search";
+
 // État des filtres
 const selectedTypes = new Set();
 const selectedProgressionsInclude = new Set();
@@ -1025,39 +1028,215 @@ function displayExercises() {
     });
 }
 
+// Navigation dans la progression
+
+function exerciseMatchesProgressionContext(
+    exercise,
+    context = "search"
+) {
+    if (context === "search") {
+        return (
+            exerciseMatchesCategoryFilter(exercise) &&
+            exerciseMatchesEquipmentFilter(exercise)
+        );
+    }
+
+    if (context === "plan") {
+        return true;
+    }
+
+    return true;
+}
+
+
+function getProgressionNeighbor(
+    currentExercise,
+    direction,
+    context = "search"
+) {
+    const progression =
+        getProgressionName(currentExercise);
+
+    const currentOrder =
+        Number(currentExercise.prog_ordre);
+
+    if (
+        !progression ||
+        Number.isNaN(currentOrder)
+    ) {
+        return null;
+    }
+
+    const compatibleExercises = exercises
+        .filter(exercise =>
+            getProgressionName(exercise) === progression
+        )
+        .filter(exercise =>
+            exerciseMatchesProgressionContext(
+                exercise,
+                context
+            )
+        )
+        .filter(exercise => {
+            const order =
+                Number(exercise.prog_ordre);
+
+            return !Number.isNaN(order);
+        });
+
+    if (direction === 1) {
+
+        const nextExercises =
+            compatibleExercises
+                .filter(exercise =>
+                    Number(exercise.prog_ordre) >
+                    currentOrder
+                )
+                .sort((a, b) =>
+                    Number(a.prog_ordre) -
+                    Number(b.prog_ordre)
+                );
+
+        return nextExercises[0] || null;
+    }
+
+    if (direction === -1) {
+
+        const previousExercises =
+            compatibleExercises
+                .filter(exercise =>
+                    Number(exercise.prog_ordre) <
+                    currentOrder
+                )
+                .sort((a, b) =>
+                    Number(b.prog_ordre) -
+                    Number(a.prog_ordre)
+                );
+
+        return previousExercises[0] || null;
+    }
+
+    return null;
+}
+
+
+function updateProgressionNavigation(
+    currentExercise,
+    context = "search"
+) {
+    const upButton =
+        document.getElementById(
+            "progression-up-button"
+        );
+
+    const downButton =
+        document.getElementById(
+            "progression-down-button"
+        );
+
+    if (!upButton || !downButton) {
+        return;
+    }
+
+    const nextExercise =
+        getProgressionNeighbor(
+            currentExercise,
+            1,
+            context
+        );
+
+    const previousExercise =
+        getProgressionNeighbor(
+            currentExercise,
+            -1,
+            context
+        );
+
+    upButton.disabled = !nextExercise;
+    downButton.disabled = !previousExercise;
+
+    upButton.onclick = () => {
+
+        if (!nextExercise) {
+            return;
+        }
+
+        displayExerciseDetails(
+            nextExercise,
+            context
+        );
+    };
+
+    downButton.onclick = () => {
+
+        if (!previousExercise) {
+            return;
+        }
+
+        displayExerciseDetails(
+            previousExercise,
+            context
+        );
+    };
+}
+
 // Détails
-function displayExerciseDetails(exercise) {
-    const musclesPrincipaux = exercise.muscles_principaux
-        .map(muscle => `
-            <li>
-                ${muscle
-                    .filter(part => part !== "")
-                    .join(" — ")}
-            </li>
-        `)
-        .join("");
 
-    const musclesSecondaires = exercise.muscles_secondaires
-        .map(muscle => `
-            <li>
-                ${muscle
-                    .filter(part => part !== "")
-                    .join(" — ")}
-            </li>
-        `)
-        .join("");
+function displayExerciseDetails(
+    exercise,
+    context = "search"
+) {
+    const nameElement =
+        document.getElementById(
+            "details-exercise-name"
+        );
 
-    const equipements = exercise.equipement
-        .map(group => `
-            <li>
-                ${group.join(" OU ")}
-            </li>
-        `)
-        .join("");
+    const infoElement =
+        document.getElementById(
+            "details-exercise-info"
+        );
 
-    detailsContent.innerHTML = `
-        <h3>${exercise.nom}</h3>
+    if (!nameElement || !infoElement) {
+        return;
+    }
 
+    currentDetailExercise = exercise;
+    currentDetailContext = context;
+
+    nameElement.textContent = exercise.nom;
+
+    const musclesPrincipaux =
+        exercise.muscles_principaux
+            .map(muscle => `
+                <li>
+                    ${muscle
+                        .filter(part => part !== "")
+                        .join(" — ")}
+                </li>
+            `)
+            .join("");
+
+    const musclesSecondaires =
+        exercise.muscles_secondaires
+            .map(muscle => `
+                <li>
+                    ${muscle
+                        .filter(part => part !== "")
+                        .join(" — ")}
+                </li>
+            `)
+            .join("");
+
+    const equipements =
+        exercise.equipement
+            .map(group => `
+                <li>
+                    ${group.join(" OU ")}
+                </li>
+            `)
+            .join("");
+
+    infoElement.innerHTML = `
         <p>
             <strong>Type :</strong>
             ${exercise.type}
@@ -1075,7 +1254,11 @@ function displayExerciseDetails(exercise) {
 
         <p>
             <strong>Pronation :</strong>
-            ${exercise.pronation.join(", ")}
+            ${
+                Array.isArray(exercise.pronation)
+                    ? exercise.pronation.join(", ")
+                    : exercise.pronation || ""
+            }
         </p>
 
         <p>
@@ -1085,20 +1268,44 @@ function displayExerciseDetails(exercise) {
         </p>
 
         <h4>Équipement</h4>
+
         <ul>
             ${equipements}
         </ul>
 
         <h4>Muscles principaux</h4>
+
         <ul>
             ${musclesPrincipaux}
         </ul>
 
         <h4>Muscles secondaires</h4>
+
         <ul>
             ${musclesSecondaires}
         </ul>
     `;
+
+    updateProgressionNavigation(
+        exercise,
+        context
+    );
+}
+
+function exerciseMatchesCategoryFilter(exercise) {
+    const matchesCali =
+        selectedCategories.has("cali") &&
+        exercise.cali;
+
+    const matchesGym =
+        selectedCategories.has("gym") &&
+        exercise.gym;
+
+    return matchesCali || matchesGym;
+}
+
+function exerciseMatchesEquipmentFilter(exercise) {
+    return exerciseHasRequiredEquipment(exercise);
 }
 
 // Filtres ouverts
