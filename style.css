@@ -154,6 +154,10 @@ main {
     cursor: pointer;
 }
 
+#exercise-browser {
+    display: block;
+}
+
 #plan-exercise-browser-container {
     margin-top: 20px;
 }
@@ -164,11 +168,17 @@ main {
 ============================== */
 
 .exercise-search-area {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.exercise-main-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
     align-items: start;
-    margin-bottom: 20px;
 }
 
 .exercise-results,
