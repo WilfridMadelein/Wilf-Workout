@@ -102,6 +102,131 @@ main {
     border-radius: 8px;
 }
 
+#add-exercise-to-plan-button {
+    margin-left: 8px;
+    padding: 3px 8px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+#plan-exercise-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.plan-exercise-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+}
+
+.plan-exercise-navigation {
+    display: flex;
+    flex-direction: column;
+}
+
+.plan-exercise-move-button {
+    width: 24px;
+    height: 16px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 10px;
+    line-height: 1;
+}
+
+.plan-exercise-move-button:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.plan-exercise-item > span {
+    flex: 1;
+}
+
+.remove-plan-exercise-button {
+    padding: 2px 6px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.plan-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 30px;
+    margin-bottom: 20px;
+    align-items: start;
+}
+
+.plan-info {
+    min-width: 0;
+}
+
+.plan-default-settings {
+    min-width: 0;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.plan-info h2 {
+    margin-top: 0;
+}
+
+.plan-default-settings h3 {
+    margin-top: 0;
+}
+
+.plan-setting-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-top: 15px;
+}
+
+.plan-parameter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.plan-parameter label {
+    width: 100px;
+}
+
+.plan-parameter input {
+    width: 80px;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+.tempo-inputs {
+    display: flex;
+    gap: 4px;
+}
+
+.tempo-inputs input {
+    width: 35px;
+    padding: 5px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+@media (max-width: 800px) {
+    .plan-header {
+        grid-template-columns: 1fr;
+    }
+}
+
 
 /* ==============================
    ÉDITEUR DE PLAN
@@ -560,4 +685,49 @@ main {
     .exercise-search-area {
         grid-template-columns: 1fr;
     }
+}
+
+/* ==============================
+   FILTRES DU PLAN
+============================== */
+
+.plan-filter-row {
+    border-bottom: 1px solid #ddd;
+}
+
+.plan-filter-title {
+    height: 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    box-sizing: border-box;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.plan-filter-title:hover {
+    background: #f5f5f5;
+}
+
+.plan-filter-arrow {
+    font-size: 12px;
+}
+
+.plan-filter-summary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.plan-filter-options {
+    display: none;
+    padding: 12px 10px 15px 10px;
+}
+
+.plan-filter-options.open {
+    display: block;
 }

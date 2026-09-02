@@ -375,65 +375,103 @@
         <!-- ÉDITION DU PLAN -->
         <div id="plan-editor" style="display: none;">
 
-            <h2 id="current-plan-name"></h2>
+<div class="plan-header">
 
-            <button id="back-to-plans-button">
-                ← Retour aux plans
-            </button>
+<div class="plan-info">
+    <h2 id="current-plan-name"></h2>
 
-            <div class="plan-settings">
+    <div id="plan-category-filters"></div>
 
-                <div class="plan-setting-group">
+    <div id="plan-equipment-filters"></div>
+</div>
 
-                    <h3>Cali / Gym</h3>
+    <div class="plan-default-settings">
 
-                    <button
-                        id="plan-cali-button"
-                        class="plan-option-button active"
-                    >
-                        Cali
-                    </button>
+        <h3>Paramètres du plan</h3>
 
-                    <button
-                        id="plan-gym-button"
-                        class="plan-option-button active"
-                    >
-                        Gym
-                    </button>
+        <div class="plan-parameter">
+            <label for="plan-sets">
+                Séries
+            </label>
 
-                </div>
+            <input
+                type="number"
+                id="plan-sets"
+                min="1"
+                value="3"
+            >
+        </div>
 
-                <div class="plan-setting-group">
+        <div class="plan-parameter">
+            <label for="plan-reps">
+                Répétitions
+            </label>
 
-                    <h3>Équipement</h3>
+            <input
+                type="number"
+                id="plan-reps"
+                min="1"
+                value="10"
+            >
+        </div>
 
-                    <button
-                        id="equipment-general-button"
-                        class="plan-option-button active"
-                    >
-                        Général
-                    </button>
+        <div class="plan-parameter">
+            <label for="plan-time">
+                Temps
+            </label>
 
-                    <button
-                        id="equipment-custom-button"
-                        class="plan-option-button"
-                    >
-                        Personnalisé
-                    </button>
+            <input
+                type="number"
+                id="plan-time"
+                min="1"
+                value="30"
+            >
 
-                </div>
+            <span>sec</span>
+        </div>
 
-            </div>
+        <div class="plan-parameter">
+            <label for="plan-rest">
+                Repos
+            </label>
+
+            <input
+                type="number"
+                id="plan-rest"
+                min="0"
+                value="90"
+            >
+
+            <span>sec</span>
+        </div>
+
+        <div class="plan-parameter">
+
+<div class="plan-parameter">
+    <label>Tempo</label>
+
+    <div class="tempo-inputs">
+        <input type="number" id="plan-tempo-1" min="0">
+        <input type="number" id="plan-tempo-2" min="0">
+        <input type="number" id="plan-tempo-3" min="0">
+        <input type="number" id="plan-tempo-4" min="0">
+    </div>
+</div>
+        </div>
+
+    </div>
+
+</div>
+
+<button id="back-to-plans-button">
+    ← Retour aux plans
+</button>
 
             <div class="plan-exercises">
 
                 <h3>Exercices</h3>
 
                 <div id="plan-exercise-list"></div>
-
-                <button id="add-exercise-button">
-                    + Ajouter un exercice
-                </button>
 
                 <div id="plan-exercise-browser-container"></div>
 

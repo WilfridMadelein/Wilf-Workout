@@ -4,6 +4,7 @@ const searchInput = document.getElementById("search-input");
 const exerciseBrowser = document.getElementById("exercise-browser");
 const pageExercises = document.getElementById("page-exercises");
 const planExerciseBrowserContainer = document.getElementById("plan-exercise-browser-container");
+const planExerciseList = document.getElementById("plan-exercise-list");
 
 const typeFilters = document.getElementById("type-filters");
 const muscleFilters = document.getElementById("muscle-filters");
@@ -27,6 +28,8 @@ const selectedMuscleFamilies = new Set();
 const selectedSubmuscles = new Map();
 const selectedEquipment = new Set(equipmentOptions);
 const selectedCategories = new Set(["cali", "gym"]);
+const selectedPlanEquipment = new Set(equipmentOptions);
+const selectedPlanCategories = new Set(["cali", "gym"]);
 
 // Muscles
 function createMuscleButtons() {
@@ -907,133 +910,108 @@ function highlightSearchMatches(text, searchTerms) {
 
 // Affichage des exercices
 function displayExercises() {
-    updateFilterSummaries();
-
     const searchTerms = getSearchTerms(searchInput.value);
+    const isPlanContext = planEditor.style.display === "block";
 
-    const filteredExercises = exercises
-        .map(exercise => ({
-            exercise,
-            searchRanking: getExerciseSearchRanking(
-                exercise,
+    if (isPlanContext) {
+        updatePlanFilterSummaries();
+    } else {
+        updateFilterSummaries();
+    }
+
+    let filteredExercises = exercises.filter(exercise => {
+        // Dans un plan : les filtres du plan sont obligatoires
+        if (
+            isPlanContext &&
+            !exerciseMatchesPlanFilters(exercise)
+        ) {
+            return false;
+        }
+
+        // Les filtres de recherche restent actifs
+        if (!exerciseMatchesCategoryFilter(exercise)) {
+            return false;
+        }
+
+        if (!exerciseMatchesEquipmentFilter(exercise)) {
+            return false;
+        }
+
+        if (
+            selectedTypes.size > 0 &&
+            !selectedTypes.has(exercise.type)
+        ) {
+            return false;
+        }
+
+        if (!exerciseMatchesMuscle(exercise)) {
+            return false;
+        }
+
+        if (!exerciseMatchesProgression(exercise)) {
+            return false;
+        }
+
+        // Recherche textuelle
+        if (
+            searchTerms.length > 0 &&
+            !findValidTermCombination(
+                exercise.nom,
+                searchTerms
+            ) &&
+            !findValidTermCombination(
+                getProgressionName(exercise),
                 searchTerms
             )
-        }))
-        .filter(item => {
-            const exercise = item.exercise;
+        ) {
+            return false;
+        }
 
-            if (
-                searchTerms.length > 0 &&
-                !item.searchRanking
-            ) {
-                return false;
-            }
+        return true;
+    });
 
-            if (
-                selectedTypes.size > 0 &&
-                !selectedTypes.has(exercise.type)
-            ) {
-                return false;
-            }
+    // Prépare les données nécessaires au tri
+    const rankedExercises = filteredExercises.map(exercise => ({
+        exercise: exercise,
+        searchRanking: getExerciseSearchRanking(
+            exercise,
+            searchTerms
+        )
+    }));
 
-            const matchesCategory =
-                (
-                    selectedCategories.has("cali") &&
-                    exercise.cali
-                ) ||
-                (
-                    selectedCategories.has("gym") &&
-                    exercise.gym
-                );
-
-            if (!matchesCategory) {
-                return false;
-            }
-
-            if (!exerciseMatchesMuscle(exercise)) {
-                return false;
-            }
-
-            if (!exerciseMatchesProgression(exercise)) {
-                return false;
-            }
-
-            if (!exerciseHasRequiredEquipment(exercise)) {
-                return false;
-            }
-
-            return true;
-        });
-
-    filteredExercises.sort(compareExercisesBySearch);
-
-    const exerciseCount = filteredExercises.length;
-    const exerciseTitle = document.querySelector(
-        ".exercise-results h2"
-    );
-
-    if (exerciseTitle) {
-        exerciseTitle.innerHTML = `
-            <span>Exercices</span>
-            <span class="exercise-count">
-                ${exerciseCount} exercice${exerciseCount !== 1 ? "s" : ""}
-            </span>
-        `;
-    }
+    rankedExercises.sort(compareExercisesBySearch);
 
     exerciseList.innerHTML = "";
 
-    if (filteredExercises.length === 0) {
-        const emptyMessage = document.createElement("div");
+    rankedExercises.forEach(item => {
+        const exercise = item.exercise;
 
-        emptyMessage.classList.add("exercise-empty");
-        emptyMessage.textContent = "Aucun exercice trouvé.";
-
-        exerciseList.appendChild(emptyMessage);
-        return;
-    }
-
-    filteredExercises.forEach(({ exercise }) => {
         const element = document.createElement("div");
         element.classList.add("exercise-item");
 
-        const exerciseName = document.createElement("span");
-        exerciseName.classList.add("exercise-name");
-        exerciseName.innerHTML = highlightSearchMatches(
+        element.innerHTML = highlightSearchMatches(
             exercise.nom,
             searchTerms
         );
 
-        const progression = document.createElement("span");
-        progression.classList.add("exercise-progression");
-
-        const progressionText = getProgressionDisplay(exercise);
-
-        progression.innerHTML = highlightSearchMatches(
-            progressionText,
-            searchTerms
-        );
-
-        element.appendChild(exerciseName);
-
-        if (progressionText) {
-            element.appendChild(progression);
-        }
-
         element.addEventListener("click", () => {
-            displayExerciseDetails(exercise);
+            displayExerciseDetails(
+                exercise,
+                isPlanContext ? "plan" : "search"
+            );
         });
 
         exerciseList.appendChild(element);
     });
+
+    if (rankedExercises.length === 0) {
+        exerciseList.textContent = "Aucun exercice trouvé.";
+    }
 }
 
 // Navigation dans la progression
 
-function exerciseMatchesProgressionContext(
-    exercise,
-    context = "search"
-) {
+function exerciseMatchesProgressionContext(exercise, context = "search") {
     if (context === "search") {
         return (
             exerciseMatchesCategoryFilter(exercise) &&
@@ -1042,7 +1020,7 @@ function exerciseMatchesProgressionContext(
     }
 
     if (context === "plan") {
-        return true;
+        return exerciseMatchesPlanFilters(exercise);
     }
 
     return true;
@@ -1190,6 +1168,23 @@ function displayExerciseDetails(
         document.getElementById(
             "details-exercise-name"
         );
+
+    const header = document.querySelector(".exercise-detail-header");
+let addButton = document.getElementById("add-exercise-to-plan-button");
+
+if (addButton) {
+    addButton.remove();
+}
+
+if (context === "plan") {
+    addButton = document.createElement("button");
+    addButton.id = "add-exercise-to-plan-button";
+    addButton.textContent = "Ajouter";
+    addButton.addEventListener("click", () => {
+        addExerciseToCurrentPlan(exercise);
+    });
+    header.appendChild(addButton);
+}
 
     const infoElement =
         document.getElementById(
@@ -1512,6 +1507,10 @@ tabPlans.addEventListener("click", () => {
     pageExercises.style.display = "none";
     pagePlans.style.display = "block";
 
+    planHome.style.display = "block";
+    planCreator.style.display = "none";
+    planEditor.style.display = "none";
+
     tabExercises.classList.remove("active");
     tabPlans.classList.add("active");
 });
@@ -1527,12 +1526,417 @@ const plansList = document.getElementById("plans-list");
 const planEditor = document.getElementById("plan-editor");
 const currentPlanName = document.getElementById("current-plan-name");
 const backToPlansButton = document.getElementById("back-to-plans-button");
-const addExerciseButton = document.getElementById("add-exercise-button");
 
-addExerciseButton.addEventListener("click", () => {
-    planExerciseBrowserContainer.appendChild(exerciseBrowser);
-    exerciseBrowser.style.display = "block";
-});
+let currentPlan = null;
+
+function renderPlanExercises() {
+    planExerciseList.innerHTML = "";
+
+    if (!currentPlan || currentPlan.exercises.length === 0) {
+        planExerciseList.textContent = "Aucun exercice ajouté.";
+        return;
+    }
+
+    currentPlan.exercises.forEach((planExercise, index) => {
+        const exerciseElement = document.createElement("div");
+        exerciseElement.classList.add("plan-exercise-item");
+
+        const navigation = document.createElement("div");
+        navigation.classList.add("plan-exercise-navigation");
+
+        const upButton = document.createElement("button");
+        upButton.textContent = "▲";
+        upButton.classList.add("plan-exercise-move-button");
+        upButton.disabled = index === 0;
+
+        upButton.addEventListener("click", () => {
+            movePlanExercise(index, -1);
+        });
+
+        const downButton = document.createElement("button");
+        downButton.textContent = "▼";
+        downButton.classList.add("plan-exercise-move-button");
+        downButton.disabled = index === currentPlan.exercises.length - 1;
+
+        downButton.addEventListener("click", () => {
+            movePlanExercise(index, 1);
+        });
+
+        navigation.appendChild(upButton);
+        navigation.appendChild(downButton);
+
+        const exerciseName = document.createElement("span");
+        exerciseName.textContent = `${index + 1}. ${planExercise.exercise.nom}`;
+        exerciseName.style.cursor = "pointer";
+
+        exerciseName.addEventListener("click", () => {
+            displayExerciseDetails(planExercise.exercise, "plan");
+        });
+
+        const removeButton = document.createElement("button");
+        removeButton.classList.add("remove-plan-exercise-button");
+        removeButton.textContent = "✕";
+        removeButton.setAttribute("aria-label", `Supprimer ${planExercise.exercise.nom}`);
+
+        removeButton.addEventListener("click", () => {
+            removeExerciseFromCurrentPlan(index);
+        });
+
+        exerciseElement.appendChild(navigation);
+        exerciseElement.appendChild(exerciseName);
+        exerciseElement.appendChild(removeButton);
+
+        planExerciseList.appendChild(exerciseElement);
+    });
+}
+
+function addExerciseToCurrentPlan(exercise) {
+    if (!currentPlan) {
+        return;
+    }
+
+    currentPlan.exercises.push({
+        exercise: exercise,
+        sets: 3,
+        reps: 10,
+        weight: 0,
+        rest: 90,
+        tempo: ""
+    });
+
+    renderPlanExercises();
+}
+
+function removeExerciseFromCurrentPlan(index) {
+    if (!currentPlan) {
+        return;
+    }
+
+    currentPlan.exercises.splice(index, 1);
+    renderPlanExercises();
+}
+
+function movePlanExercise(index, direction) {
+    if (!currentPlan) {
+        return;
+    }
+
+    const newIndex = index + direction;
+
+    if (
+        newIndex < 0 ||
+        newIndex >= currentPlan.exercises.length
+    ) {
+        return;
+    }
+
+    const exercises = currentPlan.exercises;
+
+    [exercises[index], exercises[newIndex]] =
+        [exercises[newIndex], exercises[index]];
+
+    renderPlanExercises();
+}
+
+function createPlanFilterRows() {
+    const categoryContainer = document.getElementById("plan-category-filters");
+    const equipmentContainer = document.getElementById("plan-equipment-filters");
+
+    categoryContainer.innerHTML = "";
+    equipmentContainer.innerHTML = "";
+
+    function createFilterRow(container, filterName, titleText, optionsContainerId, summaryId) {
+        const row = document.createElement("div");
+        row.classList.add("plan-filter-row");
+
+        const title = document.createElement("div");
+        title.classList.add("plan-filter-title");
+        title.dataset.filter = filterName;
+
+        const titleTextElement = document.createElement("strong");
+        titleTextElement.textContent = titleText;
+
+        const arrow = document.createElement("span");
+        arrow.classList.add("plan-filter-arrow");
+        arrow.textContent = "▼";
+
+        title.appendChild(titleTextElement);
+        title.appendChild(arrow);
+
+        const summary = document.createElement("div");
+        summary.id = summaryId;
+        summary.classList.add("plan-filter-summary");
+
+        const options = document.createElement("div");
+        options.id = optionsContainerId;
+        options.classList.add("plan-filter-options");
+
+        row.appendChild(title);
+        row.appendChild(summary);
+        row.appendChild(options);
+
+        container.appendChild(row);
+
+        title.addEventListener("click", () => {
+            const isOpen = options.classList.contains("open");
+
+            container
+                .querySelectorAll(".plan-filter-options.open")
+                .forEach(otherOptions => {
+                    otherOptions.classList.remove("open");
+                });
+
+            container
+                .querySelectorAll(".plan-filter-arrow")
+                .forEach(otherArrow => {
+                    otherArrow.textContent = "▼";
+                });
+
+            if (!isOpen) {
+                options.classList.add("open");
+                arrow.textContent = "▲";
+            }
+        });
+
+        return options;
+    }
+
+    const categoryOptions = createFilterRow(
+        categoryContainer,
+        "plan-category",
+        "Catégorie",
+        "plan-category-filter-options",
+        "plan-category-summary"
+    );
+
+    const equipmentOptionsContainer = createFilterRow(
+        equipmentContainer,
+        "plan-equipment",
+        "Équipements",
+        "plan-equipment-filter-options",
+        "plan-equipment-summary"
+    );
+
+    [
+        { value: "cali", label: "Cali" },
+        { value: "gym", label: "Gym" }
+    ].forEach(category => {
+        const button = document.createElement("button");
+        button.classList.add("filter-button");
+        button.textContent = category.label;
+        button.dataset.category = category.value;
+
+        if (selectedPlanCategories.has(category.value)) {
+            button.classList.add("active");
+        }
+
+        button.addEventListener("click", event => {
+            event.stopPropagation();
+
+            if (selectedPlanCategories.has(category.value)) {
+                selectedPlanCategories.delete(category.value);
+                button.classList.remove("active");
+            } else {
+                selectedPlanCategories.add(category.value);
+                button.classList.add("active");
+            }
+
+            syncPlanFiltersToSearch();
+            updatePlanFilterSummaries();
+            updatePlanProgressionFilters();
+        });
+
+        categoryOptions.appendChild(button);
+    });
+
+    equipmentOptions.forEach(equipment => {
+        const button = document.createElement("button");
+        button.classList.add("filter-button");
+        button.textContent = equipment;
+        button.dataset.equipment = equipment;
+
+        if (selectedPlanEquipment.has(equipment)) {
+            button.classList.add("active");
+        }
+
+        button.addEventListener("click", event => {
+            event.stopPropagation();
+
+            if (selectedPlanEquipment.has(equipment)) {
+                selectedPlanEquipment.delete(equipment);
+                button.classList.remove("active");
+            } else {
+                selectedPlanEquipment.add(equipment);
+                button.classList.add("active");
+            }
+
+            syncPlanFiltersToSearch();
+            updatePlanFilterSummaries();
+            updatePlanProgressionFilters();
+        });
+
+        equipmentOptionsContainer.appendChild(button);
+    });
+
+    updatePlanFilterSummaries();
+}
+
+function syncPlanFiltersToSearch() {
+    selectedCategories.clear();
+    selectedPlanCategories.forEach(category => {
+        selectedCategories.add(category);
+    });
+
+    selectedEquipment.clear();
+    selectedPlanEquipment.forEach(equipment => {
+        selectedEquipment.add(equipment);
+    });
+
+    document
+        .querySelectorAll("#category-filters .filter-button")
+        .forEach(button => {
+            button.classList.toggle(
+                "active",
+                selectedCategories.has(button.dataset.category)
+            );
+        });
+
+    document
+        .querySelectorAll("#equipment-filters .filter-button")
+        .forEach(button => {
+            if (
+                button.dataset.equipment === "all" ||
+                button.dataset.equipment === "none"
+            ) {
+                return;
+            }
+
+            button.classList.toggle(
+                "active",
+                selectedEquipment.has(button.dataset.equipment)
+            );
+        });
+
+    updateEquipmentAllButton();
+    displayExercises();
+}
+
+function updatePlanFilterSummaries() {
+    function createSummaryButton(text) {
+        const button = document.createElement("span");
+        button.classList.add("summary-button");
+
+        const label = document.createElement("span");
+        label.textContent = text;
+
+        button.appendChild(label);
+
+        return button;
+    }
+
+    // Catégorie
+    const categorySummary = document.getElementById(
+        "plan-category-summary"
+    );
+
+    categorySummary.innerHTML = "";
+
+    if (selectedPlanCategories.size === 0) {
+        categorySummary.appendChild(
+            createSummaryButton("Aucun")
+        );
+    } else {
+        if (selectedPlanCategories.has("cali")) {
+            categorySummary.appendChild(
+                createSummaryButton("Cali")
+            );
+        }
+
+        if (selectedPlanCategories.has("gym")) {
+            categorySummary.appendChild(
+                createSummaryButton("Gym")
+            );
+        }
+    }
+
+    // Équipements
+    const equipmentSummary = document.getElementById(
+        "plan-equipment-summary"
+    );
+
+    equipmentSummary.innerHTML = "";
+
+    if (
+        selectedPlanEquipment.size ===
+        equipmentOptions.length
+    ) {
+        equipmentSummary.appendChild(
+            createSummaryButton("Tous")
+        );
+    } else if (selectedPlanEquipment.size === 0) {
+        equipmentSummary.appendChild(
+            createSummaryButton("Aucun")
+        );
+    } else {
+        [...selectedPlanEquipment].forEach(equipment => {
+            equipmentSummary.appendChild(
+                createSummaryButton(equipment)
+            );
+        });
+    }
+}
+
+createPlanFilterRows();
+
+function exerciseMatchesPlanFilters(exercise) {
+    if (selectedPlanCategories.size === 0) {
+        return false;
+    }
+
+    const matchesCategory =
+        (selectedPlanCategories.has("cali") && exercise.cali) ||
+        (selectedPlanCategories.has("gym") && exercise.gym);
+
+    if (!matchesCategory) {
+        return false;
+    }
+
+    return exerciseMatchesPlanEquipment(exercise);
+}
+
+function exerciseMatchesPlanEquipment(exercise) {
+    if (selectedPlanEquipment.size === 0) {
+        return false;
+    }
+
+    if (!exercise.equipement || exercise.equipement.length === 0) {
+        return true;
+    }
+
+    return exercise.equipement.every(group =>
+        group.some(equipment => {
+            if (equipment === "Aucun") {
+                return true;
+            }
+
+            return selectedPlanEquipment.has(equipment);
+        })
+    );
+}
+
+function updatePlanProgressionFilters() {
+    if (
+        currentDetailExercise &&
+        currentDetailContext === "plan"
+    ) {
+        updateProgressionNavigation(
+            currentDetailExercise,
+            "plan"
+        );
+    }
+}
+
+// new plan
 
 newPlanButton.addEventListener("click", () => {
     planHome.style.display = "none";
@@ -1575,11 +1979,15 @@ createPlanButton.addEventListener("click", () => {
         ".open-plan-button"
     );
 
-    openPlanButton.addEventListener("click", () => {
-        planHome.style.display = "none";
-        planEditor.style.display = "block";
-        currentPlanName.textContent = plan.name;
-    });
+openPlanButton.addEventListener("click", () => {
+    currentPlan = plan;
+    planHome.style.display = "none";
+    planEditor.style.display = "block";
+    currentPlanName.textContent = plan.name;
+    renderPlanExercises();
+    planExerciseBrowserContainer.appendChild(exerciseBrowser);
+    exerciseBrowser.style.display = "block";
+});
 
     planCreator.style.display = "none";
     planHome.style.display = "block";
