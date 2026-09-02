@@ -913,10 +913,10 @@ function displayExercises() {
     const searchTerms = getSearchTerms(searchInput.value);
     const isPlanContext = planEditor.style.display === "block";
 
+    updateFilterSummaries();
+
     if (isPlanContext) {
         updatePlanFilterSummaries();
-    } else {
-        updateFilterSummaries();
     }
 
     let filteredExercises = exercises.filter(exercise => {
@@ -928,7 +928,7 @@ function displayExercises() {
             return false;
         }
 
-        // Les filtres de recherche restent actifs
+        // Filtres de recherche
         if (!exerciseMatchesCategoryFilter(exercise)) {
             return false;
         }
@@ -970,7 +970,6 @@ function displayExercises() {
         return true;
     });
 
-    // Prépare les données nécessaires au tri
     const rankedExercises = filteredExercises.map(exercise => ({
         exercise: exercise,
         searchRanking: getExerciseSearchRanking(
@@ -981,6 +980,15 @@ function displayExercises() {
 
     rankedExercises.sort(compareExercisesBySearch);
 
+    // Compteur
+    const exerciseCount = document.getElementById("exercise-count");
+
+    if (exerciseCount) {
+        exerciseCount.textContent =
+            `${rankedExercises.length} exercice` +
+            (rankedExercises.length !== 1 ? "s" : "");
+    }
+
     exerciseList.innerHTML = "";
 
     rankedExercises.forEach(item => {
@@ -989,10 +997,23 @@ function displayExercises() {
         const element = document.createElement("div");
         element.classList.add("exercise-item");
 
-        element.innerHTML = highlightSearchMatches(
+        const nameElement = document.createElement("span");
+        nameElement.classList.add("exercise-name");
+        nameElement.innerHTML = highlightSearchMatches(
             exercise.nom,
             searchTerms
         );
+
+        const progressionElement = document.createElement("span");
+        progressionElement.classList.add("exercise-progression");
+        progressionElement.textContent =
+            getProgressionDisplay(exercise);
+
+        element.appendChild(nameElement);
+
+        if (getProgressionDisplay(exercise) !== "") {
+            element.appendChild(progressionElement);
+        }
 
         element.addEventListener("click", () => {
             displayExerciseDetails(
@@ -1998,6 +2019,15 @@ openPlanButton.addEventListener("click", () => {
 backToPlansButton.addEventListener("click", () => {
     planEditor.style.display = "none";
     planHome.style.display = "block";
+
+    const exerciseBrowserContainer =
+        document.getElementById("exercise-browser-container");
+
+    exerciseBrowserContainer.appendChild(exerciseBrowser);
+    exerciseBrowser.style.display = "block";
+
+    currentDetailExercise = null;
+    currentDetailContext = "search";
 });
 
 // Initialisation
