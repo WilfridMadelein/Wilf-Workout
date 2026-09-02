@@ -919,17 +919,10 @@ function displayExercises() {
         updatePlanFilterSummaries();
     }
 
-    let filteredExercises = exercises.filter(exercise => {
-        // Dans un plan : les filtres du plan sont obligatoires
-        if (
-            isPlanContext &&
-            !exerciseMatchesPlanFilters(exercise)
-        ) {
-            return false;
-        }
+let filteredExercises = exercises.filter(exercise => {
 
-        // Filtres de recherche
-        if (!exerciseMatchesCategoryFilter(exercise)) {
+    // Filtres de recherche
+    if (!exerciseMatchesCategoryFilter(exercise)) {
             return false;
         }
 
@@ -1032,19 +1025,11 @@ function displayExercises() {
 
 // Navigation dans la progression
 
-function exerciseMatchesProgressionContext(exercise, context = "search") {
-    if (context === "search") {
-        return (
-            exerciseMatchesCategoryFilter(exercise) &&
-            exerciseMatchesEquipmentFilter(exercise)
-        );
-    }
-
-    if (context === "plan") {
-        return exerciseMatchesPlanFilters(exercise);
-    }
-
-    return true;
+function exerciseMatchesProgressionContext(exercise) {
+    return (
+        exerciseMatchesCategoryFilter(exercise) &&
+        exerciseMatchesEquipmentFilter(exercise)
+    );
 }
 
 
@@ -1065,16 +1050,13 @@ function getProgressionNeighbor(
     ) {
         return null;
     }
-
+   
     const compatibleExercises = exercises
         .filter(exercise =>
             getProgressionName(exercise) === progression
         )
         .filter(exercise =>
-            exerciseMatchesProgressionContext(
-                exercise,
-                context
-            )
+            exerciseMatchesProgressionContext(exercise)
         )
         .filter(exercise => {
             const order =
@@ -1304,7 +1286,7 @@ if (context === "plan") {
 
     updateProgressionNavigation(
         exercise,
-        context
+        "search"
     );
 }
 
