@@ -276,6 +276,7 @@ main {
 
 #back-to-plans-button {
     padding: 7px 12px;
+    margin-bottom: 20px;
     cursor: pointer;
 }
 
@@ -691,18 +692,38 @@ main {
    FILTRES DU PLAN
 ============================== */
 
+
+.plan-filters-box {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 15px;
+    box-sizing: border-box;
+}
+
+.plan-filters-box h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
 .plan-filter-row {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    align-items: center;
     border-bottom: 1px solid #ddd;
 }
 
 .plan-filter-title {
+    width: auto;
+    min-width: 0;
     height: 48px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 10px;
     box-sizing: border-box;
+    font-weight: bold;
     cursor: pointer;
+    text-align: left;
     font-size: 14px;
 }
 
@@ -715,6 +736,7 @@ main {
 }
 
 .plan-filter-summary {
+    min-width: 0;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -725,9 +747,13 @@ main {
 
 .plan-filter-options {
     display: none;
-    padding: 12px 10px 15px 10px;
+    grid-column: 1 / -1;
+    padding: 12px 10px 15px 160px;
+    flex-wrap: wrap;
+    gap: 8px;
+    box-sizing: border-box;
 }
 
 .plan-filter-options.open {
-    display: block;
+    display: flex;
 }

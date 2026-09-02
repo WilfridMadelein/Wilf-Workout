@@ -1677,26 +1677,27 @@ function createPlanFilterRows() {
 
         container.appendChild(row);
 
-        title.addEventListener("click", () => {
-            const isOpen = options.classList.contains("open");
+title.addEventListener("click", () => {
+    const isOpen = options.classList.contains("open");
+    const planFiltersBox = document.querySelector(".plan-filters-box");
 
-            container
-                .querySelectorAll(".plan-filter-options.open")
-                .forEach(otherOptions => {
-                    otherOptions.classList.remove("open");
-                });
-
-            container
-                .querySelectorAll(".plan-filter-arrow")
-                .forEach(otherArrow => {
-                    otherArrow.textContent = "▼";
-                });
-
-            if (!isOpen) {
-                options.classList.add("open");
-                arrow.textContent = "▲";
-            }
+    planFiltersBox
+        .querySelectorAll(".plan-filter-options.open")
+        .forEach(otherOptions => {
+            otherOptions.classList.remove("open");
         });
+
+    planFiltersBox
+        .querySelectorAll(".plan-filter-arrow")
+        .forEach(otherArrow => {
+            otherArrow.textContent = "▼";
+        });
+
+    if (!isOpen) {
+        options.classList.add("open");
+        arrow.textContent = "▲";
+    }
+});
 
         return options;
     }
@@ -1818,6 +1819,7 @@ function syncPlanFiltersToSearch() {
         });
 
     updateEquipmentAllButton();
+    updateFilterSummaries();
     displayExercises();
 }
 
