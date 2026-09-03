@@ -2139,7 +2139,7 @@ function renderPlanExercises() {
         "Muscles",
         "Poids",
         "Séries",
-        "Répétitions",
+        "Volume",
         "Tempo",
         "Pause",
         "Instructions",
@@ -2356,7 +2356,7 @@ row.appendChild(weightCell);
 
             row.appendChild(setsCell);
 
-// Répétitions / temps
+// Volume (répétitions ou temps)
 const repsTimeCell = document.createElement("td");
 
 const repsTimeContainer = document.createElement("div");
