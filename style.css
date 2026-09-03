@@ -908,3 +908,319 @@ main {
     max-width: none;
     box-sizing: border-box;
 }
+
+/* ==============================
+   TABLEAU DES EXERCICES DU PLAN
+============================== */
+
+.plan-exercise-table {
+    width: 100%;
+    table-layout: auto;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.plan-exercise-table th,
+.plan-exercise-table td {
+    border: 1px solid #ddd;
+    padding: 6px 8px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.plan-exercise-table th {
+    font-weight: bold;
+}
+
+.plan-exercise-table td:first-child {
+    text-align: left;
+}
+
+/* =========================
+   EXERCICE
+========================= */
+
+.plan-exercise-table th:first-child,
+.plan-exercise-table td:first-child {
+    min-width: 220px;
+}
+
+.plan-exercise-name {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+
+/* =========================
+   PROGRESSION
+========================= */
+
+.plan-progression-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.plan-progression-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+}
+
+.plan-progression-button {
+    width: 18px;
+    height: 15px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    font-size: 9px;
+    line-height: 1;
+    color: #888;
+    cursor: pointer;
+}
+
+.plan-progression-button:hover:not(:disabled) {
+    color: #222;
+}
+
+.plan-progression-button:disabled {
+    opacity: 0.25;
+    cursor: default;
+}
+
+/* =========================
+   CONTRÔLES NUMÉRIQUES
+========================= */
+
+.plan-number-control {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+}
+
+.plan-number-input {
+    box-sizing: border-box;
+    min-width: 2ch;
+    max-width: 5ch;
+
+    padding: 0;
+
+    text-align: center;
+
+    border: none;
+    outline: none;
+    background: transparent;
+
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.2;
+
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+.plan-number-input::-webkit-inner-spin-button,
+.plan-number-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.plan-number-arrow {
+    width: 18px;
+    height: 12px;
+
+    padding: 0;
+    margin: 0;
+
+    border: none;
+    background: transparent;
+
+    font-size: 8px;
+    line-height: 1;
+
+    color: #888;
+    cursor: pointer;
+}
+
+.plan-number-arrow:hover {
+    color: #222;
+}
+
+.plan-number-arrow:active {
+    transform: scale(0.9);
+}
+
+/* =========================
+   POIDS
+========================= */
+
+.plan-exercise-table td:nth-child(4) .plan-number-input {
+    min-width: 3ch;
+    max-width: 5ch;
+}
+
+.plan-weight-unit,
+.plan-value-unit {
+    border: none;
+    outline: none;
+    background: transparent;
+
+    padding: 2px 0;
+    margin-left: 3px;
+
+    font-size: 13px;
+    cursor: pointer;
+
+    appearance: none;
+    -webkit-appearance: none;
+
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+/* =========================
+   RÉPÉTITIONS / TEMPS
+========================= */
+
+.plan-value-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.plan-static-unit {
+    margin-left: 3px;
+    font-size: 13px;
+}
+
+/* =========================
+   TEMPO
+========================= */
+
+.plan-tempo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+}
+
+.plan-tempo-separator {
+    font-size: 13px;
+    font-weight: 700;
+    margin: 0 1px;
+}
+
+/* =========================
+   SET
+========================= */
+
+.plan-combination-button {
+    min-width: 34px;
+    padding: 5px 7px;
+}
+
+/* =========================
+   ORDRE DANS LE SET
+========================= */
+
+.plan-combination-exercise-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+}
+
+.plan-order-button {
+    width: 18px;
+    height: 15px;
+
+    padding: 0;
+    margin: 0;
+
+    border: none;
+    background: transparent;
+
+    font-size: 9px;
+    line-height: 1;
+
+    color: #888;
+    cursor: pointer;
+}
+
+.plan-order-button:hover:not(:disabled) {
+    color: #222;
+}
+
+.plan-order-button:disabled {
+    opacity: 0.25;
+    cursor: default;
+}
+
+/* =========================
+   BANDE DE DÉPLACEMENT DES SETS
+========================= */
+
+.plan-combination-group-order {
+    width: 38px;
+    padding: 4px !important;
+}
+
+.plan-combination-group-order-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+}
+
+/* =========================
+   MENU DU SET
+========================= */
+
+.combination-menu {
+    position: absolute;
+    z-index: 100;
+
+    margin-top: 5px;
+    padding: 8px;
+
+    background: white;
+
+    border: 1px solid #ccc;
+    border-radius: 6px;
+
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+}
+
+.combination-menu-label {
+    margin-bottom: 5px;
+    font-size: 13px;
+}
+
+.combination-select {
+    padding: 4px;
+}
+
+/* =========================
+   COULEURS DES SETS
+========================= */
+
+.plan-set-colored-1 {
+    background-color: rgba(170, 120, 200, 0.10);
+}
+
+.plan-set-colored-2 {
+    background-color: rgba(100, 190, 140, 0.10);
+}
+
+.plan-set-colored-3 {
+    background-color: rgba(230, 170, 80, 0.10);
+}
