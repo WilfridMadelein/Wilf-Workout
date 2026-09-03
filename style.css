@@ -1123,8 +1123,23 @@ main {
 ========================= */
 
 .plan-combination-button {
-    min-width: 34px;
-    padding: 5px 7px;
+    border: none;
+    outline: none;
+    background: transparent;
+
+    padding: 2px 0;
+
+    font-size: 13px;
+    font-weight: 400;
+
+    cursor: pointer;
+
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.plan-combination-button:hover {
+    color: #555;
 }
 
 /* =========================
@@ -1223,4 +1238,63 @@ main {
 
 .plan-set-colored-3 {
     background-color: rgba(230, 170, 80, 0.10);
+}
+
+/* =========================
+   INSTRUCTIONS
+========================= */
+
+.plan-instructions-button {
+    border: none;
+    background: transparent;
+
+    padding: 2px 0;
+
+    font: inherit;
+    cursor: pointer;
+
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.plan-instructions-button:hover {
+    color: #555;
+}
+
+.plan-instructions-popup {
+    position: absolute;
+    z-index: 1000;
+
+    width: 280px;
+
+    padding: 10px;
+
+    background: white;
+
+    border: 1px solid #ccc;
+    border-radius: 8px;
+
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+
+    box-sizing: border-box;
+}
+
+.plan-instructions-textarea {
+    display: block;
+
+    width: 100%;
+    min-height: 90px;
+    max-height: 160px;
+
+    box-sizing: border-box;
+
+    resize: vertical;
+
+    border: none;
+    outline: none;
+    background: transparent;
+
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.4;
 }

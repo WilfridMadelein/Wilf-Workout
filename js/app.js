@@ -1501,9 +1501,9 @@ function displayExerciseDetails(exercise, context = "search") {
         <p><strong>Type :</strong> ${exercise.type}</p>
         <p><strong>Catégorie :</strong> ${
             exercise.cali && exercise.gym
-                ? "Calisthénie, Gym"
+                ? "Calisthénique, Gym"
                 : exercise.cali
-                    ? "Calisthénie"
+                    ? "Calisthénique"
                     : "Gym"
         }</p>
         <p><strong>Pronation :</strong> ${exercise.pronation || "—"}</p>
@@ -2024,7 +2024,7 @@ function renderPlanExercises() {
         "Répétitions",
         "Tempo",
         "Pause",
-        "Détails",
+        "Instructions",
         "Set",
     ];
 
@@ -2344,27 +2344,32 @@ restContainer.appendChild(restUnit);
 restCell.appendChild(restContainer);
 row.appendChild(restCell);
 
-            // Détails
-            const detailsCell = document.createElement("td");
+// Instructions
+const instructionsCell = document.createElement("td");
 
-            const detailsButton = document.createElement("button");
-            detailsButton.textContent = "Détails";
-            detailsButton.classList.add("plan-details-button");
+const instructionsButton = document.createElement("button");
+instructionsButton.textContent = "Instructions";
+instructionsButton.classList.add("plan-instructions-button");
 
-            detailsButton.addEventListener("click", () => {
-                const index = currentPlan.exercises.indexOf(planExercise);
-                openPlanExerciseDetails(planExercise, index);
-            });
+instructionsButton.dataset.planExerciseIndex =
+    currentPlan.exercises.indexOf(planExercise);
 
-            detailsCell.appendChild(detailsButton);
-            row.appendChild(detailsCell);
+instructionsButton.addEventListener("click", () => {
+    openPlanExerciseInstructions(
+        planExercise,
+        currentPlan.exercises.indexOf(planExercise)
+    );
+});
+
+instructionsCell.appendChild(instructionsButton);
+row.appendChild(instructionsCell);
 
             // Combinaison
             const combinationCell = document.createElement("td");
 
             const combinationButton = document.createElement("button");
 
-            combinationButton.textContent = `C${group}`;
+            combinationButton.textContent = `S${group}`;
             combinationButton.classList.add("plan-combination-button");
 
             combinationButton.addEventListener("click", () => {
@@ -2467,8 +2472,96 @@ row.appendChild(restCell);
     planExerciseList.appendChild(table);
 }
 
-function openPlanExerciseDetails(planExercise, index) {
-    console.log("Détails de l'exercice :", planExercise, index);
+function openPlanExerciseInstructions(planExercise, index) {
+    if (!currentPlan) {
+        return;
+    }
+
+    // Ferme une éventuelle bulle déjà ouverte.
+    document
+        .querySelectorAll(".plan-instructions-popup")
+        .forEach(popup => popup.remove());
+
+    if (!planExercise.details) {
+        planExercise.details = {};
+    }
+
+    const exercise = planExercise.exercise;
+
+    // Texte par défaut basé sur les informations de l'exercice.
+    if (planExercise.details.instructions == null) {
+        const parts = [];
+
+        if (exercise.pronation) {
+            parts.push(`Pronation : ${exercise.pronation}`);
+        }
+
+        if (exercise.equipement && exercise.equipement.length > 0) {
+            const equipmentGroups = exercise.equipement
+                .map(group => group.join(" ou "))
+                .join(" + ");
+
+            parts.push(`Équipement : ${equipmentGroups}`);
+        }
+
+        planExercise.details.instructions = parts.join("\n");
+    }
+
+    const popup = document.createElement("div");
+    popup.classList.add("plan-instructions-popup");
+
+    const textarea = document.createElement("textarea");
+    textarea.classList.add("plan-instructions-textarea");
+
+    textarea.maxLength = 200;
+    textarea.value = planExercise.details.instructions;
+
+    popup.appendChild(textarea);
+
+    // Empêche le clic dans la bulle de la fermer.
+    popup.addEventListener("click", event => {
+        event.stopPropagation();
+    });
+
+    document.body.appendChild(popup);
+
+    // Positionne la bulle près du bouton Instructions.
+    const button = document.querySelector(
+        `.plan-instructions-button[data-plan-exercise-index="${index}"]`
+    );
+
+    if (button) {
+        const rect = button.getBoundingClientRect();
+
+        popup.style.left = `${rect.left + window.scrollX}px`;
+        popup.style.top = `${rect.bottom + window.scrollY + 5}px`;
+    }
+
+    textarea.focus();
+
+    function saveInstructions() {
+        planExercise.details.instructions =
+            textarea.value.slice(0, 200);
+    }
+
+    textarea.addEventListener("input", saveInstructions);
+
+    function closePopup(event) {
+        if (!popup.contains(event.target)) {
+            saveInstructions();
+            popup.remove();
+            document.removeEventListener(
+                "click",
+                closePopup
+            );
+        }
+    }
+
+    // Petit délai pour ne pas fermer immédiatement
+    // à cause du clic ayant ouvert la bulle.
+    setTimeout(() => {
+        document.addEventListener("click", closePopup);
+    }, 0);
 }
 
 // Combinaisons
@@ -2856,7 +2949,7 @@ function addExerciseToCurrentPlan(exercise) {
         weight: 0,
         weightUnit: "lbs",
 
-        details: {},
+        instructions: {},
 
         combination: {
             type: null,
