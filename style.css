@@ -233,8 +233,9 @@ main {
 ============================== */
 
 #plan-editor {
-    max-width: 1000px;
-    margin: 0 auto;
+    max-width: none;
+    width: 100%;
+    margin: 0;
 }
 
 .plan-settings {
@@ -775,4 +776,135 @@ main {
 
 .plan-filter-options.open {
     display: flex;
+}
+
+/* ==============================
+   TABLEAU DES EXERCICES DU PLAN   
+============================== */
+
+.plan-exercise-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.plan-exercise-table th,
+.plan-exercise-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.plan-exercise-table th {
+    font-weight: bold;
+}
+
+.plan-exercise-table td:first-child {
+    text-align: left;
+}
+
+.plan-exercise-name {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+
+.plan-order-button {
+    margin: 2px;
+}
+
+.plan-details-button {
+    cursor: pointer;
+}
+
+.plan-number-input {
+    width: 55px;
+    box-sizing: border-box;
+    padding: 4px;
+    text-align: center;
+}
+
+.plan-tempo-container {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+}
+
+.plan-tempo-input {
+    width: 32px;
+    box-sizing: border-box;
+    padding: 4px;
+    text-align: center;
+}
+
+.plan-weight-unit {
+    margin-left: 4px;
+    padding: 4px;
+}
+
+.plan-exercise-table input,
+.plan-exercise-table select {
+    font: inherit;
+}
+
+.plan-progression-buttons {
+    display: inline-flex;
+    gap: 2px;
+    margin-left: 6px;
+}
+
+.plan-progression-button {
+    padding: 1px 4px;
+    font-size: 11px;
+}
+
+.plan-order-button {
+    padding: 2px 5px;
+    margin: 1px;
+}
+
+/* ==============================
+   CORRECTION LARGEUR NAVIGATEUR PLAN
+============================== */
+
+#plan-editor {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+}
+
+.plan-exercises {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+}
+
+#plan-exercise-browser-container {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+    display: block;
+}
+
+#plan-exercise-browser-container > #exercise-browser {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+    display: block;
+}
+
+#plan-exercise-browser-container .exercise-search-area {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+}
+
+#plan-exercise-browser-container .exercise-main-row {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
 }

@@ -17,6 +17,18 @@ const tabExercises = document.getElementById("tab-exercises");
 const tabPlans = document.getElementById("tab-plans");
 const pagePlans = document.getElementById("page-plans");
 
+const planSetsInput = document.getElementById("plan-sets");
+const planRepsInput = document.getElementById("plan-reps");
+const planTimeInput = document.getElementById("plan-time");
+const planRestInput = document.getElementById("plan-rest");
+
+const planTempoInputs = [
+    document.getElementById("plan-tempo-1"),
+    document.getElementById("plan-tempo-2"),
+    document.getElementById("plan-tempo-3"),
+    document.getElementById("plan-tempo-4")
+];
+
 let currentDetailExercise = null;
 let currentDetailContext = "search";
 
@@ -710,6 +722,16 @@ function getProgressionName(exercise) {
     return String(exercise.prog_group || "").trim();
 }
 
+function isIsometricExercise(exercise) {
+    const type = String(exercise.type).toLowerCase().trim();
+
+    return (
+        type === "iso" ||
+        type === "isométrique" ||
+        type === "isometric"
+    );
+}
+
 function getProgressionDisplay(exercise) {
     const progression = getProgressionName(exercise);
     const ordre = exercise.prog_ordre;
@@ -1322,6 +1344,65 @@ function getProgressionNeighbor(
     return null;
 }
 
+function exerciseMatchesPlanProgressionFilter(exercise) {
+    const matchesCali =
+        selectedPlanCategories.has("cali") &&
+        exercise.cali;
+
+    const matchesGym =
+        selectedPlanCategories.has("gym") &&
+        exercise.gym;
+
+    if (!matchesCali && !matchesGym) {
+        return false;
+    }
+
+    return exerciseHasRequiredEquipmentForPlan(exercise);
+}
+
+function exerciseHasRequiredEquipmentForPlan(exercise) {
+    return exercise.equipement.every(equipmentGroup => {
+        return equipmentGroup.some(equipment => {
+            if (equipment === "Aucun") return true;
+
+            return selectedPlanEquipment.has(equipment);
+        });
+    });
+}
+
+function getPlanProgressionNeighbor(exercise, direction) {
+    const progression = getProgressionName(exercise);
+    const currentOrder = Number(exercise.prog_ordre);
+
+    if (!progression || Number.isNaN(currentOrder)) {
+        return null;
+    }
+
+    const progressionExercises = exercises
+        .filter(item => getProgressionName(item) === progression)
+        .filter(item => exerciseMatchesPlanProgressionFilter(item))
+        .filter(item => !Number.isNaN(Number(item.prog_ordre)))
+        .sort((a, b) =>
+            Number(a.prog_ordre) - Number(b.prog_ordre)
+        );
+
+    if (direction === 1) {
+        return progressionExercises.find(
+            item => Number(item.prog_ordre) > currentOrder
+        ) || null;
+    }
+
+    if (direction === -1) {
+        const previousExercises = progressionExercises
+            .filter(item =>
+                Number(item.prog_ordre) < currentOrder
+            );
+
+        return previousExercises[previousExercises.length - 1] || null;
+    }
+
+    return null;
+}
 
 function updateProgressionNavigation(currentExercise, context = "search") {
     const upButton = document.getElementById("progression-up-button");
@@ -1724,6 +1805,149 @@ const backToPlansButton = document.getElementById("back-to-plans-button");
 
 let currentPlan = null;
 
+function ensurePlanDefaults(plan) {
+    if (!plan.defaults) {
+        plan.defaults = {};
+    }
+
+    if (plan.defaults.sets == null) {
+        plan.defaults.sets = 3;
+    }
+
+    if (plan.defaults.reps == null) {
+        plan.defaults.reps = 10;
+    }
+
+    if (plan.defaults.time == null) {
+        plan.defaults.time = 30;
+    }
+
+    if (plan.defaults.rest == null) {
+        plan.defaults.rest = 90;
+    }
+
+    if (!plan.defaults.tempo) {
+        plan.defaults.tempo = {};
+    }
+
+    if (plan.defaults.tempo.first == null || plan.defaults.tempo.first === "") {
+        plan.defaults.tempo.first = 3;
+    }
+
+    if (plan.defaults.tempo.second == null || plan.defaults.tempo.second === "") {
+        plan.defaults.tempo.second = 1;
+    }
+
+    if (plan.defaults.tempo.third == null || plan.defaults.tempo.third === "") {
+        plan.defaults.tempo.third = 1;
+    }
+
+    if (plan.defaults.tempo.fourth == null || plan.defaults.tempo.fourth === "") {
+        plan.defaults.tempo.fourth = 0;
+    }
+}
+
+function loadPlanDefaultsIntoInputs() {
+    if (!currentPlan) return;
+
+    ensurePlanDefaults(currentPlan);
+
+    planSetsInput.value = currentPlan.defaults.sets;
+    planRepsInput.value = currentPlan.defaults.reps;
+    planTimeInput.value = currentPlan.defaults.time;
+    planRestInput.value = currentPlan.defaults.rest;
+
+    planTempoInputs[0].value = currentPlan.defaults.tempo.first;
+    planTempoInputs[1].value = currentPlan.defaults.tempo.second;
+    planTempoInputs[2].value = currentPlan.defaults.tempo.third;
+    planTempoInputs[3].value = currentPlan.defaults.tempo.fourth;
+}
+
+function setupPlanDefaultInputs() {
+    planSetsInput.addEventListener("change", () => {
+        if (!currentPlan) return;
+
+        currentPlan.defaults.sets =
+            Number(planSetsInput.value);
+    });
+
+    planRepsInput.addEventListener("change", () => {
+        if (!currentPlan) return;
+
+        currentPlan.defaults.reps =
+            Number(planRepsInput.value);
+    });
+
+    planTimeInput.addEventListener("change", () => {
+        if (!currentPlan) return;
+
+        currentPlan.defaults.time =
+            Number(planTimeInput.value);
+    });
+
+    planRestInput.addEventListener("change", () => {
+        if (!currentPlan) return;
+
+        currentPlan.defaults.rest =
+            Number(planRestInput.value);
+    });
+
+    planTempoInputs[0].addEventListener("change", () => {
+        if (!currentPlan) return;
+
+        currentPlan.defaults.tempo.first =
+            Number(planTempoInputs[0].value);
+    });
+
+    planTempoInputs[1].addEventListener("change", () => {
+        if (!currentPlan) return;
+
+        currentPlan.defaults.tempo.second =
+            Number(planTempoInputs[1].value);
+    });
+
+    planTempoInputs[2].addEventListener("change", () => {
+        if (!currentPlan) return;
+
+        currentPlan.defaults.tempo.third =
+            Number(planTempoInputs[2].value);
+    });
+
+    planTempoInputs[3].addEventListener("change", () => {
+        if (!currentPlan) return;
+
+        currentPlan.defaults.tempo.fourth =
+            Number(planTempoInputs[3].value);
+    });
+}
+
+function createPlanNumberInput(value, onChange, options = {}) {
+    const input = document.createElement("input");
+
+    input.type = "number";
+    input.value = value ?? "";
+
+    if (options.min !== undefined) {
+        input.min = options.min;
+    }
+
+    if (options.step !== undefined) {
+        input.step = options.step;
+    }
+
+    input.classList.add("plan-number-input");
+
+    input.addEventListener("change", () => {
+        const newValue = input.value === ""
+            ? null
+            : Number(input.value);
+
+        onChange(newValue);
+    });
+
+    return input;
+}
+
 function renderPlanExercises() {
     planExerciseList.innerHTML = "";
 
@@ -1732,71 +1956,440 @@ function renderPlanExercises() {
         return;
     }
 
+    const table = document.createElement("table");
+    table.classList.add("plan-exercise-table");
+
+    // En-tête
+    const thead = document.createElement("thead");
+    const headerRow = document.createElement("tr");
+
+    const headers = [
+        "Exercices",
+        "Progression",
+        "Muscles",
+        "Poids",
+        "Séries",
+        "Répétitions / Temps",
+        "Tempo",
+        "Pause",
+        "Détails",
+        "Combinaisons",
+        "Ordre"
+    ];
+
+    headers.forEach(headerText => {
+        const th = document.createElement("th");
+        th.textContent = headerText;
+        headerRow.appendChild(th);
+    });
+
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // Corps
+    const tbody = document.createElement("tbody");
+
     currentPlan.exercises.forEach((planExercise, index) => {
-        const exerciseElement = document.createElement("div");
-        exerciseElement.classList.add("plan-exercise-item");
+        const exercise = planExercise.exercise;
 
-        const navigation = document.createElement("div");
-        navigation.classList.add("plan-exercise-navigation");
+        const row = document.createElement("tr");
 
-        const upButton = document.createElement("button");
-        upButton.textContent = "▲";
-        upButton.classList.add("plan-exercise-move-button");
-        upButton.disabled = index === 0;
+        // =========================
+        // EXERCICE
+        // =========================
 
-        upButton.addEventListener("click", () => {
-            movePlanExercise(index, -1);
-        });
+        const exerciseCell = document.createElement("td");
 
-        const downButton = document.createElement("button");
-        downButton.textContent = "▼";
-        downButton.classList.add("plan-exercise-move-button");
-        downButton.disabled = index === currentPlan.exercises.length - 1;
-
-        downButton.addEventListener("click", () => {
-            movePlanExercise(index, 1);
-        });
-
-        navigation.appendChild(upButton);
-        navigation.appendChild(downButton);
-
-        const exerciseName = document.createElement("span");
-        exerciseName.textContent = `${index + 1}. ${planExercise.exercise.nom}`;
-        exerciseName.style.cursor = "pointer";
+        const exerciseName = document.createElement("button");
+        exerciseName.classList.add("plan-exercise-name");
+        exerciseName.textContent = exercise.nom;
 
         exerciseName.addEventListener("click", () => {
-            displayExerciseDetails(planExercise.exercise, "plan");
+            displayExerciseDetails(exercise, "plan");
         });
 
-        const removeButton = document.createElement("button");
-        removeButton.classList.add("remove-plan-exercise-button");
-        removeButton.textContent = "✕";
-        removeButton.setAttribute("aria-label", `Supprimer ${planExercise.exercise.nom}`);
+        exerciseCell.appendChild(exerciseName);
+        row.appendChild(exerciseCell);
 
-        removeButton.addEventListener("click", () => {
-            removeExerciseFromCurrentPlan(index);
-        });
+        // =========================
+        // PROGRESSION
+        // =========================
 
-        exerciseElement.appendChild(navigation);
-        exerciseElement.appendChild(exerciseName);
-        exerciseElement.appendChild(removeButton);
+        const progressionCell = document.createElement("td");
 
-        planExerciseList.appendChild(exerciseElement);
+        const progressionName = document.createElement("span");
+
+progressionName.textContent =
+    getProgressionName(exercise) || "—";
+
+progressionCell.appendChild(progressionName);
+
+const progressionButtons = document.createElement("div");
+progressionButtons.classList.add("plan-progression-buttons");
+
+const progressionUp = document.createElement("button");
+progressionUp.textContent = "▲";
+progressionUp.classList.add("plan-progression-button");
+
+const progressionDown = document.createElement("button");
+progressionDown.textContent = "▼";
+progressionDown.classList.add("plan-progression-button");
+
+progressionButtons.appendChild(progressionUp);
+progressionButtons.appendChild(progressionDown);
+
+progressionCell.appendChild(progressionButtons);
+
+row.appendChild(progressionCell);
+
+const nextProgression = getPlanProgressionNeighbor(
+    exercise,
+    1
+);
+
+const previousProgression = getPlanProgressionNeighbor(
+    exercise,
+    -1
+);
+
+progressionUp.disabled = !nextProgression;
+progressionDown.disabled = !previousProgression;
+
+progressionUp.addEventListener("click", () => {
+    if (!nextProgression) return;
+
+    updatePlanExerciseProgression(
+        planExercise,
+        nextProgression
+    );
+
+    displayExerciseDetails(
+        nextProgression,
+        "plan"
+    );
+});
+
+progressionDown.addEventListener("click", () => {
+    if (!previousProgression) return;
+
+    updatePlanExerciseProgression(
+        planExercise,
+        previousProgression
+    );
+
+    displayExerciseDetails(
+        previousProgression,
+        "plan"
+    );
+});
+
+        // =========================
+        // MUSCLES
+        // =========================
+
+        const musclesCell = document.createElement("td");
+
+        const muscleFamilies = [
+            ...new Set(
+                exercise.muscles_principaux.map(muscle => muscle[0])
+            )
+        ];
+
+        musclesCell.textContent =
+            muscleFamilies.length > 0
+                ? muscleFamilies.join(" / ")
+                : "—";
+
+        row.appendChild(musclesCell);
+
+        // =========================
+        // POIDS
+        // =========================
+
+const weightCell = document.createElement("td");
+
+const weightInput = createPlanNumberInput(
+    planExercise.weight,
+    value => {
+        planExercise.weight = value ?? 0;
+    },
+    {
+        min: 0,
+        step: 0.5
+    }
+);
+
+weightCell.appendChild(weightInput);
+
+const weightUnitSelect = document.createElement("select");
+
+weightUnitSelect.classList.add("plan-weight-unit");
+
+["lbs", "kg"].forEach(unit => {
+    const option = document.createElement("option");
+
+    option.value = unit;
+    option.textContent = unit;
+
+    if (planExercise.weightUnit === unit) {
+        option.selected = true;
+    }
+
+    weightUnitSelect.appendChild(option);
+});
+
+weightUnitSelect.addEventListener("change", () => {
+    planExercise.weightUnit = weightUnitSelect.value;
+});
+
+weightCell.appendChild(weightUnitSelect);
+
+row.appendChild(weightCell);
+
+        // =========================
+        // SÉRIES
+        // =========================
+
+const setsCell = document.createElement("td");
+
+const setsInput = createPlanNumberInput(
+    planExercise.sets,
+    value => {
+        planExercise.sets = value ?? 0;
+    },
+    {
+        min: 1,
+        step: 1
+    }
+);
+
+setsCell.appendChild(setsInput);
+
+row.appendChild(setsCell);
+
+ // =========================
+// RÉPÉTITIONS / TEMPS
+// =========================
+
+const repsTimeCell = document.createElement("td");
+
+const valueInput = createPlanNumberInput(
+    planExercise.value,
+    value => {
+        planExercise.value = value ?? 0;
+    },
+    {
+        min: 1,
+        step: 1
+    }
+);
+
+repsTimeCell.appendChild(valueInput);
+
+const valueUnitSelect = document.createElement("select");
+
+const repOption = document.createElement("option");
+repOption.value = "rep";
+repOption.textContent = "rep";
+
+const secOption = document.createElement("option");
+secOption.value = "sec";
+secOption.textContent = "sec";
+
+valueUnitSelect.appendChild(repOption);
+valueUnitSelect.appendChild(secOption);
+
+valueUnitSelect.value = planExercise.valueUnit;
+
+valueUnitSelect.addEventListener("change", () => {
+    planExercise.valueUnit = valueUnitSelect.value;
+});
+
+repsTimeCell.appendChild(valueUnitSelect);
+
+row.appendChild(repsTimeCell);
+
+// =========================
+// TEMPO
+// =========================
+
+const tempoCell = document.createElement("td");
+
+const tempoContainer = document.createElement("div");
+tempoContainer.classList.add("plan-tempo-container");
+
+const tempoKeys = [
+    "first",
+    "second",
+    "third",
+    "fourth"
+];
+
+tempoKeys.forEach(key => {
+    const tempoInput = document.createElement("input");
+
+    tempoInput.type = "number";
+    tempoInput.min = "0";
+    tempoInput.value = planExercise.tempo[key] ?? "";
+
+    tempoInput.classList.add("plan-tempo-input");
+
+    tempoInput.addEventListener("change", () => {
+        planExercise.tempo[key] = tempoInput.value;
     });
+
+    tempoContainer.appendChild(tempoInput);
+});
+
+tempoCell.appendChild(tempoContainer);
+
+row.appendChild(tempoCell);
+
+        // =========================
+        // PAUSE
+        // =========================
+
+const restCell = document.createElement("td");
+
+const restInput = createPlanNumberInput(
+    planExercise.rest,
+    value => {
+        planExercise.rest = value ?? 0;
+    },
+    {
+        min: 0,
+        step: 1
+    }
+);
+
+restCell.appendChild(restInput);
+
+const restUnit = document.createElement("span");
+restUnit.textContent = " sec";
+
+restCell.appendChild(restUnit);
+
+row.appendChild(restCell);
+
+        // =========================
+        // DÉTAILS
+        // =========================
+
+        const detailsCell = document.createElement("td");
+
+        const detailsButton = document.createElement("button");
+        detailsButton.textContent = "Détails";
+
+        detailsButton.addEventListener("click", () => {
+            openPlanExerciseDetails(planExercise, index);
+        });
+
+        detailsButton.classList.add("plan-details-button");
+
+        detailsCell.appendChild(detailsButton);
+
+        row.appendChild(detailsCell);
+
+        // =========================
+        // COMBINAISONS
+        // =========================
+
+        const combinationCell = document.createElement("td");
+
+        combinationCell.textContent = "—";
+
+        row.appendChild(combinationCell);
+
+        // =========================
+        // ORDRE
+        // =========================
+
+        const orderCell = document.createElement("td");
+
+        const upButton = document.createElement("button");
+        upButton.textContent = "↑";
+        upButton.classList.add("plan-order-button");
+
+        const downButton = document.createElement("button");
+        downButton.textContent = "↓";
+        downButton.classList.add("plan-order-button");
+
+        upButton.disabled = index === 0;
+        downButton.disabled =
+            index === currentPlan.exercises.length - 1;
+
+        upButton.addEventListener("click", () => {
+            if (index === 0) return;
+
+            const temp = currentPlan.exercises[index - 1];
+            currentPlan.exercises[index - 1] =
+                currentPlan.exercises[index];
+            currentPlan.exercises[index] = temp;
+
+            renderPlanExercises();
+        });
+
+        downButton.addEventListener("click", () => {
+            if (index === currentPlan.exercises.length - 1) return;
+
+            const temp = currentPlan.exercises[index + 1];
+            currentPlan.exercises[index + 1] =
+                currentPlan.exercises[index];
+            currentPlan.exercises[index] = temp;
+
+            renderPlanExercises();
+        });
+
+        orderCell.appendChild(upButton);
+        orderCell.appendChild(downButton);
+
+        row.appendChild(orderCell);
+
+        tbody.appendChild(row);
+    });
+
+    table.appendChild(tbody);
+    planExerciseList.appendChild(table);
+}
+
+function openPlanExerciseDetails(planExercise, index) {
+    console.log("Détails de l'exercice :", planExercise, index);
 }
 
 function addExerciseToCurrentPlan(exercise) {
-    if (!currentPlan) {
-        return;
-    }
+    if (!currentPlan) return;
+
+    const isIso = isIsometricExercise(exercise);
 
     currentPlan.exercises.push({
         exercise: exercise,
-        sets: 3,
-        reps: 10,
+
+        sets: currentPlan.defaults.sets,
+
+        value: isIso
+            ? currentPlan.defaults.time
+            : currentPlan.defaults.reps,
+
+        valueUnit: isIso ? "sec" : "rep",
+
+        rest: currentPlan.defaults.rest,
+
+        tempo: {
+            first: currentPlan.defaults.tempo.first,
+            second: currentPlan.defaults.tempo.second,
+            third: currentPlan.defaults.tempo.third,
+            fourth: currentPlan.defaults.tempo.fourth
+        },
+
         weight: 0,
-        rest: 90,
-        tempo: ""
+        weightUnit: "lbs",
+
+        details: {},
+
+        combination: {
+            type: null,
+            group: null
+        }
     });
 
     renderPlanExercises();
@@ -1808,6 +2401,29 @@ function removeExerciseFromCurrentPlan(index) {
     }
 
     currentPlan.exercises.splice(index, 1);
+    renderPlanExercises();
+}
+
+function updatePlanExerciseProgression(planExercise, newExercise) {
+    const oldExercise = planExercise.exercise;
+
+    const oldIsIso = isIsometricExercise(oldExercise);
+    const newIsIso = isIsometricExercise(newExercise);
+
+    planExercise.exercise = newExercise;
+
+    // Push/Pull → Iso
+    if (!oldIsIso && newIsIso) {
+        planExercise.value = currentPlan.defaults.time;
+        planExercise.valueUnit = "sec";
+    }
+
+    // Iso → Push/Pull
+    if (oldIsIso && !newIsIso) {
+        planExercise.value = currentPlan.defaults.reps;
+        planExercise.valueUnit = "rep";
+    }
+
     renderPlanExercises();
 }
 
@@ -2030,6 +2646,10 @@ function syncPlanFiltersToSearch() {
     saveSearchState(planSearchState);
 
     displayExercises();
+
+    if (currentPlan) {
+    renderPlanExercises();
+}
 }
 
 function updatePlanFilterSummaries() {
@@ -2170,11 +2790,26 @@ createPlanButton.addEventListener("click", () => {
         return;
     }
 
-    const plan = {
-        id: Date.now(),
-        name: planName,
-        exercises: []
-    };
+const plan = {
+    id: Date.now(),
+    name: planName,
+
+    defaults: {
+        sets: 3,
+        reps: 10,
+        time: 30,
+        rest: 90,
+
+        tempo: {
+            first: 3,
+            second: 1,
+            third: 1,
+            fourth: 0
+        }
+    },
+
+    exercises: []
+};
 
     plansList.innerHTML = `
         <div class="plan-card">
@@ -2192,11 +2827,14 @@ createPlanButton.addEventListener("click", () => {
 
 openPlanButton.addEventListener("click", () => {
     currentPlan = plan;
+    ensurePlanDefaults(currentPlan);
 
     planHome.style.display = "none";
     planEditor.style.display = "block";
 
     currentPlanName.textContent = plan.name;
+
+    loadPlanDefaultsIntoInputs();
 
     renderPlanExercises();
 
@@ -2229,3 +2867,4 @@ setupCategoryButtons();
 createProgressionOptions();
 setupFilterRows();
 displayExercises();
+setupPlanDefaultInputs();
