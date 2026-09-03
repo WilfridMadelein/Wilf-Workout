@@ -1956,12 +1956,10 @@ function renderPlanExercises() {
         return;
     }
 
+    normalizeCombinationNumbers();
+
     const table = document.createElement("table");
     table.classList.add("plan-exercise-table");
-
-    // En-tête
-    const thead = document.createElement("thead");
-    const headerRow = document.createElement("tr");
 
     const headers = [
         "Exercices",
@@ -1977,375 +1975,397 @@ function renderPlanExercises() {
         "Ordre"
     ];
 
-    headers.forEach(headerText => {
+    const thead = document.createElement("thead");
+    const headerRow = document.createElement("tr");
+
+    headers.forEach(text => {
         const th = document.createElement("th");
-        th.textContent = headerText;
+        th.textContent = text;
         headerRow.appendChild(th);
     });
 
     thead.appendChild(headerRow);
     table.appendChild(thead);
 
-    // Corps
-    const tbody = document.createElement("tbody");
+    // Regroupe les exercices par combinaison.
+    const groups = [];
 
-    currentPlan.exercises.forEach((planExercise, index) => {
-        const exercise = planExercise.exercise;
+    currentPlan.exercises.forEach(planExercise => {
+        const group = planExercise.combination.group;
 
-        const row = document.createElement("tr");
+        let groupData = groups.find(item => item.group === group);
 
-        // =========================
-        // EXERCICE
-        // =========================
+        if (!groupData) {
+            groupData = {
+                group,
+                exercises: []
+            };
 
-        const exerciseCell = document.createElement("td");
+            groups.push(groupData);
+        }
 
-        const exerciseName = document.createElement("button");
-        exerciseName.classList.add("plan-exercise-name");
-        exerciseName.textContent = exercise.nom;
-
-        exerciseName.addEventListener("click", () => {
-            displayExerciseDetails(exercise, "plan");
-        });
-
-        exerciseCell.appendChild(exerciseName);
-        row.appendChild(exerciseCell);
-
-        // =========================
-        // PROGRESSION
-        // =========================
-
-        const progressionCell = document.createElement("td");
-
-        const progressionName = document.createElement("span");
-
-progressionName.textContent =
-    getProgressionName(exercise) || "—";
-
-progressionCell.appendChild(progressionName);
-
-const progressionButtons = document.createElement("div");
-progressionButtons.classList.add("plan-progression-buttons");
-
-const progressionUp = document.createElement("button");
-progressionUp.textContent = "▲";
-progressionUp.classList.add("plan-progression-button");
-
-const progressionDown = document.createElement("button");
-progressionDown.textContent = "▼";
-progressionDown.classList.add("plan-progression-button");
-
-progressionButtons.appendChild(progressionUp);
-progressionButtons.appendChild(progressionDown);
-
-progressionCell.appendChild(progressionButtons);
-
-row.appendChild(progressionCell);
-
-const nextProgression = getPlanProgressionNeighbor(
-    exercise,
-    1
-);
-
-const previousProgression = getPlanProgressionNeighbor(
-    exercise,
-    -1
-);
-
-progressionUp.disabled = !nextProgression;
-progressionDown.disabled = !previousProgression;
-
-progressionUp.addEventListener("click", () => {
-    if (!nextProgression) return;
-
-    updatePlanExerciseProgression(
-        planExercise,
-        nextProgression
-    );
-
-    displayExerciseDetails(
-        nextProgression,
-        "plan"
-    );
-});
-
-progressionDown.addEventListener("click", () => {
-    if (!previousProgression) return;
-
-    updatePlanExerciseProgression(
-        planExercise,
-        previousProgression
-    );
-
-    displayExerciseDetails(
-        previousProgression,
-        "plan"
-    );
-});
-
-        // =========================
-        // MUSCLES
-        // =========================
-
-        const musclesCell = document.createElement("td");
-
-        const muscleFamilies = [
-            ...new Set(
-                exercise.muscles_principaux.map(muscle => muscle[0])
-            )
-        ];
-
-        musclesCell.textContent =
-            muscleFamilies.length > 0
-                ? muscleFamilies.join(" / ")
-                : "—";
-
-        row.appendChild(musclesCell);
-
-        // =========================
-        // POIDS
-        // =========================
-
-const weightCell = document.createElement("td");
-
-const weightInput = createPlanNumberInput(
-    planExercise.weight,
-    value => {
-        planExercise.weight = value ?? 0;
-    },
-    {
-        min: 0,
-        step: 0.5
-    }
-);
-
-weightCell.appendChild(weightInput);
-
-const weightUnitSelect = document.createElement("select");
-
-weightUnitSelect.classList.add("plan-weight-unit");
-
-["lbs", "kg"].forEach(unit => {
-    const option = document.createElement("option");
-
-    option.value = unit;
-    option.textContent = unit;
-
-    if (planExercise.weightUnit === unit) {
-        option.selected = true;
-    }
-
-    weightUnitSelect.appendChild(option);
-});
-
-weightUnitSelect.addEventListener("change", () => {
-    planExercise.weightUnit = weightUnitSelect.value;
-});
-
-weightCell.appendChild(weightUnitSelect);
-
-row.appendChild(weightCell);
-
-        // =========================
-        // SÉRIES
-        // =========================
-
-const setsCell = document.createElement("td");
-
-const setsInput = createPlanNumberInput(
-    planExercise.sets,
-    value => {
-        planExercise.sets = value ?? 0;
-    },
-    {
-        min: 1,
-        step: 1
-    }
-);
-
-setsCell.appendChild(setsInput);
-
-row.appendChild(setsCell);
-
- // =========================
-// RÉPÉTITIONS / TEMPS
-// =========================
-
-const repsTimeCell = document.createElement("td");
-
-const valueInput = createPlanNumberInput(
-    planExercise.value,
-    value => {
-        planExercise.value = value ?? 0;
-    },
-    {
-        min: 1,
-        step: 1
-    }
-);
-
-repsTimeCell.appendChild(valueInput);
-
-const valueUnitSelect = document.createElement("select");
-
-const repOption = document.createElement("option");
-repOption.value = "rep";
-repOption.textContent = "rep";
-
-const secOption = document.createElement("option");
-secOption.value = "sec";
-secOption.textContent = "sec";
-
-valueUnitSelect.appendChild(repOption);
-valueUnitSelect.appendChild(secOption);
-
-valueUnitSelect.value = planExercise.valueUnit;
-
-valueUnitSelect.addEventListener("change", () => {
-    planExercise.valueUnit = valueUnitSelect.value;
-});
-
-repsTimeCell.appendChild(valueUnitSelect);
-
-row.appendChild(repsTimeCell);
-
-// =========================
-// TEMPO
-// =========================
-
-const tempoCell = document.createElement("td");
-
-const tempoContainer = document.createElement("div");
-tempoContainer.classList.add("plan-tempo-container");
-
-const tempoKeys = [
-    "first",
-    "second",
-    "third",
-    "fourth"
-];
-
-tempoKeys.forEach(key => {
-    const tempoInput = document.createElement("input");
-
-    tempoInput.type = "number";
-    tempoInput.min = "0";
-    tempoInput.value = planExercise.tempo[key] ?? "";
-
-    tempoInput.classList.add("plan-tempo-input");
-
-    tempoInput.addEventListener("change", () => {
-        planExercise.tempo[key] = tempoInput.value;
+        groupData.exercises.push(planExercise);
     });
 
-    tempoContainer.appendChild(tempoInput);
-});
+    const tbody = document.createElement("tbody");
 
-tempoCell.appendChild(tempoContainer);
+    groups.forEach((groupData, groupIndex) => {
+        const { group, exercises: groupExercises } = groupData;
 
-row.appendChild(tempoCell);
+        groupExercises.forEach((planExercise, exerciseIndex) => {
+            const exercise = planExercise.exercise;
+            const row = document.createElement("tr");
 
-        // =========================
-        // PAUSE
-        // =========================
+            // Exercice
+            const exerciseCell = document.createElement("td");
 
-const restCell = document.createElement("td");
+            const exerciseName = document.createElement("button");
+            exerciseName.classList.add("plan-exercise-name");
+            exerciseName.textContent = exercise.nom;
 
-const restInput = createPlanNumberInput(
-    planExercise.rest,
-    value => {
-        planExercise.rest = value ?? 0;
-    },
-    {
-        min: 0,
-        step: 1
-    }
-);
+            exerciseName.addEventListener("click", () => {
+                displayExerciseDetails(exercise, "plan");
+            });
 
-restCell.appendChild(restInput);
+            exerciseCell.appendChild(exerciseName);
+            row.appendChild(exerciseCell);
 
-const restUnit = document.createElement("span");
-restUnit.textContent = " sec";
+            // Progression
+            const progressionCell = document.createElement("td");
 
-restCell.appendChild(restUnit);
+            const progressionName = document.createElement("span");
+            progressionName.textContent =
+                getProgressionName(exercise) || "—";
 
-row.appendChild(restCell);
+            progressionCell.appendChild(progressionName);
 
-        // =========================
-        // DÉTAILS
-        // =========================
+            const progressionButtons = document.createElement("div");
+            progressionButtons.classList.add("plan-progression-buttons");
 
-        const detailsCell = document.createElement("td");
+            const progressionUp = document.createElement("button");
+            progressionUp.textContent = "▲";
+            progressionUp.classList.add("plan-progression-button");
 
-        const detailsButton = document.createElement("button");
-        detailsButton.textContent = "Détails";
+            const progressionDown = document.createElement("button");
+            progressionDown.textContent = "▼";
+            progressionDown.classList.add("plan-progression-button");
 
-        detailsButton.addEventListener("click", () => {
-            openPlanExerciseDetails(planExercise, index);
+            progressionButtons.appendChild(progressionUp);
+            progressionButtons.appendChild(progressionDown);
+            progressionCell.appendChild(progressionButtons);
+            row.appendChild(progressionCell);
+
+            const nextProgression =
+                getPlanProgressionNeighbor(exercise, 1);
+
+            const previousProgression =
+                getPlanProgressionNeighbor(exercise, -1);
+
+            progressionUp.disabled = !nextProgression;
+            progressionDown.disabled = !previousProgression;
+
+            progressionUp.addEventListener("click", () => {
+                if (!nextProgression) return;
+
+                updatePlanExerciseProgression(
+                    planExercise,
+                    nextProgression
+                );
+
+                displayExerciseDetails(nextProgression, "plan");
+            });
+
+            progressionDown.addEventListener("click", () => {
+                if (!previousProgression) return;
+
+                updatePlanExerciseProgression(
+                    planExercise,
+                    previousProgression
+                );
+
+                displayExerciseDetails(previousProgression, "plan");
+            });
+
+            // Muscles
+            const musclesCell = document.createElement("td");
+
+            const muscleFamilies = [
+                ...new Set(
+                    exercise.muscles_principaux.map(
+                        muscle => muscle[0]
+                    )
+                )
+            ];
+
+            musclesCell.textContent =
+                muscleFamilies.length
+                    ? muscleFamilies.join(" / ")
+                    : "—";
+
+            row.appendChild(musclesCell);
+
+            // Poids
+            const weightCell = document.createElement("td");
+
+            const weightInput = createPlanNumberInput(
+                planExercise.weight,
+                value => {
+                    planExercise.weight = value ?? 0;
+                },
+                {
+                    min: 0,
+                    step: 0.5
+                }
+            );
+
+            weightCell.appendChild(weightInput);
+
+            const weightUnitSelect = document.createElement("select");
+            weightUnitSelect.classList.add("plan-weight-unit");
+
+            ["lbs", "kg"].forEach(unit => {
+                const option = document.createElement("option");
+
+                option.value = unit;
+                option.textContent = unit;
+                option.selected = planExercise.weightUnit === unit;
+
+                weightUnitSelect.appendChild(option);
+            });
+
+            weightUnitSelect.addEventListener("change", () => {
+                planExercise.weightUnit = weightUnitSelect.value;
+            });
+
+            weightCell.appendChild(weightUnitSelect);
+            row.appendChild(weightCell);
+
+            // Séries
+            const setsCell = document.createElement("td");
+
+            setsCell.appendChild(
+                createPlanNumberInput(
+                    planExercise.sets,
+                    value => {
+                        planExercise.sets = value ?? 0;
+                    },
+                    {
+                        min: 1,
+                        step: 1
+                    }
+                )
+            );
+
+            row.appendChild(setsCell);
+
+            // Répétitions / temps
+            const repsTimeCell = document.createElement("td");
+
+            repsTimeCell.appendChild(
+                createPlanNumberInput(
+                    planExercise.value,
+                    value => {
+                        planExercise.value = value ?? 0;
+                    },
+                    {
+                        min: 1,
+                        step: 1
+                    }
+                )
+            );
+
+            const valueUnitSelect = document.createElement("select");
+
+            [
+                ["rep", "rep"],
+                ["sec", "sec"]
+            ].forEach(([value, text]) => {
+                const option = document.createElement("option");
+                option.value = value;
+                option.textContent = text;
+                valueUnitSelect.appendChild(option);
+            });
+
+            valueUnitSelect.value = planExercise.valueUnit;
+
+            valueUnitSelect.addEventListener("change", () => {
+                planExercise.valueUnit = valueUnitSelect.value;
+            });
+
+            repsTimeCell.appendChild(valueUnitSelect);
+            row.appendChild(repsTimeCell);
+
+            // Tempo
+            const tempoCell = document.createElement("td");
+            const tempoContainer = document.createElement("div");
+
+            tempoContainer.classList.add("plan-tempo-container");
+
+            ["first", "second", "third", "fourth"].forEach(key => {
+                const input = document.createElement("input");
+
+                input.type = "number";
+                input.min = "0";
+                input.value = planExercise.tempo[key] ?? "";
+                input.classList.add("plan-tempo-input");
+
+                input.addEventListener("change", () => {
+                    planExercise.tempo[key] = input.value;
+                });
+
+                tempoContainer.appendChild(input);
+            });
+
+            tempoCell.appendChild(tempoContainer);
+            row.appendChild(tempoCell);
+
+            // Pause
+            const restCell = document.createElement("td");
+
+            restCell.appendChild(
+                createPlanNumberInput(
+                    planExercise.rest,
+                    value => {
+                        planExercise.rest = value ?? 0;
+                    },
+                    {
+                        min: 0,
+                        step: 1
+                    }
+                )
+            );
+
+            const restUnit = document.createElement("span");
+            restUnit.textContent = " sec";
+
+            restCell.appendChild(restUnit);
+            row.appendChild(restCell);
+
+            // Détails
+            const detailsCell = document.createElement("td");
+
+            const detailsButton = document.createElement("button");
+            detailsButton.textContent = "Détails";
+            detailsButton.classList.add("plan-details-button");
+
+            detailsButton.addEventListener("click", () => {
+                const index = currentPlan.exercises.indexOf(planExercise);
+                openPlanExerciseDetails(planExercise, index);
+            });
+
+            detailsCell.appendChild(detailsButton);
+            row.appendChild(detailsCell);
+
+            // Combinaison
+            if (exerciseIndex === 0) {
+                const combinationCell = document.createElement("td");
+
+                combinationCell.rowSpan = groupExercises.length;
+                combinationCell.classList.add("plan-combination-cell");
+
+                const combinationButton =
+                    document.createElement("button");
+
+                combinationButton.textContent = `C${group}`;
+                combinationButton.classList.add(
+                    "plan-combination-button"
+                );
+
+                combinationButton.addEventListener("click", () => {
+                    openCombinationMenu(
+                        planExercise,
+                        combinationButton
+                    );
+                });
+
+                combinationCell.appendChild(combinationButton);
+                row.appendChild(combinationCell);
+            }
+
+            // Ordre dans la combinaison
+            const combinationOrderCell = document.createElement("td");
+
+            if (groupExercises.length > 1) {
+                const buttons = document.createElement("div");
+                buttons.classList.add(
+                    "plan-combination-exercise-buttons"
+                );
+
+                const upButton = document.createElement("button");
+                upButton.textContent = "↑";
+                upButton.classList.add("plan-order-button");
+                upButton.disabled = exerciseIndex === 0;
+
+                upButton.addEventListener("click", () => {
+                    moveExerciseWithinCombination(
+                        planExercise,
+                        -1
+                    );
+                });
+
+                const downButton = document.createElement("button");
+                downButton.textContent = "↓";
+                downButton.classList.add("plan-order-button");
+                downButton.disabled =
+                    exerciseIndex === groupExercises.length - 1;
+
+                downButton.addEventListener("click", () => {
+                    moveExerciseWithinCombination(
+                        planExercise,
+                        1
+                    );
+                });
+
+                buttons.appendChild(upButton);
+                buttons.appendChild(downButton);
+
+                combinationOrderCell.appendChild(buttons);
+            }
+
+            row.appendChild(combinationOrderCell);
+
+            // Ordre des combinaisons
+            if (exerciseIndex === 0) {
+                const groupOrderCell = document.createElement("td");
+
+                groupOrderCell.rowSpan = groupExercises.length;
+                groupOrderCell.classList.add(
+                    "plan-combination-group-order"
+                );
+
+                const buttons = document.createElement("div");
+                buttons.classList.add(
+                    "plan-combination-group-order-container"
+                );
+
+                const upButton = document.createElement("button");
+                upButton.textContent = "↑";
+                upButton.classList.add("plan-order-button");
+                upButton.disabled = groupIndex === 0;
+
+                upButton.addEventListener("click", () => {
+                    moveCombination(group, -1);
+                });
+
+                const downButton = document.createElement("button");
+                downButton.textContent = "↓";
+                downButton.classList.add("plan-order-button");
+                downButton.disabled =
+                    groupIndex === groups.length - 1;
+
+                downButton.addEventListener("click", () => {
+                    moveCombination(group, 1);
+                });
+
+                buttons.appendChild(upButton);
+                buttons.appendChild(downButton);
+
+                groupOrderCell.appendChild(buttons);
+                row.appendChild(groupOrderCell);
+            }
+
+            tbody.appendChild(row);
         });
-
-        detailsButton.classList.add("plan-details-button");
-
-        detailsCell.appendChild(detailsButton);
-
-        row.appendChild(detailsCell);
-
-        // =========================
-        // COMBINAISONS
-        // =========================
-
-        const combinationCell = document.createElement("td");
-
-        combinationCell.textContent = "—";
-
-        row.appendChild(combinationCell);
-
-        // =========================
-        // ORDRE
-        // =========================
-
-        const orderCell = document.createElement("td");
-
-        const upButton = document.createElement("button");
-        upButton.textContent = "↑";
-        upButton.classList.add("plan-order-button");
-
-        const downButton = document.createElement("button");
-        downButton.textContent = "↓";
-        downButton.classList.add("plan-order-button");
-
-        upButton.disabled = index === 0;
-        downButton.disabled =
-            index === currentPlan.exercises.length - 1;
-
-        upButton.addEventListener("click", () => {
-            if (index === 0) return;
-
-            const temp = currentPlan.exercises[index - 1];
-            currentPlan.exercises[index - 1] =
-                currentPlan.exercises[index];
-            currentPlan.exercises[index] = temp;
-
-            renderPlanExercises();
-        });
-
-        downButton.addEventListener("click", () => {
-            if (index === currentPlan.exercises.length - 1) return;
-
-            const temp = currentPlan.exercises[index + 1];
-            currentPlan.exercises[index + 1] =
-                currentPlan.exercises[index];
-            currentPlan.exercises[index] = temp;
-
-            renderPlanExercises();
-        });
-
-        orderCell.appendChild(upButton);
-        orderCell.appendChild(downButton);
-
-        row.appendChild(orderCell);
-
-        tbody.appendChild(row);
     });
 
     table.appendChild(tbody);
@@ -2355,6 +2375,363 @@ row.appendChild(restCell);
 function openPlanExerciseDetails(planExercise, index) {
     console.log("Détails de l'exercice :", planExercise, index);
 }
+
+// Combinaisons
+
+function getNextCombinationGroup() {
+    if (!currentPlan || currentPlan.exercises.length === 0) {
+        return 1;
+    }
+
+    const groups = currentPlan.exercises
+        .map(planExercise => planExercise.combination?.group)
+        .filter(group => Number.isInteger(group));
+
+    if (groups.length === 0) {
+        return 1;
+    }
+
+    return Math.max(...groups) + 1;
+}
+
+function getCombinationGroups() {
+    if (!currentPlan) {
+        return [];
+    }
+
+    const groups = [];
+
+    currentPlan.exercises.forEach(planExercise => {
+        const group = planExercise.combination?.group;
+
+        if (!Number.isInteger(group)) {
+            return;
+        }
+
+        if (!groups.includes(group)) {
+            groups.push(group);
+        }
+    });
+
+    return groups;
+}
+
+function normalizeCombinationNumbers() {
+    if (!currentPlan) {
+        return;
+    }
+
+    const groups = getCombinationGroups();
+
+    const groupMapping = new Map();
+
+    groups.forEach((group, index) => {
+        groupMapping.set(group, index + 1);
+    });
+
+    currentPlan.exercises.forEach(planExercise => {
+        const oldGroup = planExercise.combination?.group;
+
+        if (!groupMapping.has(oldGroup)) {
+            return;
+        }
+
+        planExercise.combination.group =
+            groupMapping.get(oldGroup);
+    });
+}
+
+function moveExerciseToCombination(planExercise, targetGroup) {
+    if (!currentPlan) {
+        return;
+    }
+
+    const exercises = currentPlan.exercises;
+
+    const currentIndex = exercises.indexOf(planExercise);
+
+    if (currentIndex === -1) {
+        return;
+    }
+
+    const currentGroup =
+        planExercise.combination?.group;
+
+    if (currentGroup === targetGroup) {
+        return;
+    }
+
+    // Retirer l'exercice de sa position actuelle
+    exercises.splice(currentIndex, 1);
+
+    // Changer sa combinaison
+    planExercise.combination.group = targetGroup;
+
+    // Trouver le dernier exercice de la combinaison cible
+    let insertIndex = -1;
+
+    for (let i = 0; i < exercises.length; i++) {
+        if (
+            exercises[i].combination?.group === targetGroup
+        ) {
+            insertIndex = i;
+        }
+    }
+
+    if (insertIndex === -1) {
+        // La combinaison n'existe plus
+        exercises.push(planExercise);
+    } else {
+        // Ajouter à la fin de la combinaison
+        exercises.splice(
+            insertIndex + 1,
+            0,
+            planExercise
+        );
+    }
+
+    normalizeCombinationNumbers();
+
+    renderPlanExercises();
+}
+
+function moveExerciseToNewCombination(planExercise) {
+    if (!currentPlan) {
+        return;
+    }
+
+    const exercises = currentPlan.exercises;
+    const currentIndex = exercises.indexOf(planExercise);
+
+    if (currentIndex === -1) {
+        return;
+    }
+
+    // Retirer l'exercice de sa combinaison actuelle
+    exercises.splice(currentIndex, 1);
+
+    // L'exercice devient temporairement son propre groupe
+    const newGroup = getNextCombinationGroup();
+
+    planExercise.combination.group = newGroup;
+
+    // On le remet à la même position générale
+    exercises.splice(currentIndex, 0, planExercise);
+
+    normalizeCombinationNumbers();
+
+    renderPlanExercises();
+}
+
+function getAvailableCombinationGroups() {
+    if (!currentPlan) {
+        return [];
+    }
+
+    return getCombinationGroups().sort((a, b) => a - b);
+}
+
+function openCombinationMenu(planExercise, button) {
+    if (!currentPlan) {
+        return;
+    }
+
+    // Fermer les anciens menus
+    document
+        .querySelectorAll(".combination-menu")
+        .forEach(menu => menu.remove());
+
+    const menu = document.createElement("div");
+    menu.classList.add("combination-menu");
+
+    const label = document.createElement("div");
+    label.textContent = "Ajouté à combinaison :";
+    label.classList.add("combination-menu-label");
+
+    menu.appendChild(label);
+
+    const select = document.createElement("select");
+
+    select.classList.add("combination-select");
+
+    // Option nouvelle combinaison
+    const newOption = document.createElement("option");
+    newOption.value = "new";
+    newOption.textContent = "Nouvelle combinaison";
+
+    select.appendChild(newOption);
+
+    // Combinaisons existantes
+    getAvailableCombinationGroups().forEach(group => {
+        if (group === planExercise.combination.group) {
+            return;
+        }
+
+        const option = document.createElement("option");
+
+        option.value = group;
+        option.textContent = `Combinaison ${group}`;
+
+        select.appendChild(option);
+    });
+
+    menu.appendChild(select);
+
+    button.parentElement.appendChild(menu);
+
+    select.addEventListener("change", () => {
+        if (select.value === "new") {
+            moveExerciseToNewCombination(planExercise);
+        } else {
+            moveExerciseToCombination(
+                planExercise,
+                Number(select.value)
+            );
+        }
+
+        menu.remove();
+    });
+}
+
+function moveExerciseWithinCombination(planExercise, direction) {
+    if (!currentPlan) {
+        return;
+    }
+
+    const exercises = currentPlan.exercises;
+
+    const index = exercises.indexOf(planExercise);
+
+    if (index === -1) {
+        return;
+    }
+
+    const group = planExercise.combination?.group;
+
+    if (!Number.isInteger(group)) {
+        return;
+    }
+
+    const sameGroupIndexes = [];
+
+    exercises.forEach((item, i) => {
+        if (item.combination?.group === group) {
+            sameGroupIndexes.push(i);
+        }
+    });
+
+    const position = sameGroupIndexes.indexOf(index);
+
+    if (position === -1) {
+        return;
+    }
+
+    const targetPosition = position + direction;
+
+    if (
+        targetPosition < 0 ||
+        targetPosition >= sameGroupIndexes.length
+    ) {
+        return;
+    }
+
+    const targetIndex = sameGroupIndexes[targetPosition];
+
+    // Échanger les deux exercices
+    [
+        exercises[index],
+        exercises[targetIndex]
+    ] = [
+        exercises[targetIndex],
+        exercises[index]
+    ];
+
+    renderPlanExercises();
+}
+
+function moveCombination(group, direction) {
+    if (!currentPlan) {
+        return;
+    }
+
+    const exercises = currentPlan.exercises;
+
+    const groupIndexes = [];
+
+    exercises.forEach((planExercise, index) => {
+        if (planExercise.combination?.group === group) {
+            groupIndexes.push(index);
+        }
+    });
+
+    if (groupIndexes.length === 0) {
+        return;
+    }
+
+    const firstIndex = groupIndexes[0];
+    const lastIndex = groupIndexes[groupIndexes.length - 1];
+
+    // Combinaison précédente
+    const groups = getCombinationGroups();
+
+    const groupPosition = groups.indexOf(group);
+
+    const targetGroupPosition = groupPosition + direction;
+
+    if (
+        targetGroupPosition < 0 ||
+        targetGroupPosition >= groups.length
+    ) {
+        return;
+    }
+
+    const targetGroup = groups[targetGroupPosition];
+
+    const targetIndexes = [];
+
+    exercises.forEach((planExercise, index) => {
+        if (planExercise.combination?.group === targetGroup) {
+            targetIndexes.push(index);
+        }
+    });
+
+    if (targetIndexes.length === 0) {
+        return;
+    }
+
+    const targetFirstIndex = targetIndexes[0];
+    const targetLastIndex = targetIndexes[targetIndexes.length - 1];
+
+    const combinationExercises = exercises.splice(
+        firstIndex,
+        groupIndexes.length
+    );
+
+    let insertIndex;
+
+    if (direction === -1) {
+        insertIndex = targetFirstIndex;
+    } else {
+        insertIndex =
+            targetLastIndex -
+            (firstIndex < targetFirstIndex
+                ? groupIndexes.length
+                : 0) +
+            1;
+    }
+
+    exercises.splice(
+        insertIndex,
+        0,
+        ...combinationExercises
+    );
+
+    normalizeCombinationNumbers();
+
+    renderPlanExercises();
+}
+
+// Ajouter un exercice au plan actuel
 
 function addExerciseToCurrentPlan(exercise) {
     if (!currentPlan) return;
@@ -2388,7 +2765,7 @@ function addExerciseToCurrentPlan(exercise) {
 
         combination: {
             type: null,
-            group: null
+            group: getNextCombinationGroup()
         }
     });
 
