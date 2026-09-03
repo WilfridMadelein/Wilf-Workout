@@ -1497,43 +1497,42 @@ function displayExerciseDetails(exercise, context = "search") {
 
     nameElement.textContent = exercise.nom;
 
-    infoElement.innerHTML = `
-        <p><strong>Type :</strong> ${exercise.type}</p>
-        <p><strong>Catégorie :</strong> ${
-            exercise.cali && exercise.gym
-                ? "Calisthénique, Gym"
-                : exercise.cali
-                    ? "Calisthénique"
-                    : "Gym"
-        }</p>
-        <p><strong>Pronation :</strong> ${exercise.pronation || "—"}</p>
+infoElement.innerHTML = `
+    
+    <p>
+        <strong>Progression :</strong>
+        ${getProgressionDisplay(exercise) || "—"}
+    </p>
 
         <p>
-            <strong>Équipement :</strong><br>
-            ${exercise.equipement
-                .map(group => group.join(" OU "))
-                .join(" ET ")}
-        </p>
+        <strong>Muscles principaux :</strong><br>
+        ${exercise.muscles_principaux
+            .map(muscle => `${muscle[0]} — ${muscle[1]}`)
+            .join("<br>")}
+    </p>
 
-        <p>
-            <strong>Progression :</strong>
-            ${getProgressionDisplay(exercise) || "—"}
-        </p>
+    <p>
+        <strong>Muscles secondaires :</strong><br>
+        ${exercise.muscles_secondaires
+            .map(muscle => `${muscle[0]} — ${muscle[1]}`)
+            .join("<br>")}
+    </p>
 
-        <p>
-            <strong>Muscles principaux :</strong><br>
-            ${exercise.muscles_principaux
-                .map(muscle => `${muscle[0]} — ${muscle[1]}`)
-                .join("<br>")}
-        </p>
+<p><strong>Type :</strong> ${exercise.type}</p>
 
-        <p>
-            <strong>Muscles secondaires :</strong><br>
-            ${exercise.muscles_secondaires
-                .map(muscle => `${muscle[0]} — ${muscle[1]}`)
-                .join("<br>")}
-        </p>
-    `;
+    <p><strong>Catégorie :</strong> ${
+        exercise.cali && exercise.gym
+            ? "Calisthénique, Gym"
+            : exercise.cali
+                ? "Calisthénique"
+                : "Gym"
+    }</p>
+
+    ${getExerciseDetailsLines(exercise)
+        .map(line => `<p>${line}</p>`)
+        .join("")}
+
+`;
 
     updateProgressionNavigation(exercise, context);
 }
@@ -1552,6 +1551,125 @@ function exerciseMatchesCategoryFilter(exercise) {
 
 function exerciseMatchesEquipmentFilter(exercise) {
     return exerciseHasRequiredEquipment(exercise);
+}
+
+function getExerciseDetailsLines(exercise) {
+    const lines = [];
+
+    const gripValues = ["Neutre", "Pronation", "Supination"];
+    const footPositionValues = ["Intérieur", "Avant", "Extérieur"];
+
+    if (exercise.pronation) {
+        const values = Array.isArray(exercise.pronation)
+            ? exercise.pronation
+            : [exercise.pronation];
+
+        const grips = values.filter(value =>
+            gripValues.includes(value)
+        );
+
+        const footPositions = values.filter(value =>
+            footPositionValues.includes(value)
+        );
+
+        if (grips.length > 0) {
+            lines.push(`Grip : ${grips.join(" / ")}`);
+        }
+
+        if (footPositions.length > 0) {
+            lines.push(
+                `Position des pieds : ${footPositions.join(" / ")}`
+            );
+        }
+    }
+
+    if (exercise.equipement && exercise.equipement.length > 0) {
+        const equipmentGroups = exercise.equipement
+            .map(group => group.join(" ou "))
+            .join(" + ");
+
+        lines.push(`Équipement : ${equipmentGroups}`);
+    }
+
+    return lines;
+}
+
+function getPlanExerciseDetailsLines(exercise) {
+    const lines = [];
+
+    const gripValues = ["Neutre", "Pronation", "Supination"];
+    const footPositionValues = ["Intérieur", "Avant", "Extérieur"];
+
+    if (exercise.pronation) {
+        const values = Array.isArray(exercise.pronation)
+            ? exercise.pronation
+            : [exercise.pronation];
+
+        const grips = values.filter(value =>
+            gripValues.includes(value)
+        );
+
+        const footPositions = values.filter(value =>
+            footPositionValues.includes(value)
+        );
+
+        if (grips.length > 0) {
+            lines.push(`Grip : ${grips.join(" / ")}`);
+        }
+
+        if (footPositions.length > 0) {
+            lines.push(
+                `Position des pieds : ${footPositions.join(" / ")}`
+            );
+        }
+    }
+
+    if (exercise.equipement && exercise.equipement.length > 0) {
+        const equipmentGroups = exercise.equipement
+            .map(group => {
+                const availableEquipment = group.filter(equipment => {
+                    if (equipment === "Aucun") {
+                        return true;
+                    }
+
+                    return selectedPlanEquipment.has(equipment);
+                });
+
+                return availableEquipment;
+            })
+            .filter(group => group.length > 0);
+
+        if (equipmentGroups.length > 0) {
+            const equipmentText = equipmentGroups
+                .map(group => group.join(" OU "))
+                .join(" ET ");
+
+            lines.push(`Équipement : ${equipmentText}`);
+        }
+    }
+
+    return lines;
+}
+
+function closePlanInstructionsPopup(save = true) {
+    const popup = document.querySelector(".plan-instructions-popup");
+
+    if (!popup) {
+        return;
+    }
+
+    if (save && popup._saveInstructions) {
+        popup._saveInstructions();
+    }
+
+    popup.remove();
+
+    if (popup._closeHandler) {
+        document.removeEventListener(
+            "click",
+            popup._closeHandler
+        );
+    }
 }
 
 // Filtres ouverts
@@ -2477,10 +2595,7 @@ function openPlanExerciseInstructions(planExercise, index) {
         return;
     }
 
-    // Ferme une éventuelle bulle déjà ouverte.
-    document
-        .querySelectorAll(".plan-instructions-popup")
-        .forEach(popup => popup.remove());
+    closePlanInstructionsPopup();
 
     if (!planExercise.details) {
         planExercise.details = {};
@@ -2488,21 +2603,8 @@ function openPlanExerciseInstructions(planExercise, index) {
 
     const exercise = planExercise.exercise;
 
-    // Texte par défaut basé sur les informations de l'exercice.
     if (planExercise.details.instructions == null) {
-        const parts = [];
-
-        if (exercise.pronation) {
-            parts.push(`Pronation : ${exercise.pronation}`);
-        }
-
-        if (exercise.equipement && exercise.equipement.length > 0) {
-            const equipmentGroups = exercise.equipement
-                .map(group => group.join(" ou "))
-                .join(" + ");
-
-            parts.push(`Équipement : ${equipmentGroups}`);
-        }
+        const parts = getPlanExerciseDetailsLines(exercise);
 
         planExercise.details.instructions = parts.join("\n");
     }
@@ -2518,14 +2620,12 @@ function openPlanExerciseInstructions(planExercise, index) {
 
     popup.appendChild(textarea);
 
-    // Empêche le clic dans la bulle de la fermer.
     popup.addEventListener("click", event => {
         event.stopPropagation();
     });
 
     document.body.appendChild(popup);
 
-    // Positionne la bulle près du bouton Instructions.
     const button = document.querySelector(
         `.plan-instructions-button[data-plan-exercise-index="${index}"]`
     );
@@ -2533,8 +2633,11 @@ function openPlanExerciseInstructions(planExercise, index) {
     if (button) {
         const rect = button.getBoundingClientRect();
 
-        popup.style.left = `${rect.left + window.scrollX}px`;
-        popup.style.top = `${rect.bottom + window.scrollY + 5}px`;
+        popup.style.left =
+            `${rect.left + window.scrollX}px`;
+
+        popup.style.top =
+            `${rect.bottom + window.scrollY + 5}px`;
     }
 
     textarea.focus();
@@ -2544,23 +2647,33 @@ function openPlanExerciseInstructions(planExercise, index) {
             textarea.value.slice(0, 200);
     }
 
+    popup._saveInstructions = saveInstructions;
+
     textarea.addEventListener("input", saveInstructions);
 
-    function closePopup(event) {
-        if (!popup.contains(event.target)) {
-            saveInstructions();
-            popup.remove();
-            document.removeEventListener(
-                "click",
-                closePopup
-            );
+    function closeOnOutsideClick(event) {
+        if (popup.contains(event.target)) {
+            return;
         }
+
+        saveInstructions();
+        popup.remove();
+
+        document.removeEventListener(
+            "click",
+            closeOnOutsideClick
+        );
+
+        popup._closeHandler = null;
     }
 
-    // Petit délai pour ne pas fermer immédiatement
-    // à cause du clic ayant ouvert la bulle.
+    popup._closeHandler = closeOnOutsideClick;
+
     setTimeout(() => {
-        document.addEventListener("click", closePopup);
+        document.addEventListener(
+            "click",
+            closeOnOutsideClick
+        );
     }, 0);
 }
 
@@ -2975,15 +3088,21 @@ function updatePlanExerciseProgression(planExercise, newExercise) {
     const oldIsIso = isIsometricExercise(oldExercise);
     const newIsIso = isIsometricExercise(newExercise);
 
+    closePlanInstructionsPopup();
+
     planExercise.exercise = newExercise;
 
-    // Push/Pull → Iso
+    if (!planExercise.details) {
+        planExercise.details = {};
+    }
+
+    planExercise.details.instructions = null;
+
     if (!oldIsIso && newIsIso) {
         planExercise.value = currentPlan.defaults.time;
         planExercise.valueUnit = "sec";
     }
 
-    // Iso → Push/Pull
     if (oldIsIso && !newIsIso) {
         planExercise.value = currentPlan.defaults.reps;
         planExercise.valueUnit = "rep";
