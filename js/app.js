@@ -2257,30 +2257,22 @@ function renderPlanExercises() {
             row.appendChild(detailsCell);
 
             // Combinaison
-            if (exerciseIndex === 0) {
-                const combinationCell = document.createElement("td");
+            const combinationCell = document.createElement("td");
 
-                combinationCell.rowSpan = groupExercises.length;
-                combinationCell.classList.add("plan-combination-cell");
+            const combinationButton = document.createElement("button");
 
-                const combinationButton =
-                    document.createElement("button");
+            combinationButton.textContent = `C${group}`;
+            combinationButton.classList.add("plan-combination-button");
 
-                combinationButton.textContent = `C${group}`;
-                combinationButton.classList.add(
-                    "plan-combination-button"
+            combinationButton.addEventListener("click", () => {
+                openCombinationMenu(
+                    planExercise,
+                    combinationButton
                 );
+            });
 
-                combinationButton.addEventListener("click", () => {
-                    openCombinationMenu(
-                        planExercise,
-                        combinationButton
-                    );
-                });
-
-                combinationCell.appendChild(combinationButton);
-                row.appendChild(combinationCell);
-            }
+            combinationCell.appendChild(combinationButton);
+            row.appendChild(combinationCell);
 
             // Ordre dans la combinaison
             const combinationOrderCell = document.createElement("td");
