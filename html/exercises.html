@@ -17,11 +17,7 @@
                         </h2>
                     </div>
 
-                    <input
-                        type="text"
-                        id="search-input"
-                        placeholder="Rechercher un exercice..."
-                    >
+                    <input type="text" id="search-input" placeholder="Rechercher un exercice...">
 
                     <div id="exercise-list"></div>
 
@@ -40,28 +36,20 @@
                             <div class="exercise-detail-header">
 
                                 <div class="progression-navigation">
-
                                     <button
                                         id="progression-up-button"
                                         class="progression-nav-button"
                                         aria-label="Progression suivante"
-                                    >
-                                        ▲
-                                    </button>
+                                    >▲</button>
 
                                     <button
                                         id="progression-down-button"
                                         class="progression-nav-button"
                                         aria-label="Progression précédente"
-                                    >
-                                        ▼
-                                    </button>
-
+                                    >▼</button>
                                 </div>
 
-                                <h3 id="details-exercise-name">
-                                    Sélectionne un exercice.
-                                </h3>
+                                <h3 id="details-exercise-name">Sélectionne un exercice.</h3>
 
                             </div>
 
@@ -82,45 +70,20 @@
                 <!-- CATÉGORIE -->
                 <div class="filter-row">
 
-                    <button
-                        class="filter-title"
-                        data-filter="category"
-                    >
+                    <button class="filter-title" data-filter="category">
                         <span>Catégorie</span>
                         <span class="filter-arrow">▼</span>
                     </button>
 
-                    <div
-                        id="category-summary"
-                        class="filter-summary"
-                    ></div>
+                    <div id="category-summary" class="filter-summary"></div>
 
                 </div>
 
-                <div
-                    id="category-filter-options"
-                    class="filter-options"
-                >
+                <div id="category-filter-options" class="filter-options">
 
-                    <div
-                        id="category-filters"
-                        class="filter-buttons"
-                    >
-
-                        <button
-                            class="filter-button active"
-                            data-category="cali"
-                        >
-                            Cali
-                        </button>
-
-                        <button
-                            class="filter-button active"
-                            data-category="gym"
-                        >
-                            Gym
-                        </button>
-
+                    <div id="category-filters" class="filter-buttons">
+                        <button class="filter-button active" data-category="cali">Cali</button>
+                        <button class="filter-button active" data-category="gym">Gym</button>
                     </div>
 
                 </div>
@@ -129,59 +92,22 @@
                 <!-- TYPE -->
                 <div class="filter-row">
 
-                    <button
-                        class="filter-title"
-                        data-filter="type"
-                    >
+                    <button class="filter-title" data-filter="type">
                         <span>Type</span>
                         <span class="filter-arrow">▼</span>
                     </button>
 
-                    <div
-                        id="type-summary"
-                        class="filter-summary"
-                    ></div>
+                    <div id="type-summary" class="filter-summary"></div>
 
                 </div>
 
-                <div
-                    id="type-filter-options"
-                    class="filter-options"
-                >
+                <div id="type-filter-options" class="filter-options">
 
-                    <div
-                        id="type-filters"
-                        class="filter-buttons"
-                    >
-
-                        <button
-                            class="filter-button active"
-                            data-type="all"
-                        >
-                            Tous
-                        </button>
-
-                        <button
-                            class="filter-button"
-                            data-type="Push"
-                        >
-                            Push
-                        </button>
-
-                        <button
-                            class="filter-button"
-                            data-type="Pull"
-                        >
-                            Pull
-                        </button>
-
-                        <button
-                            class="filter-button"
-                            data-type="Isométrique"
-                        >
-                            Isométrique
-                        </button>
-
+                    <div id="type-filters" class="filter-buttons">
+                        <button class="filter-button active" data-type="all">Tous</button>
+                        <button class="filter-button" data-type="Push">Push</button>
+                        <button class="filter-button" data-type="Pull">Pull</button>
+                        <button class="filter-button" data-type="Isométrique">Isométrique</button>
                     </div>
 
                 </div>
@@ -190,31 +116,18 @@
                 <!-- MUSCLES -->
                 <div class="filter-row">
 
-                    <button
-                        class="filter-title"
-                        data-filter="muscle"
-                    >
+                    <button class="filter-title" data-filter="muscle">
                         <span>Muscles</span>
                         <span class="filter-arrow">▼</span>
                     </button>
 
-                    <div
-                        id="muscle-summary"
-                        class="filter-summary"
-                    ></div>
+                    <div id="muscle-summary" class="filter-summary"></div>
 
                 </div>
 
-                <div
-                    id="muscle-filter-options"
-                    class="filter-options"
-                >
+                <div id="muscle-filter-options" class="filter-options">
 
-                    <div
-                        id="muscle-filters"
-                        class="filter-buttons"
-                    ></div>
-
+                    <div id="muscle-filters" class="filter-buttons"></div>
                     <div id="submuscle-filters"></div>
 
                 </div>
@@ -223,10 +136,7 @@
                 <!-- PROGRESSION -->
                 <div class="filter-row">
 
-                    <button
-                        class="filter-title"
-                        data-filter="progression"
-                    >
+                    <button class="filter-title" data-filter="progression">
                         <span>Progression</span>
                         <span class="filter-arrow">▼</span>
                     </button>
@@ -234,72 +144,33 @@
                     <div class="filter-summary progression-summary">
 
                         <div class="progression-summary-row">
-
                             <span>Include</span>
-
-                            <div
-                                id="progression-include-summary"
-                                class="selected-items"
-                            ></div>
-
-                            <button
-                                id="progression-include-add"
-                                class="add-filter-button"
-                            >
-                                +
-                            </button>
-
+                            <div id="progression-include-summary" class="selected-items"></div>
+                            <button id="progression-include-add" class="add-filter-button">+</button>
                         </div>
 
                         <div class="progression-summary-row">
-
                             <span>Exclude</span>
-
-                            <div
-                                id="progression-exclude-summary"
-                                class="selected-items"
-                            ></div>
-
-                            <button
-                                id="progression-exclude-add"
-                                class="add-filter-button"
-                            >
-                                +
-                            </button>
-
+                            <div id="progression-exclude-summary" class="selected-items"></div>
+                            <button id="progression-exclude-add" class="add-filter-button">+</button>
                         </div>
 
                     </div>
 
                 </div>
 
-                <div
-                    id="progression-filter-options"
-                    class="filter-options"
-                >
+                <div id="progression-filter-options" class="filter-options">
 
                     <div class="progression-filter-panel">
 
                         <div class="progression-filter-column">
-
                             <strong>Include</strong>
-
-                            <div
-                                id="progression-include-options"
-                                class="progression-options"
-                            ></div>
-
+                            <div id="progression-include-options" class="progression-options"></div>
                         </div>
 
                         <div class="progression-filter-column">
-
                             <strong>Exclude</strong>
-
-                            <div
-                                id="progression-exclude-options"
-                                class="progression-options"
-                            ></div>
-
+                            <div id="progression-exclude-options" class="progression-options"></div>
                         </div>
 
                     </div>
@@ -310,45 +181,20 @@
                 <!-- ÉQUIPEMENTS -->
                 <div class="filter-row">
 
-                    <button
-                        class="filter-title"
-                        data-filter="equipment"
-                    >
+                    <button class="filter-title" data-filter="equipment">
                         <span>Équipements</span>
                         <span class="filter-arrow">▼</span>
                     </button>
 
-                    <div
-                        id="equipment-summary"
-                        class="filter-summary"
-                    ></div>
+                    <div id="equipment-summary" class="filter-summary"></div>
 
                 </div>
 
-                <div
-                    id="equipment-filter-options"
-                    class="filter-options"
-                >
+                <div id="equipment-filter-options" class="filter-options">
 
-                    <div
-                        id="equipment-filters"
-                        class="filter-buttons"
-                    >
-
-                        <button
-                            class="filter-button active"
-                            data-equipment="all"
-                        >
-                            Tous
-                        </button>
-
-                        <button
-                            class="filter-button"
-                            data-equipment="none"
-                        >
-                            Aucun
-                        </button>
-
+                    <div id="equipment-filters" class="filter-buttons">
+                        <button class="filter-button active" data-equipment="all">Tous</button>
+                        <button class="filter-button" data-equipment="none">Aucun</button>
                     </div>
 
                 </div>

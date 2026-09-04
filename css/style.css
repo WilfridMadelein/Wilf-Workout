@@ -1,6 +1,6 @@
-/* ==============================
+/* =========================================================
    GÉNÉRAL
-============================== */
+========================================================= */
 
 body {
     font-family: Arial, sans-serif;
@@ -8,19 +8,19 @@ body {
     padding: 20px;
 }
 
-header {
-    margin-bottom: 30px;
-}
-
 main {
     max-width: 1000px;
     margin: auto;
 }
 
+header {
+    margin-bottom: 30px;
+}
 
-/* ==============================
+
+/* =========================================================
    ONGLETS
-============================== */
+========================================================= */
 
 .app-header {
     text-align: center;
@@ -62,9 +62,9 @@ main {
 }
 
 
-/* ==============================
+/* =========================================================
    PAGE PLANS
-============================== */
+========================================================= */
 
 #page-plans {
     display: none;
@@ -90,8 +90,7 @@ main {
     width: 100%;
     max-width: 500px;
     padding: 10px;
-    margin-top: 8px;
-    margin-bottom: 15px;
+    margin: 8px 0 15px;
     box-sizing: border-box;
 }
 
@@ -102,59 +101,22 @@ main {
     border-radius: 8px;
 }
 
-#add-exercise-to-plan-button {
-    margin-left: 8px;
-    padding: 3px 8px;
-    font-size: 12px;
+
+/* =========================================================
+   ÉDITEUR DE PLAN
+========================================================= */
+
+#plan-editor {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+#back-to-plans-button {
+    padding: 7px 12px;
+    margin-bottom: 20px;
     cursor: pointer;
-}
-
-#plan-exercise-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.plan-exercise-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-}
-
-.plan-exercise-navigation {
-    display: flex;
-    flex-direction: column;
-}
-
-.plan-exercise-move-button {
-    width: 24px;
-    height: 16px;
-    padding: 0;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    font-size: 10px;
-    line-height: 1;
-}
-
-.plan-exercise-move-button:disabled {
-    opacity: 0.3;
-    cursor: default;
-}
-
-.plan-exercise-item > span {
-    flex: 1;
-}
-
-.remove-plan-exercise-button {
-    padding: 2px 6px;
-    border: none;
-    background: transparent;
-    cursor: pointer;
-    font-size: 14px;
 }
 
 .plan-header {
@@ -169,6 +131,12 @@ main {
     min-width: 0;
 }
 
+.plan-info h2,
+.plan-default-settings h3,
+.plan-setting-group h3 {
+    margin-top: 0;
+}
+
 .plan-default-settings {
     min-width: 0;
     padding: 15px;
@@ -177,19 +145,30 @@ main {
     box-sizing: border-box;
 }
 
-.plan-info h2 {
-    margin-top: 0;
-}
-
-.plan-default-settings h3 {
-    margin-top: 0;
+.plan-settings {
+    display: flex;
+    gap: 40px;
+    margin: 25px 0 35px;
 }
 
 .plan-setting-group {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    margin-top: 15px;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.plan-setting-group h3 {
+    margin-bottom: 10px;
+}
+
+.plan-option-button {
+    padding: 8px 14px;
+    margin: 3px;
+    cursor: pointer;
+}
+
+.plan-option-button.active {
+    font-weight: bold;
 }
 
 .plan-parameter {
@@ -221,52 +200,11 @@ main {
     text-align: center;
 }
 
-@media (max-width: 800px) {
-    .plan-header {
-        grid-template-columns: 1fr;
-    }
-}
-
-
-/* ==============================
-   ÉDITEUR DE PLAN
-============================== */
-
-#plan-editor {
-    max-width: none;
-    width: 100%;
-    margin: 0;
-}
-
-.plan-settings {
-    display: flex;
-    gap: 40px;
-    margin-top: 25px;
-    margin-bottom: 35px;
-}
-
-.plan-setting-group {
-    padding: 15px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-}
-
-.plan-setting-group h3 {
-    margin-top: 0;
-}
-
-.plan-option-button {
-    padding: 8px 14px;
-    margin: 3px;
-    cursor: pointer;
-}
-
-.plan-option-button.active {
-    font-weight: bold;
-}
-
 .plan-exercises {
+    width: 100%;
+    max-width: none;
     margin-top: 20px;
+    box-sizing: border-box;
 }
 
 #add-exercise-button {
@@ -275,24 +213,29 @@ main {
     cursor: pointer;
 }
 
-#back-to-plans-button {
-    padding: 7px 12px;
-    margin-bottom: 20px;
-    cursor: pointer;
+#plan-exercise-browser-container {
+    width: 100%;
+    max-width: none;
+    margin-top: 20px;
+    box-sizing: border-box;
 }
 
-#exercise-browser {
+#plan-exercise-browser-container > #exercise-browser,
+#plan-exercise-browser-container .exercise-search-area,
+#plan-exercise-browser-container .exercise-main-row {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+}
+
+#plan-exercise-browser-container > #exercise-browser {
     display: block;
 }
 
-#plan-exercise-browser-container {
-    margin-top: 20px;
-}
 
-
-/* ==============================
+/* =========================================================
    EXERCICES : RECHERCHE + DÉTAILS
-============================== */
+========================================================= */
 
 .exercise-search-area {
     display: flex;
@@ -328,21 +271,17 @@ main {
     font-size: 16px;
 }
 
-.exercise-count {
-    font-size: 14px;
-    font-weight: normal;
-    color: #777;
-}
-
+.exercise-count,
 #exercise-count {
     color: #888;
     font-size: 14px;
+    font-weight: normal;
 }
 
 
-/* ==============================
+/* =========================================================
    LISTE DES EXERCICES
-============================== */
+========================================================= */
 
 #exercise-list {
     height: 400px;
@@ -396,9 +335,9 @@ main {
 }
 
 
-/* ==============================
-   DÉTAILS
-============================== */
+/* =========================================================
+   DÉTAILS D'EXERCICE
+========================================================= */
 
 .exercise-details-panel {
     display: flex;
@@ -421,13 +360,6 @@ main {
     box-sizing: border-box;
 }
 
-
-/* Nom + navigation */
-
-.exercise-detail-header h3 {
-    margin: 0;
-}
-
 .exercise-detail-header {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto;
@@ -435,10 +367,8 @@ main {
     gap: 10px;
 }
 
-.progression-navigation {
-    display: flex;
-    gap: 4px;
-    flex-shrink: 0;
+.exercise-detail-header h3 {
+    margin: 0;
 }
 
 #details-exercise-name {
@@ -447,19 +377,16 @@ main {
     overflow-wrap: anywhere;
 }
 
-#add-exercise-to-plan-button {
-    justify-self: end;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
 
-
-/* Navigation entre les progressions */
+/* =========================================================
+   NAVIGATION DES PROGRESSIONS
+========================================================= */
 
 .progression-navigation {
     display: flex;
     flex-direction: column;
     justify-content: center;
+    gap: 4px;
     flex-shrink: 0;
 }
 
@@ -479,9 +406,20 @@ main {
     cursor: default;
 }
 
-/* ==============================
+#add-exercise-to-plan-button {
+    justify-self: end;
+    margin-left: 8px;
+    padding: 3px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+
+/* =========================================================
    FILTRES
-============================== */
+========================================================= */
 
 #exercise-filters {
     border-top: 1px solid #ccc;
@@ -501,9 +439,9 @@ main {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 10px;
     border: none;
     background: transparent;
-    padding: 10px;
     font-weight: bold;
     cursor: pointer;
     text-align: left;
@@ -564,9 +502,9 @@ main {
 }
 
 
-/* ==============================
+/* =========================================================
    RÉSUMÉS DES FILTRES
-============================== */
+========================================================= */
 
 .summary-button {
     display: inline-flex;
@@ -583,13 +521,13 @@ main {
 }
 
 .summary-remove {
+    padding: 0;
     border: none;
     background: transparent;
     color: white;
     cursor: pointer;
     font-size: 16px;
     line-height: 1;
-    padding: 0;
 }
 
 .summary-remove:hover {
@@ -597,9 +535,9 @@ main {
 }
 
 
-/* ==============================
+/* =========================================================
    SOUS-MUSCLES
-============================== */
+========================================================= */
 
 #submuscle-filters {
     display: flex;
@@ -610,15 +548,14 @@ main {
 }
 
 .submuscle-container {
+    min-width: 150px;
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 6px;
-    min-width: 150px;
 }
 
 .submuscle-title {
-    margin-top: 0;
-    margin-bottom: 8px;
+    margin: 0 0 8px;
 }
 
 .submuscle-option {
@@ -631,9 +568,9 @@ main {
 }
 
 
-/* ==============================
-   PROGRESSION
-============================== */
+/* =========================================================
+   FILTRE DE PROGRESSION
+========================================================= */
 
 .progression-summary {
     display: flex;
@@ -663,8 +600,8 @@ main {
     width: 25px;
     min-width: 25px;
     height: 25px;
-    border-radius: 50%;
     border: 1px solid #aaa;
+    border-radius: 50%;
     background: #f5f5f5;
     cursor: pointer;
     font-size: 16px;
@@ -698,31 +635,19 @@ main {
 }
 
 
-/* ==============================
-   RESPONSIVE
-============================== */
-
-@media (max-width: 800px) {
-    .exercise-search-area {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* ==============================
+/* =========================================================
    FILTRES DU PLAN
-============================== */
-
+========================================================= */
 
 .plan-filters-box {
+    padding: 15px;
     border: 1px solid #ccc;
     border-radius: 8px;
-    padding: 15px;
     box-sizing: border-box;
 }
 
 .plan-filters-box h3 {
-    margin-top: 0;
-    margin-bottom: 10px;
+    margin: 0 0 10px;
 }
 
 .plan-filter-row {
@@ -769,149 +694,19 @@ main {
     display: none;
     grid-column: 1 / -1;
     padding: 12px 10px 15px 160px;
+    box-sizing: border-box;
     flex-wrap: wrap;
     gap: 8px;
-    box-sizing: border-box;
 }
 
 .plan-filter-options.open {
     display: flex;
 }
 
-/* ==============================
-   TABLEAU DES EXERCICES DU PLAN   
-============================== */
 
-.plan-exercise-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-
-.plan-exercise-table th,
-.plan-exercise-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: center;
-    vertical-align: middle;
-}
-
-.plan-exercise-table th {
-    font-weight: bold;
-}
-
-.plan-exercise-table td:first-child {
-    text-align: left;
-}
-
-.plan-exercise-name {
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    font: inherit;
-    text-align: left;
-}
-
-.plan-order-button {
-    margin: 2px;
-}
-
-.plan-details-button {
-    cursor: pointer;
-}
-
-.plan-number-input {
-    width: 55px;
-    box-sizing: border-box;
-    padding: 4px;
-    text-align: center;
-}
-
-.plan-tempo-container {
-    display: flex;
-    gap: 3px;
-    align-items: center;
-}
-
-.plan-tempo-input {
-    width: 32px;
-    box-sizing: border-box;
-    padding: 4px;
-    text-align: center;
-}
-
-.plan-weight-unit {
-    margin-left: 4px;
-    padding: 4px;
-}
-
-.plan-exercise-table input,
-.plan-exercise-table select {
-    font: inherit;
-}
-
-.plan-progression-buttons {
-    display: inline-flex;
-    gap: 2px;
-    margin-left: 6px;
-}
-
-.plan-progression-button {
-    padding: 1px 4px;
-    font-size: 11px;
-}
-
-.plan-order-button {
-    padding: 2px 5px;
-    margin: 1px;
-}
-
-/* ==============================
-   CORRECTION LARGEUR NAVIGATEUR PLAN
-============================== */
-
-#plan-editor {
-    width: 100%;
-    max-width: none;
-    box-sizing: border-box;
-}
-
-.plan-exercises {
-    width: 100%;
-    max-width: none;
-    box-sizing: border-box;
-}
-
-#plan-exercise-browser-container {
-    width: 100%;
-    max-width: none;
-    box-sizing: border-box;
-    display: block;
-}
-
-#plan-exercise-browser-container > #exercise-browser {
-    width: 100%;
-    max-width: none;
-    box-sizing: border-box;
-    display: block;
-}
-
-#plan-exercise-browser-container .exercise-search-area {
-    width: 100%;
-    max-width: none;
-    box-sizing: border-box;
-}
-
-#plan-exercise-browser-container .exercise-main-row {
-    width: 100%;
-    max-width: none;
-    box-sizing: border-box;
-}
-
-/* ==============================
+/* =========================================================
    TABLEAU DES EXERCICES DU PLAN
-============================== */
+========================================================= */
 
 .plan-exercise-table {
     width: 100%;
@@ -936,27 +731,34 @@ main {
     text-align: left;
 }
 
-/* =========================
-   EXERCICE
-========================= */
-
 .plan-exercise-table th:first-child,
 .plan-exercise-table td:first-child {
     min-width: 220px;
 }
 
+.plan-exercise-table input,
+.plan-exercise-table select {
+    font: inherit;
+}
+
+
+/* =========================================================
+   NOM DE L'EXERCICE
+========================================================= */
+
 .plan-exercise-name {
-    background: none;
-    border: none;
     padding: 0;
+    border: none;
+    background: none;
     cursor: pointer;
     font: inherit;
     text-align: left;
 }
 
-/* =========================
+
+/* =========================================================
    PROGRESSION
-========================= */
+========================================================= */
 
 .plan-progression-cell {
     display: flex;
@@ -965,37 +767,43 @@ main {
     gap: 6px;
 }
 
-.plan-progression-buttons {
+.plan-progression-buttons,
+.plan-combination-exercise-buttons {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0;
 }
 
-.plan-progression-button {
+.plan-progression-button,
+.plan-order-button {
     width: 18px;
     height: 15px;
     padding: 0;
+    margin: 0;
     border: none;
     background: transparent;
-    font-size: 9px;
-    line-height: 1;
     color: #888;
     cursor: pointer;
+    font-size: 9px;
+    line-height: 1;
 }
 
-.plan-progression-button:hover:not(:disabled) {
+.plan-progression-button:hover:not(:disabled),
+.plan-order-button:hover:not(:disabled) {
     color: #222;
 }
 
-.plan-progression-button:disabled {
+.plan-progression-button:disabled,
+.plan-order-button:disabled {
     opacity: 0.25;
     cursor: default;
 }
 
-/* =========================
+
+/* =========================================================
    CONTRÔLES NUMÉRIQUES
-========================= */
+========================================================= */
 
 .plan-number-control {
     display: inline-flex;
@@ -1006,22 +814,17 @@ main {
 }
 
 .plan-number-input {
-    box-sizing: border-box;
     min-width: 2ch;
     max-width: 5ch;
-
     padding: 0;
-
-    text-align: center;
-
+    box-sizing: border-box;
     border: none;
     outline: none;
     background: transparent;
-
+    text-align: center;
     font-size: 14px;
     font-weight: 700;
     line-height: 1.2;
-
     appearance: textfield;
     -moz-appearance: textfield;
 }
@@ -1035,18 +838,14 @@ main {
 .plan-number-arrow {
     width: 18px;
     height: 12px;
-
     padding: 0;
     margin: 0;
-
     border: none;
     background: transparent;
-
-    font-size: 8px;
-    line-height: 1;
-
     color: #888;
     cursor: pointer;
+    font-size: 8px;
+    line-height: 1;
 }
 
 .plan-number-arrow:hover {
@@ -1057,9 +856,10 @@ main {
     transform: scale(0.9);
 }
 
-/* =========================
+
+/* =========================================================
    POIDS
-========================= */
+========================================================= */
 
 .plan-exercise-table td:nth-child(4) .plan-number-input {
     min-width: 3ch;
@@ -1068,26 +868,23 @@ main {
 
 .plan-weight-unit,
 .plan-value-unit {
+    padding: 2px 0;
+    margin-left: 3px;
     border: none;
     outline: none;
     background: transparent;
-
-    padding: 2px 0;
-    margin-left: 3px;
-
     font-size: 13px;
     cursor: pointer;
-
     appearance: none;
     -webkit-appearance: none;
-
     text-decoration: underline;
     text-underline-offset: 2px;
 }
 
-/* =========================
+
+/* =========================================================
    RÉPÉTITIONS / TEMPS
-========================= */
+========================================================= */
 
 .plan-value-container {
     display: flex;
@@ -1101,39 +898,37 @@ main {
     font-size: 13px;
 }
 
-/* =========================
+
+/* =========================================================
    TEMPO
-========================= */
+========================================================= */
 
 .plan-tempo-container {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0px;
+    gap: 0;
 }
 
 .plan-tempo-separator {
+    margin: 0;
     font-size: 13px;
     font-weight: 700;
-    margin: 0 0px;
 }
 
-/* =========================
-   SET
-========================= */
+
+/* =========================================================
+   SETS / COMBINAISONS
+========================================================= */
 
 .plan-combination-button {
+    padding: 2px 0;
     border: none;
     outline: none;
     background: transparent;
-
-    padding: 2px 0;
-
     font-size: 13px;
     font-weight: 400;
-
     cursor: pointer;
-
     text-decoration: underline;
     text-underline-offset: 2px;
 }
@@ -1141,47 +936,6 @@ main {
 .plan-combination-button:hover {
     color: #555;
 }
-
-/* =========================
-   ORDRE DANS LE SET
-========================= */
-
-.plan-combination-exercise-buttons {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0;
-}
-
-.plan-order-button {
-    width: 18px;
-    height: 15px;
-
-    padding: 0;
-    margin: 0;
-
-    border: none;
-    background: transparent;
-
-    font-size: 9px;
-    line-height: 1;
-
-    color: #888;
-    cursor: pointer;
-}
-
-.plan-order-button:hover:not(:disabled) {
-    color: #222;
-}
-
-.plan-order-button:disabled {
-    opacity: 0.25;
-    cursor: default;
-}
-
-/* =========================
-   BANDE DE DÉPLACEMENT DES SETS
-========================= */
 
 .plan-combination-group-order {
     width: 38px;
@@ -1196,22 +950,19 @@ main {
     gap: 0;
 }
 
-/* =========================
-   MENU DU SET
-========================= */
+
+/* =========================================================
+   MENU DES SETS
+========================================================= */
 
 .combination-menu {
     position: absolute;
     z-index: 100;
-
     margin-top: 5px;
     padding: 8px;
-
     background: white;
-
     border: 1px solid #ccc;
     border-radius: 6px;
-
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
 }
 
@@ -1224,9 +975,10 @@ main {
     padding: 4px;
 }
 
-/* =========================
+
+/* =========================================================
    COULEURS DES SETS
-========================= */
+========================================================= */
 
 .plan-set-colored-1 {
     background-color: rgba(170, 120, 200, 0.10);
@@ -1240,19 +992,17 @@ main {
     background-color: rgba(230, 170, 80, 0.10);
 }
 
-/* =========================
+
+/* =========================================================
    INSTRUCTIONS
-========================= */
+========================================================= */
 
 .plan-instructions-button {
+    padding: 2px 0;
     border: none;
     background: transparent;
-
-    padding: 2px 0;
-
     font: inherit;
     cursor: pointer;
-
     text-decoration: underline;
     text-underline-offset: 2px;
 }
@@ -1264,37 +1014,40 @@ main {
 .plan-instructions-popup {
     position: absolute;
     z-index: 1000;
-
     width: 280px;
-
     padding: 10px;
-
     background: white;
-
     border: 1px solid #ccc;
     border-radius: 8px;
-
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-
     box-sizing: border-box;
 }
 
 .plan-instructions-textarea {
     display: block;
-
     width: 100%;
     min-height: 90px;
     max-height: 160px;
-
     box-sizing: border-box;
-
     resize: vertical;
-
     border: none;
     outline: none;
     background: transparent;
-
     font: inherit;
     font-size: 13px;
     line-height: 1.4;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 800px) {
+
+    .plan-header,
+    .exercise-main-row {
+        grid-template-columns: 1fr;
+    }
+
 }
