@@ -9,6 +9,6 @@ const muscleFamilies = [
     "Épaules",
     "Pectoraux",
     "Trapèzes",
-    "Bas dos",
+    "Dos",
     "Abdominaux"
 ];
