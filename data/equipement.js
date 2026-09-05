@@ -4,6 +4,7 @@ const equipmentOptions = [
     "Kettlebell",
     "Plate",
     "Cable",
+    "Machine",
     "Élastique",
     "Weight vest",
     "Sandbag",

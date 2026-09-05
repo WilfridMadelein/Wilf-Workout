@@ -20,9 +20,10 @@ async function loadHTML() {
         }
 
         // Le HTML doit être chargé avant app.js
-        const appScript = document.createElement("script");
-        appScript.src = "js/app.js";
-        document.body.appendChild(appScript);
+const appScript = document.createElement("script");
+appScript.type = "module";
+appScript.src = "js/app.js";
+document.body.appendChild(appScript);
 
     } catch (error) {
         console.error("Erreur lors du chargement du HTML :", error);

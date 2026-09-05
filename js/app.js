@@ -1,3 +1,11 @@
+// ============================================================
+// MODULES
+// ============================================================
+
+
+
+import "./exercises/exercise-search.js";
+
 // DOM
 const exerciseList = document.getElementById("exercise-list");
 const searchInput = document.getElementById("search-input");
