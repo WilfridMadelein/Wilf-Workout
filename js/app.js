@@ -21,6 +21,44 @@ import {
 } from "./exercises/exercise-search.js";
 
 import {
+    configureExerciseFilters,
+
+    createMuscleButtons,
+    updateMuscleSpecialButtons,
+    createSubmuscleButtons,
+    removeSubmuscleContainer,
+    exerciseMatchesMuscle,
+
+    createEquipmentButtons,
+    updateEquipmentAllButton,
+    setupEquipmentAllButton,
+    exerciseHasRequiredEquipment,
+    exerciseMatchesEquipmentFilter,
+
+    setupTypeButtons,
+    updateTypeAllButton,
+
+    setupCategoryButtons,
+    exerciseMatchesCategoryFilter,
+
+    getProgressionOptions,
+    createProgressionOptions,
+    createProgressionButton,
+    updateProgressionButtons,
+    exerciseMatchesProgression
+} from "./exercises/exercise-filters.js";
+
+import {
+    configureExerciseDisplay,
+    exerciseMatchesProgressionContext,
+    getProgressionNeighbor,
+    exerciseMatchesPlanProgressionFilter,
+    exerciseHasRequiredEquipmentForPlan,
+    getPlanProgressionNeighbor,
+    updateProgressionNavigation
+} from "./exercises/exercise-display.js";
+
+import {
     configurePlanRender,
     createPlanNumberInput,
     renderPlanExercises,
@@ -314,457 +352,6 @@ function rebuildSearchFilterInterface() {
     updateFilterSummaries();
 }
 
-// Muscles
-function createMuscleButtons() {
-    const allButton = document.createElement("button");
-
-    allButton.classList.add("filter-button", "active");
-    allButton.textContent = "Tous";
-    allButton.dataset.muscle = "all";
-
-    allButton.addEventListener("click", () => {
-        selectedMuscleFamilies.clear();
-        selectedSubmuscles.clear();
-
-        document
-            .querySelectorAll("#muscle-filters .filter-button")
-            .forEach(button => button.classList.remove("active"));
-
-        allButton.classList.add("active");
-        submuscleFilters.innerHTML = "";
-
-        displayExercises();
-    });
-
-    muscleFilters.appendChild(allButton);
-
-    muscleFamilies.forEach(family => {
-        const button = document.createElement("button");
-
-        button.classList.add("filter-button");
-        button.textContent = family;
-        button.dataset.muscle = family;
-
-        button.addEventListener("click", () => {
-            if (selectedMuscleFamilies.has(family)) {
-                selectedMuscleFamilies.delete(family);
-                selectedSubmuscles.delete(family);
-                button.classList.remove("active");
-                removeSubmuscleContainer(family);
-            } else {
-                selectedMuscleFamilies.add(family);
-                button.classList.add("active");
-                createSubmuscleButtons(family);
-            }
-
-            updateMuscleSpecialButtons();
-            displayExercises();
-        });
-
-        muscleFilters.appendChild(button);
-    });
-}
-
-function updateMuscleSpecialButtons() {
-    const allButton = muscleFilters.querySelector('[data-muscle="all"]');
-
-    allButton.classList.toggle(
-        "active",
-        selectedMuscleFamilies.size === 0
-    );
-}
-
-function createSubmuscleButtons(family) {
-    removeSubmuscleContainer(family);
-
-    const submuscles = new Set();
-
-    exercises.forEach(exercise => {
-        const allMuscles = [
-            ...exercise.muscles_principaux,
-            ...exercise.muscles_secondaires
-        ];
-
-        allMuscles.forEach(muscle => {
-            if (muscle[0] === family && muscle[1] !== "") {
-                submuscles.add(muscle[1]);
-            }
-        });
-    });
-
-    if (submuscles.size === 0) {
-        return;
-    }
-
-    if (!selectedSubmuscles.has(family)) {
-    selectedSubmuscles.set(
-        family,
-        new Set(submuscles)
-    );
-    }
-
-    const container = document.createElement("div");
-    container.classList.add("submuscle-container");
-    container.dataset.family = family;
-
-    const title = document.createElement("p");
-    title.classList.add("submuscle-title");
-    title.innerHTML = `<strong>${family}</strong>`;
-
-    container.appendChild(title);
-
-    submuscles.forEach(submuscle => {
-        const label = document.createElement("label");
-        label.classList.add("submuscle-option");
-
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.checked = true;
-
-        checkbox.addEventListener("change", () => {
-            const selected = selectedSubmuscles.get(family);
-
-            if (checkbox.checked) {
-                selected.add(submuscle);
-            } else {
-                selected.delete(submuscle);
-            }
-
-            displayExercises();
-        });
-
-        label.appendChild(checkbox);
-        label.appendChild(document.createTextNode(submuscle));
-        container.appendChild(label);
-    });
-
-    submuscleFilters.appendChild(container);
-}
-
-function removeSubmuscleContainer(family) {
-    const container = submuscleFilters.querySelector(
-        `[data-family="${family}"]`
-    );
-
-    if (container) {
-        container.remove();
-    }
-}
-
-// Équipements
-function createEquipmentButtons() {
-    equipmentOptions.forEach(equipment => {
-        const button = document.createElement("button");
-
-        button.classList.add("filter-button", "active");
-        button.textContent = equipment;
-        button.dataset.equipment = equipment;
-
-        button.addEventListener("click", () => {
-            if (selectedEquipment.has(equipment)) {
-                selectedEquipment.delete(equipment);
-                button.classList.remove("active");
-            } else {
-                selectedEquipment.add(equipment);
-                button.classList.add("active");
-            }
-
-            updateEquipmentAllButton();
-            displayExercises();
-        });
-
-        equipmentFilters.appendChild(button);
-    });
-
-    updateEquipmentAllButton();
-}
-
-function updateEquipmentAllButton() {
-    const allButton = equipmentFilters.querySelector(
-        '[data-equipment="all"]'
-    );
-
-    const noneButton = equipmentFilters.querySelector(
-        '[data-equipment="none"]'
-    );
-
-    const allSelected =
-        selectedEquipment.size === equipmentOptions.length;
-
-    const noneSelected =
-        selectedEquipment.size === 0;
-
-    allButton.classList.toggle("active", allSelected);
-    noneButton.classList.toggle("active", noneSelected);
-}
-
-function setupEquipmentAllButton() {
-    const allButton = equipmentFilters.querySelector(
-        '[data-equipment="all"]'
-    );
-
-    const noneButton = equipmentFilters.querySelector(
-        '[data-equipment="none"]'
-    );
-
-    allButton.addEventListener("click", () => {
-        equipmentOptions.forEach(equipment => {
-            selectedEquipment.add(equipment);
-        });
-
-        equipmentFilters
-            .querySelectorAll(".filter-button")
-            .forEach(button => button.classList.add("active"));
-
-        displayExercises();
-    });
-
-    noneButton.addEventListener("click", () => {
-        selectedEquipment.clear();
-
-        equipmentFilters
-            .querySelectorAll(".filter-button")
-            .forEach(button => button.classList.remove("active"));
-
-        noneButton.classList.add("active");
-
-        displayExercises();
-    });
-}
-
-// Types
-function setupTypeButtons() {
-    const buttons = typeFilters.querySelectorAll(".filter-button");
-
-    buttons.forEach(button => {
-        button.addEventListener("click", () => {
-            const type = button.dataset.type;
-
-            if (type === "all") {
-                selectedTypes.clear();
-
-                buttons.forEach(otherButton => {
-                    otherButton.classList.remove("active");
-                });
-
-                button.classList.add("active");
-            } else {
-                if (selectedTypes.has(type)) {
-                    selectedTypes.delete(type);
-                    button.classList.remove("active");
-                } else {
-                    selectedTypes.add(type);
-                    button.classList.add("active");
-                }
-
-                updateTypeAllButton();
-            }
-
-            displayExercises();
-        });
-    });
-}
-
-function updateTypeAllButton() {
-    const allButton = typeFilters.querySelector(
-        '[data-type="all"]'
-    );
-
-    allButton.classList.toggle(
-        "active",
-        selectedTypes.size === 0
-    );
-}
-
-// Catégories
-function setupCategoryButtons() {
-    const buttons = categoryFilters.querySelectorAll(".filter-button");
-
-    buttons.forEach(button => {
-        button.addEventListener("click", () => {
-            const category = button.dataset.category;
-
-            if (selectedCategories.has(category)) {
-                selectedCategories.delete(category);
-                button.classList.remove("active");
-            } else {
-                selectedCategories.add(category);
-                button.classList.add("active");
-            }
-
-            displayExercises();
-        });
-    });
-}
-
-// Logique équipement
-function exerciseHasRequiredEquipment(exercise) {
-    return exercise.equipement.every(equipmentGroup => {
-        return equipmentGroup.some(equipment => {
-            if (equipment === "Aucun") {
-                return true;
-            }
-
-            return selectedEquipment.has(equipment);
-        });
-    });
-}
-
-// Logique muscles
-function exerciseMatchesMuscle(exercise) {
-    if (selectedMuscleFamilies.size === 0) {
-        return true;
-    }
-
-    const allMuscles = [
-        ...exercise.muscles_principaux,
-        ...exercise.muscles_secondaires
-    ];
-
-    return [...selectedMuscleFamilies].some(family => {
-        const familyMuscles = allMuscles.filter(
-            muscle => muscle[0] === family
-        );
-
-        if (familyMuscles.length === 0) {
-            return false;
-        }
-
-        const selectedSubs = selectedSubmuscles.get(family);
-
-        if (!selectedSubs || selectedSubs.size === 0) {
-            return false;
-        }
-
-        return familyMuscles.some(muscle =>
-            selectedSubs.has(muscle[1])
-        );
-    });
-}
-
-// Progression
-function getProgressionOptions() {
-    const progressions = new Set();
-
-    exercises.forEach(exercise => {
-        if (
-            exercise.prog_group &&
-            exercise.prog_group.trim() !== ""
-        ) {
-            progressions.add(exercise.prog_group);
-        }
-    });
-
-    return [...progressions].sort();
-}
-
-function createProgressionOptions() {
-    const includeContainer = document.getElementById(
-        "progression-include-options"
-    );
-
-    const excludeContainer = document.getElementById(
-        "progression-exclude-options"
-    );
-
-    includeContainer.innerHTML = "";
-    excludeContainer.innerHTML = "";
-
-    const progressions = getProgressionOptions();
-
-    progressions.forEach(progression => {
-        createProgressionButton(
-            progression,
-            includeContainer,
-            selectedProgressionsInclude,
-            selectedProgressionsExclude
-        );
-
-        createProgressionButton(
-            progression,
-            excludeContainer,
-            selectedProgressionsExclude,
-            selectedProgressionsInclude
-        );
-    });
-}
-
-function createProgressionButton(
-    progression,
-    container,
-    selectedSet,
-    oppositeSet
-) {
-    const button = document.createElement("button");
-
-    button.classList.add("filter-button");
-    button.textContent = progression;
-
-    if (selectedSet.has(progression)) {
-        button.classList.add("active");
-    }
-
-    button.addEventListener("click", () => {
-        if (selectedSet.has(progression)) {
-            selectedSet.delete(progression);
-            button.classList.remove("active");
-        } else {
-            oppositeSet.delete(progression);
-            selectedSet.add(progression);
-            button.classList.add("active");
-            updateProgressionButtons();
-        }
-
-        displayExercises();
-    });
-
-    container.appendChild(button);
-}
-
-function updateProgressionButtons() {
-    document
-        .querySelectorAll(
-            "#progression-include-options .filter-button"
-        )
-        .forEach(button => {
-            const progression = button.textContent;
-
-            button.classList.toggle(
-                "active",
-                selectedProgressionsInclude.has(progression)
-            );
-        });
-
-    document
-        .querySelectorAll(
-            "#progression-exclude-options .filter-button"
-        )
-        .forEach(button => {
-            const progression = button.textContent;
-
-            button.classList.toggle(
-                "active",
-                selectedProgressionsExclude.has(progression)
-            );
-        });
-}
-
-function exerciseMatchesProgression(exercise) {
-    const progression = exercise.prog_group;
-
-    if (
-        selectedProgressionsInclude.size > 0 &&
-        !selectedProgressionsInclude.has(progression)
-    ) {
-        return false;
-    }
-
-    if (selectedProgressionsExclude.has(progression)) {
-        return false;
-    }
-
-    return true;
-}
 
 // Affichage des exercices
 function displayExercises() {
@@ -888,182 +475,6 @@ element.addEventListener("click", () => {
     }
 }
 
-// Navigation dans la progression
-
-function exerciseMatchesProgressionContext(exercise) {
-    return (
-        exerciseMatchesCategoryFilter(exercise) &&
-        exerciseMatchesEquipmentFilter(exercise)
-    );
-}
-
-
-function getProgressionNeighbor(
-    currentExercise,
-    direction,
-    context = "search"
-) {
-    const progression =
-        getProgressionName(currentExercise);
-
-    const currentOrder =
-        Number(currentExercise.prog_ordre);
-
-    if (
-        !progression ||
-        Number.isNaN(currentOrder)
-    ) {
-        return null;
-    }
-   
-    const compatibleExercises = exercises
-        .filter(exercise =>
-            getProgressionName(exercise) === progression
-        )
-        .filter(exercise =>
-            exerciseMatchesProgressionContext(exercise)
-        )
-        .filter(exercise => {
-            const order =
-                Number(exercise.prog_ordre);
-
-            return !Number.isNaN(order);
-        });
-
-    if (direction === 1) {
-
-        const nextExercises =
-            compatibleExercises
-                .filter(exercise =>
-                    Number(exercise.prog_ordre) >
-                    currentOrder
-                )
-                .sort((a, b) =>
-                    Number(a.prog_ordre) -
-                    Number(b.prog_ordre)
-                );
-
-        return nextExercises[0] || null;
-    }
-
-    if (direction === -1) {
-
-        const previousExercises =
-            compatibleExercises
-                .filter(exercise =>
-                    Number(exercise.prog_ordre) <
-                    currentOrder
-                )
-                .sort((a, b) =>
-                    Number(b.prog_ordre) -
-                    Number(a.prog_ordre)
-                );
-
-        return previousExercises[0] || null;
-    }
-
-    return null;
-}
-
-function exerciseMatchesPlanProgressionFilter(exercise) {
-    const matchesCali =
-        selectedPlanCategories.has("cali") &&
-        exercise.cali;
-
-    const matchesGym =
-        selectedPlanCategories.has("gym") &&
-        exercise.gym;
-
-    if (!matchesCali && !matchesGym) {
-        return false;
-    }
-
-    return exerciseHasRequiredEquipmentForPlan(exercise);
-}
-
-function exerciseHasRequiredEquipmentForPlan(exercise) {
-    return exercise.equipement.every(equipmentGroup => {
-        return equipmentGroup.some(equipment => {
-            if (equipment === "Aucun") return true;
-
-            return selectedPlanEquipment.has(equipment);
-        });
-    });
-}
-
-function getPlanProgressionNeighbor(exercise, direction) {
-    const progression = getProgressionName(exercise);
-    const currentOrder = Number(exercise.prog_ordre);
-
-    if (!progression || Number.isNaN(currentOrder)) {
-        return null;
-    }
-
-    const progressionExercises = exercises
-        .filter(item => getProgressionName(item) === progression)
-        .filter(item => exerciseMatchesPlanProgressionFilter(item))
-        .filter(item => !Number.isNaN(Number(item.prog_ordre)))
-        .sort((a, b) =>
-            Number(a.prog_ordre) - Number(b.prog_ordre)
-        );
-
-    if (direction === 1) {
-        return progressionExercises.find(
-            item => Number(item.prog_ordre) > currentOrder
-        ) || null;
-    }
-
-    if (direction === -1) {
-        const previousExercises = progressionExercises
-            .filter(item =>
-                Number(item.prog_ordre) < currentOrder
-            );
-
-        return previousExercises[previousExercises.length - 1] || null;
-    }
-
-    return null;
-}
-
-function updateProgressionNavigation(currentExercise, context = "search") {
-    const upButton = document.getElementById("progression-up-button");
-    const downButton = document.getElementById("progression-down-button");
-
-    if (!upButton || !downButton) return;
-
-    const nextExercise = getProgressionNeighbor(
-        currentExercise,
-        1,
-        "search"
-    );
-
-    const previousExercise = getProgressionNeighbor(
-        currentExercise,
-        -1,
-        "search"
-    );
-
-    upButton.disabled = !nextExercise;
-    downButton.disabled = !previousExercise;
-
-    upButton.onclick = () => {
-        if (!nextExercise) return;
-
-        displayExerciseDetails(
-            nextExercise,
-            context
-        );
-    };
-
-    downButton.onclick = () => {
-        if (!previousExercise) return;
-
-        displayExerciseDetails(
-            previousExercise,
-            context
-        );
-    };
-}
 
 // Détails
 
@@ -1158,21 +569,6 @@ infoElement.innerHTML = `
     updateProgressionNavigation(exercise, context);
 }
 
-function exerciseMatchesCategoryFilter(exercise) {
-    const matchesCali =
-        selectedCategories.has("cali") &&
-        exercise.cali;
-
-    const matchesGym =
-        selectedCategories.has("gym") &&
-        exercise.gym;
-
-    return matchesCali || matchesGym;
-}
-
-function exerciseMatchesEquipmentFilter(exercise) {
-    return exerciseHasRequiredEquipment(exercise);
-}
 
 function getExerciseDetailsLines(exercise) {
     const lines = [];
@@ -1808,6 +1204,49 @@ configurePlanFilters({
 });
 
 createPlanFilterRows();
+
+configureExerciseFilters({
+    getSelectedCategories: () => selectedCategories,
+    getSelectedEquipment: () => selectedEquipment,
+    getSelectedTypes: () => selectedTypes,
+    getSelectedProgressionsInclude:
+        () => selectedProgressionsInclude,
+    getSelectedProgressionsExclude:
+        () => selectedProgressionsExclude,
+    getSelectedMuscleFamilies:
+        () => selectedMuscleFamilies,
+    getSelectedSubmuscles:
+        () => selectedSubmuscles,
+
+    getEquipmentOptions: () => equipmentOptions,
+    getMuscleFamilies: () => muscleFamilies,
+    getExercises: () => exercises,
+
+    getMuscleFilters: () => muscleFilters,
+    getSubmuscleFilters: () => submuscleFilters,
+    getEquipmentFilters: () => equipmentFilters,
+    getTypeFilters: () => typeFilters,
+
+    displayExercises,
+    updateFilterSummaries
+});
+
+configureExerciseDisplay({
+    getExercises: () => exercises,
+
+    getSelectedPlanCategories:
+        () => selectedPlanCategories,
+
+    getSelectedPlanEquipment:
+        () => selectedPlanEquipment,
+
+    getProgressionName,
+
+    exerciseMatchesCategoryFilter,
+    exerciseMatchesEquipmentFilter,
+
+    displayExerciseDetails
+});
 
 // Initialisation
 createMuscleButtons();
