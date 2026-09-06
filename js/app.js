@@ -59,6 +59,11 @@ import {
 } from "./exercises/exercise-display.js";
 
 import {
+    configureExerciseList,
+    displayExercises
+} from "./exercises/exercise-list.js";
+
+import {
     configurePlanRender,
     createPlanNumberInput,
     renderPlanExercises,
@@ -352,128 +357,6 @@ function rebuildSearchFilterInterface() {
     updateFilterSummaries();
 }
 
-
-// Affichage des exercices
-function displayExercises() {
-    const searchTerms = getSearchTerms(searchInput.value);
-    const isPlanContext = planEditor.style.display === "block";
-
-        if (!isPlanContext) {
-        removeAddButton();
-        currentDetailContext = "search";
-    }
-
-    updateFilterSummaries();
-
-    if (isPlanContext) {
-        updatePlanFilterSummaries();
-    }
-
-let filteredExercises = exercises.filter(exercise => {
-
-    // Filtres de recherche
-    if (!exerciseMatchesCategoryFilter(exercise)) {
-            return false;
-        }
-
-        if (!exerciseMatchesEquipmentFilter(exercise)) {
-            return false;
-        }
-
-        if (
-            selectedTypes.size > 0 &&
-            !selectedTypes.has(exercise.type)
-        ) {
-            return false;
-        }
-
-        if (!exerciseMatchesMuscle(exercise)) {
-            return false;
-        }
-
-        if (!exerciseMatchesProgression(exercise)) {
-            return false;
-        }
-
-        // Recherche textuelle
-        if (
-            searchTerms.length > 0 &&
-            !findValidTermCombination(
-                exercise.nom,
-                searchTerms
-            ) &&
-            !findValidTermCombination(
-                getProgressionName(exercise),
-                searchTerms
-            )
-        ) {
-            return false;
-        }
-
-        return true;
-    });
-
-    const rankedExercises = filteredExercises.map(exercise => ({
-        exercise: exercise,
-        searchRanking: getExerciseSearchRanking(
-            exercise,
-            searchTerms
-        )
-    }));
-
-    rankedExercises.sort(compareExercisesBySearch);
-
-    // Compteur
-    const exerciseCount = document.getElementById("exercise-count");
-
-    if (exerciseCount) {
-        exerciseCount.textContent =
-            `${rankedExercises.length} exercice` +
-            (rankedExercises.length !== 1 ? "s" : "");
-    }
-
-    exerciseList.innerHTML = "";
-
-    rankedExercises.forEach(item => {
-        const exercise = item.exercise;
-
-        const element = document.createElement("div");
-        element.classList.add("exercise-item");
-
-        const nameElement = document.createElement("span");
-        nameElement.classList.add("exercise-name");
-        nameElement.innerHTML = highlightSearchMatches(
-            exercise.nom,
-            searchTerms
-        );
-
-        const progressionElement = document.createElement("span");
-        progressionElement.classList.add("exercise-progression");
-        progressionElement.textContent =
-            getProgressionDisplay(exercise);
-
-        element.appendChild(nameElement);
-
-        if (getProgressionDisplay(exercise) !== "") {
-            element.appendChild(progressionElement);
-        }
-
-element.addEventListener("click", () => {
-    displayExerciseDetails(
-        exercise,
-        pagePlans.style.display === "block" && planEditor.style.display === "block"
-            ? "plan"
-            : "search"
-    );
-});
-
-        exerciseList.appendChild(element);
-    });
-
-    if (rankedExercises.length === 0) {
-        exerciseList.textContent = "Aucun exercice trouvé.";
-    }
-}
 
 
 // Détails
@@ -1244,6 +1127,45 @@ configureExerciseDisplay({
 
     exerciseMatchesCategoryFilter,
     exerciseMatchesEquipmentFilter,
+
+    displayExerciseDetails
+});
+
+configureExerciseList({
+    getExercises: () => exercises,
+
+    getSearchInput: () => searchInput,
+    getExerciseList: () => exerciseList,
+    getExerciseCount: () =>
+        document.getElementById("exercise-count"),
+
+    getIsPlanContext: () =>
+        planEditor.style.display === "block",
+
+    getSelectedTypes: () => selectedTypes,
+
+    setCurrentDetailContext:
+        value => {
+            currentDetailContext = value;
+        },
+
+    getSearchTerms,
+    getProgressionName,
+    getProgressionDisplay,
+
+    findValidTermCombination,
+    getExerciseSearchRanking,
+    compareExercisesBySearch,
+    highlightSearchMatches,
+
+    exerciseMatchesCategoryFilter,
+    exerciseMatchesEquipmentFilter,
+    exerciseMatchesMuscle,
+    exerciseMatchesProgression,
+
+    removeAddButton,
+    updateFilterSummaries,
+    updatePlanFilterSummaries,
 
     displayExerciseDetails
 });
