@@ -1,4 +1,36 @@
 // ============================================================
+// DÉPENDANCES
+// ============================================================
+
+let getCurrentPlan = () => null;
+let getPlanExerciseList = () => null;
+let normalizeCombinationNumbers = () => {};
+let displayExerciseDetails = () => {};
+let getProgressionName = () => "";
+let getPlanProgressionNeighbor = () => null;
+let updatePlanExerciseProgression = () => {};
+let closePlanInstructionsPopup = () => {};
+let getPlanExerciseDetailsLines = () => [];
+let openCombinationMenu = () => {};
+let moveExerciseWithinCombination = () => {};
+let moveCombination = () => {};
+
+function configurePlanRender(dependencies) {
+    getCurrentPlan = dependencies.getCurrentPlan;
+    getPlanExerciseList = dependencies.getPlanExerciseList;
+    normalizeCombinationNumbers = dependencies.normalizeCombinationNumbers;
+    displayExerciseDetails = dependencies.displayExerciseDetails;
+    getProgressionName = dependencies.getProgressionName;
+    getPlanProgressionNeighbor = dependencies.getPlanProgressionNeighbor;
+    updatePlanExerciseProgression = dependencies.updatePlanExerciseProgression;
+    closePlanInstructionsPopup = dependencies.closePlanInstructionsPopup;
+    getPlanExerciseDetailsLines = dependencies.getPlanExerciseDetailsLines;
+    openCombinationMenu = dependencies.openCombinationMenu;
+    moveExerciseWithinCombination = dependencies.moveExerciseWithinCombination;
+    moveCombination = dependencies.moveCombination;
+}
+
+// ============================================================
 // AFFICHAGE DU PLAN
 // ============================================================
 
@@ -88,10 +120,10 @@ function createPlanNumberInput(value, onChange, options = {}) {
 // ============================================================
 
 function renderPlanExercises() {
-    planExerciseList.innerHTML = "";
+    getPlanExerciseList().innerHTML = "";
 
-    if (!currentPlan || currentPlan.exercises.length === 0) {
-        planExerciseList.textContent = "Aucun exercice ajouté.";
+    if (!getCurrentPlan() || getCurrentPlan().exercises.length === 0) {
+        getPlanExerciseList().textContent = "Aucun exercice ajouté.";
         return;
     }
 
@@ -128,7 +160,7 @@ function renderPlanExercises() {
     // Regroupe les exercices par combinaison.
     const groups = [];
 
-    currentPlan.exercises.forEach(planExercise => {
+    getCurrentPlan().exercises.forEach(planExercise => {
         const group = planExercise.combination.group;
 
         let groupData = groups.find(
@@ -634,7 +666,7 @@ function renderPlanExercises() {
 
                 instructionsButton.dataset
                     .planExerciseIndex =
-                    currentPlan.exercises.indexOf(
+                    getCurrentPlan().exercises.indexOf(
                         planExercise
                     );
 
@@ -643,7 +675,7 @@ function renderPlanExercises() {
                     () => {
                         openPlanExerciseInstructions(
                             planExercise,
-                            currentPlan.exercises.indexOf(
+                            getCurrentPlan().exercises.indexOf(
                                 planExercise
                             )
                         );
@@ -842,7 +874,7 @@ function renderPlanExercises() {
     });
 
     table.appendChild(tbody);
-    planExerciseList.appendChild(table);
+    getPlanExerciseList().appendChild(table);
 }
 
 // ============================================================
@@ -853,7 +885,7 @@ function openPlanExerciseInstructions(
     planExercise,
     index
 ) {
-    if (!currentPlan) {
+    if (!getCurrentPlan()) {
         return;
     }
 
@@ -964,6 +996,7 @@ function openPlanExerciseInstructions(
 // ============================================================
 
 export {
+    configurePlanRender,
     createPlanNumberInput,
     renderPlanExercises,
     openPlanExerciseInstructions

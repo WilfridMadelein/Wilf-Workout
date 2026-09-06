@@ -180,6 +180,21 @@ function getMatchQuality(text, term, match) {
     return 1;
 }
 
+function getMatchPosition(text, match) {
+    const normalizedText = normalizeSearchText(text);
+
+    if (match.start === 0) {
+        return 0;
+    }
+
+    const textBeforeMatch = normalizedText.slice(
+        0,
+        match.start
+    );
+
+    return textBeforeMatch.split(/\s+/).length - 1;
+}
+
 function getSearchCriteria(text, searchTerms) {
     if (
         !text ||
@@ -504,6 +519,7 @@ export {
     findTermMatches,
     findValidTermCombination,
     getMatchQuality,
+    getMatchPosition,
     getSearchCriteria,
     compareSearchCriteria,
     getExerciseSearchRanking,

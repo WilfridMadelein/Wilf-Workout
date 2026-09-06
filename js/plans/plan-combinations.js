@@ -2,7 +2,21 @@
 // COMBINAISONS / SETS
 // ============================================================
 
+let getCurrentPlan = () => null;
+let renderPlanExercises = () => {};
+
+function configurePlanCombinations(dependencies) {
+    getCurrentPlan = dependencies.getCurrentPlan;
+    renderPlanExercises = dependencies.renderPlanExercises;
+}
+
+// ------------------------------------------------------------
+// Numéro du prochain Set
+// ------------------------------------------------------------
+
 function getNextCombinationGroup() {
+    const currentPlan = getCurrentPlan();
+
     if (!currentPlan || currentPlan.exercises.length === 0) {
         return 1;
     }
@@ -18,7 +32,13 @@ function getNextCombinationGroup() {
     return Math.max(...groups) + 1;
 }
 
+// ------------------------------------------------------------
+// Liste des Sets dans leur ordre actuel
+// ------------------------------------------------------------
+
 function getCombinationGroups() {
+    const currentPlan = getCurrentPlan();
+
     if (!currentPlan) {
         return [];
     }
@@ -28,7 +48,10 @@ function getCombinationGroups() {
     currentPlan.exercises.forEach(planExercise => {
         const group = planExercise.combination?.group;
 
-        if (!Number.isInteger(group) || groups.includes(group)) {
+        if (
+            !Number.isInteger(group) ||
+            groups.includes(group)
+        ) {
             return;
         }
 
@@ -38,7 +61,13 @@ function getCombinationGroups() {
     return groups;
 }
 
+// ------------------------------------------------------------
+// Renumérotation des Sets
+// ------------------------------------------------------------
+
 function normalizeCombinationNumbers() {
+    const currentPlan = getCurrentPlan();
+
     if (!currentPlan) {
         return;
     }
@@ -51,7 +80,8 @@ function normalizeCombinationNumbers() {
     });
 
     currentPlan.exercises.forEach(planExercise => {
-        const oldGroup = planExercise.combination?.group;
+        const oldGroup =
+            planExercise.combination?.group;
 
         if (groupMapping.has(oldGroup)) {
             planExercise.combination.group =
@@ -60,67 +90,107 @@ function normalizeCombinationNumbers() {
     });
 }
 
-function moveExerciseToCombination(planExercise, targetGroup) {
+// ------------------------------------------------------------
+// Déplacer un exercice vers un autre Set
+// ------------------------------------------------------------
+
+function moveExerciseToCombination(
+    planExercise,
+    targetGroup
+) {
+    const currentPlan = getCurrentPlan();
+
     if (!currentPlan) {
         return;
     }
 
-    const planExercises = currentPlan.exercises;
-    const currentIndex = planExercises.indexOf(planExercise);
+    const exercises = currentPlan.exercises;
+    const currentIndex =
+        exercises.indexOf(planExercise);
 
     if (currentIndex === -1) {
         return;
     }
 
-    const currentGroup = planExercise.combination?.group;
+    const currentGroup =
+        planExercise.combination?.group;
 
     if (currentGroup === targetGroup) {
         return;
     }
 
-    planExercises.splice(currentIndex, 1);
-    planExercise.combination.group = targetGroup;
+    exercises.splice(currentIndex, 1);
+
+    planExercise.combination.group =
+        targetGroup;
 
     let insertIndex = -1;
 
-    for (let i = 0; i < planExercises.length; i++) {
-        if (planExercises[i].combination?.group === targetGroup) {
+    for (let i = 0; i < exercises.length; i++) {
+        if (
+            exercises[i].combination?.group ===
+            targetGroup
+        ) {
             insertIndex = i;
         }
     }
 
     if (insertIndex === -1) {
-        planExercises.push(planExercise);
+        exercises.push(planExercise);
     } else {
-        planExercises.splice(insertIndex + 1, 0, planExercise);
+        exercises.splice(
+            insertIndex + 1,
+            0,
+            planExercise
+        );
     }
 
     normalizeCombinationNumbers();
     renderPlanExercises();
 }
 
-function moveExerciseToNewCombination(planExercise) {
+// ------------------------------------------------------------
+// Créer un nouveau Set avec un exercice
+// ------------------------------------------------------------
+
+function moveExerciseToNewCombination(
+    planExercise
+) {
+    const currentPlan = getCurrentPlan();
+
     if (!currentPlan) {
         return;
     }
 
-    const planExercises = currentPlan.exercises;
-    const currentIndex = planExercises.indexOf(planExercise);
+    const exercises = currentPlan.exercises;
+    const currentIndex =
+        exercises.indexOf(planExercise);
 
     if (currentIndex === -1) {
         return;
     }
 
-    planExercises.splice(currentIndex, 1);
+    exercises.splice(currentIndex, 1);
 
-    const newGroup = getNextCombinationGroup();
-    planExercise.combination.group = newGroup;
+    const newGroup =
+        getNextCombinationGroup();
 
-    planExercises.splice(currentIndex, 0, planExercise);
+    planExercise.combination.group =
+        newGroup;
+
+    exercises.splice(
+        currentIndex,
+        0,
+        planExercise
+    );
 
     normalizeCombinationNumbers();
     renderPlanExercises();
 }
+
+// ------------------------------------------------------------
+// Sets disponibles
+// ------------------------------------------------------------
 
 function getAvailableCombinationGroups() {
     return getCombinationGroups().sort(
@@ -128,8 +198,15 @@ function getAvailableCombinationGroups() {
     );
 }
 
-function openCombinationMenu(planExercise, button) {
-    if (!currentPlan) {
+// ------------------------------------------------------------
+// Menu de changement de Set
+// ------------------------------------------------------------
+
+function openCombinationMenu(
+    planExercise,
+    button
+) {
+    if (!getCurrentPlan()) {
         return;
     }
 
@@ -137,65 +214,108 @@ function openCombinationMenu(planExercise, button) {
         .querySelectorAll(".combination-menu")
         .forEach(menu => menu.remove());
 
-    const menu = document.createElement("div");
-    menu.classList.add("combination-menu");
+    const menu =
+        document.createElement("div");
 
-    const label = document.createElement("div");
-    label.textContent = "Ajouter à :";
-    label.classList.add("combination-menu-label");
+    menu.classList.add(
+        "combination-menu"
+    );
+
+    const label =
+        document.createElement("div");
+
+    label.textContent =
+        "Ajouter à :";
+
+    label.classList.add(
+        "combination-menu-label"
+    );
 
     menu.appendChild(label);
 
-    const select = document.createElement("select");
-    select.classList.add("combination-select");
+    const select =
+        document.createElement("select");
 
-    const newOption = document.createElement("option");
+    select.classList.add(
+        "combination-select"
+    );
+
+    const newOption =
+        document.createElement("option");
+
     newOption.value = "new";
-    newOption.textContent = "Nouveau Set";
+    newOption.textContent =
+        "Nouveau Set";
+
     select.appendChild(newOption);
 
-    getAvailableCombinationGroups().forEach(group => {
-        if (group === planExercise.combination.group) {
-            return;
-        }
+    getAvailableCombinationGroups()
+        .forEach(group => {
+            if (
+                group ===
+                planExercise.combination.group
+            ) {
+                return;
+            }
 
-        const option = document.createElement("option");
-        option.value = group;
-        option.textContent = `Set ${group}`;
+            const option =
+                document.createElement("option");
 
-        select.appendChild(option);
-    });
+            option.value = group;
+            option.textContent =
+                `Set ${group}`;
+
+            select.appendChild(option);
+        });
 
     menu.appendChild(select);
     button.parentElement.appendChild(menu);
 
-    select.addEventListener("change", () => {
-        if (select.value === "new") {
-            moveExerciseToNewCombination(planExercise);
-        } else {
-            moveExerciseToCombination(
-                planExercise,
-                Number(select.value)
-            );
-        }
+    select.addEventListener(
+        "change",
+        () => {
+            if (select.value === "new") {
+                moveExerciseToNewCombination(
+                    planExercise
+                );
+            } else {
+                moveExerciseToCombination(
+                    planExercise,
+                    Number(select.value)
+                );
+            }
 
-        menu.remove();
-    });
+            menu.remove();
+        }
+    );
 }
 
-function moveExerciseWithinCombination(planExercise, direction) {
+// ------------------------------------------------------------
+// Déplacer un exercice dans son Set
+// ------------------------------------------------------------
+
+function moveExerciseWithinCombination(
+    planExercise,
+    direction
+) {
+    const currentPlan = getCurrentPlan();
+
     if (!currentPlan) {
         return;
     }
 
-    const planExercises = currentPlan.exercises;
-    const index = planExercises.indexOf(planExercise);
+    const exercises =
+        currentPlan.exercises;
+
+    const index =
+        exercises.indexOf(planExercise);
 
     if (index === -1) {
         return;
     }
 
-    const group = planExercise.combination?.group;
+    const group =
+        planExercise.combination?.group;
 
     if (!Number.isInteger(group)) {
         return;
@@ -203,109 +323,125 @@ function moveExerciseWithinCombination(planExercise, direction) {
 
     const sameGroupIndexes = [];
 
-    planExercises.forEach((item, i) => {
-        if (item.combination?.group === group) {
+    exercises.forEach((item, i) => {
+        if (
+            item.combination?.group ===
+            group
+        ) {
             sameGroupIndexes.push(i);
         }
     });
 
-    const position = sameGroupIndexes.indexOf(index);
-    const targetPosition = position + direction;
+    const position =
+        sameGroupIndexes.indexOf(index);
+
+    const targetPosition =
+        position + direction;
 
     if (
         position === -1 ||
         targetPosition < 0 ||
-        targetPosition >= sameGroupIndexes.length
+        targetPosition >=
+            sameGroupIndexes.length
     ) {
         return;
     }
 
-    const targetIndex = sameGroupIndexes[targetPosition];
+    const targetIndex =
+        sameGroupIndexes[targetPosition];
 
-    [planExercises[index], planExercises[targetIndex]] =
-        [planExercises[targetIndex], planExercises[index]];
+    [
+        exercises[index],
+        exercises[targetIndex]
+    ] = [
+        exercises[targetIndex],
+        exercises[index]
+    ];
 
     renderPlanExercises();
 }
 
-function moveCombination(planExercise, direction) {
+// ------------------------------------------------------------
+// Déplacer un Set complet
+// ------------------------------------------------------------
+
+function moveCombination(
+    group,
+    direction
+) {
+    const currentPlan = getCurrentPlan();
+
     if (!currentPlan) {
         return;
     }
 
-    const planExercises = currentPlan.exercises;
-    const group = planExercise.combination?.group;
+    const groups =
+        getCombinationGroups();
 
-    if (!Number.isInteger(group)) {
-        return;
-    }
+    const groupPosition =
+        groups.indexOf(group);
 
-    const groupIndexes = [];
-
-    planExercises.forEach((item, index) => {
-        if (item.combination?.group === group) {
-            groupIndexes.push(index);
-        }
-    });
-
-    if (groupIndexes.length === 0) {
-        return;
-    }
-
-    const firstIndex = groupIndexes[0];
-    const groups = getCombinationGroups();
-    const groupPosition = groups.indexOf(group);
-    const targetGroupPosition = groupPosition + direction;
+    const targetGroupPosition =
+        groupPosition + direction;
 
     if (
+        groupPosition === -1 ||
         targetGroupPosition < 0 ||
-        targetGroupPosition >= groups.length
+        targetGroupPosition >=
+            groups.length
     ) {
         return;
     }
 
-    const targetGroup = groups[targetGroupPosition];
-    const targetIndexes = [];
+    // Nouvel ordre des Sets
+    const reorderedGroups =
+        [...groups];
 
-    planExercises.forEach((item, index) => {
-        if (item.combination?.group === targetGroup) {
-            targetIndexes.push(index);
-        }
+    [
+        reorderedGroups[groupPosition],
+        reorderedGroups[targetGroupPosition]
+    ] = [
+        reorderedGroups[targetGroupPosition],
+        reorderedGroups[groupPosition]
+    ];
+
+    // Regrouper les exercices par Set
+    const exercisesByGroup =
+        new Map();
+
+    groups.forEach(currentGroup => {
+        exercisesByGroup.set(
+            currentGroup,
+            currentPlan.exercises.filter(
+                planExercise =>
+                    planExercise
+                        .combination
+                        ?.group === currentGroup
+            )
+        );
     });
 
-    if (targetIndexes.length === 0) {
-        return;
-    }
+    // Reconstruire le tableau dans
+    // le nouvel ordre des Sets
+    const reorderedExercises =
+        reorderedGroups.flatMap(
+            currentGroup =>
+                exercisesByGroup.get(
+                    currentGroup
+                ) || []
+        );
 
-    const targetFirstIndex = targetIndexes[0];
-    const targetLastIndex =
-        targetIndexes[targetIndexes.length - 1];
-
-    const combinationExercises = planExercises.splice(
-        firstIndex,
-        groupIndexes.length
-    );
-
-    let insertIndex;
-
-    if (direction === -1) {
-        insertIndex = targetFirstIndex;
-    } else {
-        insertIndex =
-            targetLastIndex -
-            (firstIndex < targetFirstIndex
-                ? groupIndexes.length
-                : 0) +
-            1;
-    }
-
-    planExercises.splice(
-        insertIndex,
+    // Conserver le même tableau
+    // pour ne pas casser les références
+    currentPlan.exercises.splice(
         0,
-        ...combinationExercises
+        currentPlan.exercises.length,
+        ...reorderedExercises
     );
 
+    // Set 1, Set 2, Set 3...
     normalizeCombinationNumbers();
+
     renderPlanExercises();
 }
 
@@ -314,6 +450,7 @@ function moveCombination(planExercise, direction) {
 // ============================================================
 
 export {
+    configurePlanCombinations,
     getNextCombinationGroup,
     getCombinationGroups,
     normalizeCombinationNumbers,
