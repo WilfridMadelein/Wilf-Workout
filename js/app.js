@@ -162,7 +162,7 @@ import {
     addExerciseToCurrentPlan,
     removeExerciseFromCurrentPlan,
     updatePlanExerciseProgression,
-    movePlanExercise
+
 } from "./plans/plan-manager.js";
 
 import {

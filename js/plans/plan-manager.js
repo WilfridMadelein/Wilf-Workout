@@ -58,10 +58,7 @@ function addExerciseToCurrentPlan(exercise) {
         weight: 0,
         weightUnit: "lbs",
 
-        instructions: {},
-
         combination: {
-            type: null,
             group: getNextCombinationGroup()
         }
     });
@@ -150,46 +147,6 @@ function updatePlanExerciseProgression(
     renderPlanExercises();
 }
 
-// ------------------------------------------------------------
-// Déplacer un exercice dans le plan
-// ------------------------------------------------------------
-
-function movePlanExercise(
-    index,
-    direction
-) {
-    const currentPlan = getCurrentPlan();
-
-    if (!currentPlan) {
-        return;
-    }
-
-    const newIndex =
-        index + direction;
-
-    if (
-        newIndex < 0 ||
-        newIndex >=
-            currentPlan.exercises.length
-    ) {
-        return;
-    }
-
-    const exercises =
-        currentPlan.exercises;
-
-    [
-        exercises[index],
-        exercises[newIndex]
-    ] = [
-        exercises[newIndex],
-        exercises[index]
-    ];
-
-    normalizeCombinationNumbers();
-
-    renderPlanExercises();
-}
 
 // ============================================================
 // EXPORTS
@@ -200,5 +157,4 @@ export {
     addExerciseToCurrentPlan,
     removeExerciseFromCurrentPlan,
     updatePlanExerciseProgression,
-    movePlanExercise
 };
