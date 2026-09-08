@@ -159,23 +159,49 @@
 
                 </div>
 
-                <div id="progression-filter-options" class="filter-options">
+<div id="progression-filter-options" class="filter-options">
 
-                    <div class="progression-filter-panel">
+    <div class="progression-filter-panel">
 
-                        <div class="progression-filter-column">
-                            <strong>Include</strong>
-                            <div id="progression-include-options" class="progression-options"></div>
-                        </div>
+<div class="progression-mode-column">
 
-                        <div class="progression-filter-column">
-                            <strong>Exclude</strong>
-                            <div id="progression-exclude-options" class="progression-options"></div>
-                        </div>
+    <button
+        id="progression-include-mode"
+        class="filter-button progression-mode-button active"
+        type="button"
+    >
+        <span>Include</span>
+        <span>+</span>
+    </button>
 
-                    </div>
+    <button
+        id="progression-exclude-mode"
+        class="filter-button progression-mode-button"
+        type="button"
+    >
+        <span>Exclude</span>
+        <span>+</span>
+    </button>
 
-                </div>
+    <input
+        id="progression-search-input"
+        class="progression-search-input"
+        type="search"
+        placeholder="Rechercher..."
+        autocomplete="off"
+        aria-label="Rechercher une progression"
+    >
+
+</div>
+
+        <div
+            id="progression-options"
+            class="progression-options"
+        ></div>
+
+    </div>
+
+</div>
 
 
                 <!-- ÉQUIPEMENTS -->

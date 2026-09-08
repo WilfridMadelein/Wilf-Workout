@@ -23,6 +23,11 @@ let getSubmuscleFilters = () => null;
 let getEquipmentFilters = () => null;
 let getTypeFilters = () => null;
 
+let getSearchTerms = () => [];
+let findValidTermCombination = () => null;
+let getSearchCriteria = () => null;
+let compareSearchCriteria = () => 0;
+
 let displayExercises = () => {};
 let updateFilterSummaries = () => {};
 
@@ -47,6 +52,18 @@ function configureExerciseFilters(dependencies) {
     getSubmuscleFilters = dependencies.getSubmuscleFilters;
     getEquipmentFilters = dependencies.getEquipmentFilters;
     getTypeFilters = dependencies.getTypeFilters;
+
+    getSearchTerms =
+    dependencies.getSearchTerms;
+
+    findValidTermCombination =
+        dependencies.findValidTermCombination;
+
+    getSearchCriteria =
+        dependencies.getSearchCriteria;
+
+    compareSearchCriteria =
+        dependencies.compareSearchCriteria;
 
     displayExercises = dependencies.displayExercises;
     updateFilterSummaries =
@@ -688,141 +705,320 @@ function getProgressionOptions() {
     return [...progressions].sort();
 }
 
-function createProgressionOptions() {
-    const includeContainer =
+let activeProgressionMode = "include";
+
+
+function setProgressionMode(mode) {
+    activeProgressionMode = mode;
+
+    updateProgressionButtons();
+}
+
+
+function openProgressionFilter(mode) {
+    setProgressionMode(mode);
+
+    const options =
         document.getElementById(
-            "progression-include-options"
+            "progression-filter-options"
         );
 
-    const excludeContainer =
-        document.getElementById(
-            "progression-exclude-options"
+    const title =
+        document.querySelector(
+            '.filter-title[data-filter="progression"]'
         );
 
     if (
-        !includeContainer ||
-        !excludeContainer
+        options &&
+        title &&
+        !options.classList.contains("open")
     ) {
-        return;
+        title.click();
     }
+}
 
-    includeContainer.innerHTML = "";
-    excludeContainer.innerHTML = "";
 
-    const progressions =
-        getProgressionOptions();
-
+function getVisibleProgressionOptions() {
     const selectedProgressionsInclude =
         getSelectedProgressionsInclude();
 
     const selectedProgressionsExclude =
         getSelectedProgressionsExclude();
 
-    progressions.forEach(progression => {
-        createProgressionButton(
-            progression,
-            includeContainer,
-            selectedProgressionsInclude,
-            selectedProgressionsExclude
+    const searchInput =
+        document.getElementById(
+            "progression-search-input"
         );
 
-        createProgressionButton(
-            progression,
-            excludeContainer,
-            selectedProgressionsExclude,
-            selectedProgressionsInclude
+    const searchTerms =
+        getSearchTerms(
+            searchInput?.value || ""
         );
-    });
-}
 
-function createProgressionButton(
-    progression,
-    container,
-    selectedSet,
-    oppositeSet
-) {
-    const button =
-        document.createElement("button");
+    /*
+     * Une progression déjà sélectionnée
+     * ne doit plus apparaître dans les options.
+     */
+    const availableProgressions =
+        getProgressionOptions().filter(
+            progression =>
+                !selectedProgressionsInclude.has(
+                    progression
+                ) &&
+                !selectedProgressionsExclude.has(
+                    progression
+                )
+        );
 
-    button.classList.add(
-        "filter-button"
-    );
-
-    button.textContent = progression;
-
-    if (selectedSet.has(progression)) {
-        button.classList.add("active");
+    /*
+     * Sans recherche :
+     * ordre alphabétique normal.
+     */
+    if (searchTerms.length === 0) {
+        return availableProgressions.sort(
+            (a, b) =>
+                a.localeCompare(
+                    b,
+                    "fr",
+                    {
+                        sensitivity: "base"
+                    }
+                )
+        );
     }
 
-    button.addEventListener("click", () => {
-        if (selectedSet.has(progression)) {
-            selectedSet.delete(
-                progression
-            );
+    /*
+     * Avec recherche :
+     *
+     * même logique que la recherche
+     * des exercices, mais uniquement
+     * sur le nom de la progression.
+     */
+    return availableProgressions
+        .filter(progression =>
+            findValidTermCombination(
+                progression,
+                searchTerms
+            )
+        )
+        .map(progression => ({
+            progression,
 
-            button.classList.remove(
-                "active"
-            );
-        } else {
-            oppositeSet.delete(
-                progression
-            );
+            searchCriteria:
+                getSearchCriteria(
+                    progression,
+                    searchTerms
+                )
+        }))
+        .sort((a, b) => {
+            if (
+                a.searchCriteria &&
+                !b.searchCriteria
+            ) {
+                return -1;
+            }
 
-            selectedSet.add(
-                progression
-            );
+            if (
+                !a.searchCriteria &&
+                b.searchCriteria
+            ) {
+                return 1;
+            }
 
-            button.classList.add(
-                "active"
-            );
+            if (
+                a.searchCriteria &&
+                b.searchCriteria
+            ) {
+                const comparison =
+                    compareSearchCriteria(
+                        a.searchCriteria,
+                        b.searchCriteria
+                    );
 
-            updateProgressionButtons();
+                if (comparison !== 0) {
+                    return comparison;
+                }
+            }
+
+            return a.progression.localeCompare(
+                b.progression,
+                "fr",
+                {
+                    sensitivity: "base"
+                }
+            );
+        })
+        .map(item => item.progression);
+}
+
+
+function renderProgressionOptions() {
+    const progressionContainer =
+        document.getElementById(
+            "progression-options"
+        );
+
+    if (!progressionContainer) {
+        return;
+    }
+
+    progressionContainer.innerHTML = "";
+
+    const progressions =
+        getVisibleProgressionOptions();
+
+    progressions.forEach(
+        progression => {
+            createProgressionButton(
+                progression,
+                progressionContainer
+            );
         }
+    );
+}
 
+
+function createProgressionOptions() {
+    const progressionContainer =
+        document.getElementById(
+            "progression-options"
+        );
+
+    const includeModeButton =
+        document.getElementById(
+            "progression-include-mode"
+        );
+
+    const excludeModeButton =
+        document.getElementById(
+            "progression-exclude-mode"
+        );
+
+    const includeAddButton =
+        document.getElementById(
+            "progression-include-add"
+        );
+
+    const excludeAddButton =
+        document.getElementById(
+            "progression-exclude-add"
+        );
+
+    const searchInput =
+        document.getElementById(
+            "progression-search-input"
+        );
+
+    if (
+        !progressionContainer ||
+        !includeModeButton ||
+        !excludeModeButton ||
+        !includeAddButton ||
+        !excludeAddButton ||
+        !searchInput
+    ) {
+        return;
+    }
+
+
+    includeModeButton.onclick = () => {
+        setProgressionMode(
+            "include"
+        );
+    };
+
+
+    excludeModeButton.onclick = () => {
+        setProgressionMode(
+            "exclude"
+        );
+    };
+
+
+    includeAddButton.onclick = event => {
+        event.stopPropagation();
+
+        openProgressionFilter(
+            "include"
+        );
+    };
+
+
+    excludeAddButton.onclick = event => {
+        event.stopPropagation();
+
+        openProgressionFilter(
+            "exclude"
+        );
+    };
+
+
+    searchInput.oninput = () => {
+        renderProgressionOptions();
+    };
+
+
+    updateProgressionButtons();
+}
+
+
+function createProgressionButton(progression, container) {
+    const button = document.createElement("button");
+
+    button.classList.add("filter-button");
+    button.textContent = progression;
+    button.dataset.progression = progression;
+
+    button.addEventListener("click", () => {
+        const include = getSelectedProgressionsInclude();
+        const exclude = getSelectedProgressionsExclude();
+
+        const selectedSet =
+            activeProgressionMode === "include"
+                ? include
+                : exclude;
+
+        const oppositeSet =
+            activeProgressionMode === "include"
+                ? exclude
+                : include;
+
+        oppositeSet.delete(progression);
+        selectedSet.add(progression);
+
+        renderProgressionOptions();
         displayExercises();
     });
 
     container.appendChild(button);
 }
 
+
 function updateProgressionButtons() {
-    const selectedProgressionsInclude =
-        getSelectedProgressionsInclude();
+    const includeModeButton =
+        document.getElementById(
+            "progression-include-mode"
+        );
 
-    const selectedProgressionsExclude =
-        getSelectedProgressionsExclude();
+    const excludeModeButton =
+        document.getElementById(
+            "progression-exclude-mode"
+        );
 
-    document
-        .querySelectorAll(
-            "#progression-include-options .filter-button"
-        )
-        .forEach(button => {
-            const progression =
-                button.textContent;
 
-            button.classList.toggle(
-                "active",
-                selectedProgressionsInclude.has(
-                    progression
-                )
-            );
-        });
+    includeModeButton?.classList.toggle(
+        "active",
+        activeProgressionMode === "include"
+    );
 
-    document
-        .querySelectorAll(
-            "#progression-exclude-options .filter-button"
-        )
-        .forEach(button => {
-            const progression =
-                button.textContent;
 
-            button.classList.toggle(
-                "active",
-                selectedProgressionsExclude.has(
-                    progression
-                )
-            );
-        });
+    excludeModeButton?.classList.toggle(
+        "active",
+        activeProgressionMode === "exclude"
+    );
+
+
+    renderProgressionOptions();
 }
 
 function exerciseMatchesProgression(

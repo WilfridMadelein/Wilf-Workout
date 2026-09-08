@@ -304,73 +304,176 @@ function createPlanFilterRows() {
         );
     });
 
-    equipmentOptions.forEach(
-        equipment => {
-            const button =
-                document.createElement(
-                    "button"
-                );
+const allEquipmentButton =
+    document.createElement("button");
 
-            button.classList.add(
-                "filter-button"
+allEquipmentButton.classList.add(
+    "filter-button"
+);
+
+allEquipmentButton.textContent = "Tous";
+allEquipmentButton.dataset.equipment = "all";
+
+allEquipmentButton.addEventListener(
+    "click",
+    event => {
+        event.stopPropagation();
+
+        selectedPlanEquipment.clear();
+
+        equipmentOptions.forEach(
+            equipment =>
+                selectedPlanEquipment.add(
+                    equipment
+                )
+        );
+
+        updatePlanEquipmentButtons();
+        syncPlanFiltersToSearch();
+        updatePlanFilterSummaries();
+        updatePlanProgressionFilters();
+    }
+);
+
+equipmentOptionsContainer.appendChild(
+    allEquipmentButton
+);
+
+
+const noEquipmentButton =
+    document.createElement("button");
+
+noEquipmentButton.classList.add(
+    "filter-button"
+);
+
+noEquipmentButton.textContent = "Aucun";
+noEquipmentButton.dataset.equipment = "none";
+
+noEquipmentButton.addEventListener(
+    "click",
+    event => {
+        event.stopPropagation();
+
+        selectedPlanEquipment.clear();
+
+        updatePlanEquipmentButtons();
+        syncPlanFiltersToSearch();
+        updatePlanFilterSummaries();
+        updatePlanProgressionFilters();
+    }
+);
+
+equipmentOptionsContainer.appendChild(
+    noEquipmentButton
+);
+
+
+equipmentOptions.forEach(
+    equipment => {
+        const button =
+            document.createElement(
+                "button"
             );
 
-            button.textContent =
-                equipment;
+        button.classList.add(
+            "filter-button"
+        );
 
-            button.dataset.equipment =
-                equipment;
+        button.textContent =
+            equipment;
 
-            if (
+        button.dataset.equipment =
+            equipment;
+
+        button.addEventListener(
+            "click",
+            event => {
+                event.stopPropagation();
+
+                if (
+                    selectedPlanEquipment.has(
+                        equipment
+                    )
+                ) {
+                    selectedPlanEquipment.delete(
+                        equipment
+                    );
+                } else {
+                    selectedPlanEquipment.add(
+                        equipment
+                    );
+                }
+
+                updatePlanEquipmentButtons();
+                syncPlanFiltersToSearch();
+                updatePlanFilterSummaries();
+                updatePlanProgressionFilters();
+            }
+        );
+
+        equipmentOptionsContainer.appendChild(
+            button
+        );
+    }
+);
+
+updatePlanEquipmentButtons();
+updatePlanFilterSummaries();
+
+    updatePlanFilterSummaries();
+}
+
+function updatePlanEquipmentButtons() {
+    const selectedPlanEquipment =
+        getSelectedPlanEquipment();
+
+    const equipmentOptions =
+        getEquipmentOptions();
+
+    const container =
+        document.getElementById(
+            "plan-equipment-filter-options"
+        );
+
+    if (!container) {
+        return;
+    }
+
+    container
+        .querySelectorAll(
+            ".filter-button"
+        )
+        .forEach(button => {
+            const equipment =
+                button.dataset.equipment;
+
+            if (equipment === "all") {
+                button.classList.toggle(
+                    "active",
+                    selectedPlanEquipment.size ===
+                        equipmentOptions.length
+                );
+
+                return;
+            }
+
+            if (equipment === "none") {
+                button.classList.toggle(
+                    "active",
+                    selectedPlanEquipment.size === 0
+                );
+
+                return;
+            }
+
+            button.classList.toggle(
+                "active",
                 selectedPlanEquipment.has(
                     equipment
                 )
-            ) {
-                button.classList.add(
-                    "active"
-                );
-            }
-
-            button.addEventListener(
-                "click",
-                event => {
-                    event.stopPropagation();
-
-                    if (
-                        selectedPlanEquipment.has(
-                            equipment
-                        )
-                    ) {
-                        selectedPlanEquipment.delete(
-                            equipment
-                        );
-
-                        button.classList.remove(
-                            "active"
-                        );
-                    } else {
-                        selectedPlanEquipment.add(
-                            equipment
-                        );
-
-                        button.classList.add(
-                            "active"
-                        );
-                    }
-
-                    syncPlanFiltersToSearch();
-                    updatePlanFilterSummaries();
-                    updatePlanProgressionFilters();
-                }
             );
-
-            equipmentOptionsContainer.appendChild(
-                button
-            );
-        }
-    );
-
-    updatePlanFilterSummaries();
+        });
 }
 
 // ------------------------------------------------------------
@@ -614,12 +717,6 @@ function exerciseMatchesPlanEquipment(
 ) {
     const selectedPlanEquipment =
         getSelectedPlanEquipment();
-
-    if (
-        selectedPlanEquipment.size === 0
-    ) {
-        return false;
-    }
 
     if (
         !exercise.equipement ||

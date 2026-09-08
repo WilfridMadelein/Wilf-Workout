@@ -162,17 +162,12 @@ import {
     addExerciseToCurrentPlan,
     removeExerciseFromCurrentPlan,
     updatePlanExerciseProgression,
-
 } from "./plans/plan-manager.js";
 
 import {
     configurePlanFilters,
     createPlanFilterRows,
-    syncPlanFiltersToSearch,
-    updatePlanFilterSummaries,
-    exerciseMatchesPlanFilters,
-    exerciseMatchesPlanEquipment,
-    updatePlanProgressionFilters
+    updatePlanFilterSummaries
 } from "./plans/plan-filters.js";
 
 import {
@@ -270,6 +265,11 @@ configureExerciseFilters({
     getSubmuscleFilters: () => submuscleFilters,
     getEquipmentFilters: () => equipmentFilters,
     getTypeFilters: () => typeFilters,
+
+    getSearchTerms,
+    findValidTermCombination,
+    getSearchCriteria,
+    compareSearchCriteria,
 
     displayExercises,
     updateFilterSummaries
@@ -445,6 +445,8 @@ equipmentOptions.forEach(equipment => {
     searchPageState.equipment.add(equipment);
     planSearchState.equipment.add(equipment);
 });
+
+createPlanFilterRows();
 
 createMuscleButtons();
 createEquipmentButtons();
