@@ -73,17 +73,25 @@ function addExerciseToCurrentPlan(exercise) {
 // Supprimer un exercice du plan
 // ------------------------------------------------------------
 
-function removeExerciseFromCurrentPlan(index) {
+function removeExerciseFromCurrentPlan(planExercise) {
     const currentPlan = getCurrentPlan();
 
     if (!currentPlan) {
         return;
     }
 
+    const index =
+        currentPlan.exercises.indexOf(planExercise);
+
+    if (index === -1) {
+        return;
+    }
+
+    closePlanInstructionsPopup();
+
     currentPlan.exercises.splice(index, 1);
 
     normalizeCombinationNumbers();
-
     renderPlanExercises();
 }
 

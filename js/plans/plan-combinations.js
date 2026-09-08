@@ -163,6 +163,7 @@ function moveExerciseToNewCombination(
     }
 
     const exercises = currentPlan.exercises;
+
     const currentIndex =
         exercises.indexOf(planExercise);
 
@@ -170,10 +171,10 @@ function moveExerciseToNewCombination(
         return;
     }
 
-    exercises.splice(currentIndex, 1);
-
     const newGroup =
         getNextCombinationGroup();
+
+    exercises.splice(currentIndex, 1);
 
     planExercise.combination.group =
         newGroup;
@@ -239,6 +240,17 @@ function openCombinationMenu(
     select.classList.add(
         "combination-select"
     );
+
+    const placeholderOption =
+    document.createElement("option");
+
+placeholderOption.value = "";
+placeholderOption.textContent =
+    "Choisir…";
+placeholderOption.disabled = true;
+placeholderOption.selected = true;
+
+select.appendChild(placeholderOption);
 
     const newOption =
         document.createElement("option");

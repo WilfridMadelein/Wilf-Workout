@@ -950,6 +950,24 @@ header {
     gap: 0;
 }
 
+.plan-delete-cell {
+    width: 38px;
+    padding: 4px !important;
+}
+
+.plan-delete-button {
+    padding: 2px 4px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.plan-delete-button:hover {
+    transform: scale(1.1);
+}
+
 
 /* =========================================================
    MENU DES SETS

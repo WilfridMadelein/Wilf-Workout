@@ -259,25 +259,25 @@ export function updateFilterSummaries() {
 
     typeSummary.innerHTML = "";
 
-    const allTypes = [
-        "Push",
-        "Pull",
-        "Isométrique"
-    ];
+const allTypes = [
+    ["Push", "Push"],
+    ["Pull", "Pull"],
+    ["Iso", "Isométrique"]
+];
 
-    if (selectedTypes.size === 0) {
-        typeSummary.appendChild(
-            createSummaryButton("Tous")
-        );
-    } else {
-        allTypes.forEach(type => {
-            if (selectedTypes.has(type)) {
-                typeSummary.appendChild(
-                    createSummaryButton(type)
-                );
-            }
-        });
-    }
+if (selectedTypes.size === 0) {
+    typeSummary.appendChild(
+        createSummaryButton("Tous")
+    );
+} else {
+    allTypes.forEach(([value, label]) => {
+        if (selectedTypes.has(value)) {
+            typeSummary.appendChild(
+                createSummaryButton(label)
+            );
+        }
+    });
+}
 
     // Muscles
     const muscleSummary =

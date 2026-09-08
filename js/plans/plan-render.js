@@ -9,11 +9,13 @@ let displayExerciseDetails = () => {};
 let getProgressionName = () => "";
 let getPlanProgressionNeighbor = () => null;
 let updatePlanExerciseProgression = () => {};
+let removeExerciseFromCurrentPlan = () => {};
 let closePlanInstructionsPopup = () => {};
 let getPlanExerciseDetailsLines = () => [];
 let openCombinationMenu = () => {};
 let moveExerciseWithinCombination = () => {};
 let moveCombination = () => {};
+
 
 function configurePlanRender(dependencies) {
     getCurrentPlan = dependencies.getCurrentPlan;
@@ -23,6 +25,7 @@ function configurePlanRender(dependencies) {
     getProgressionName = dependencies.getProgressionName;
     getPlanProgressionNeighbor = dependencies.getPlanProgressionNeighbor;
     updatePlanExerciseProgression = dependencies.updatePlanExerciseProgression;
+    removeExerciseFromCurrentPlan = dependencies.removeExerciseFromCurrentPlan;
     closePlanInstructionsPopup = dependencies.closePlanInstructionsPopup;
     getPlanExerciseDetailsLines = dependencies.getPlanExerciseDetailsLines;
     openCombinationMenu = dependencies.openCombinationMenu;
@@ -867,6 +870,42 @@ function renderPlanExercises() {
                         groupOrderCell
                     );
                 }
+
+const deleteCell =
+    document.createElement("td");
+
+deleteCell.classList.add(
+    "plan-delete-cell"
+);
+
+const deleteButton =
+    document.createElement("button");
+
+deleteButton.type = "button";
+deleteButton.textContent = "🗑";
+deleteButton.classList.add(
+    "plan-delete-button"
+);
+
+deleteButton.setAttribute(
+    "aria-label",
+    `Supprimer ${exercise.nom} du plan`
+);
+
+deleteButton.title =
+    "Supprimer l'exercice";
+
+deleteButton.addEventListener(
+    "click",
+    () => {
+        removeExerciseFromCurrentPlan(
+            planExercise
+        );
+    }
+);
+
+deleteCell.appendChild(deleteButton);
+row.appendChild(deleteCell);
 
                 tbody.appendChild(row);
             }

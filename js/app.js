@@ -215,6 +215,7 @@ configurePlanRender({
     getProgressionName,
     getPlanProgressionNeighbor,
     updatePlanExerciseProgression,
+    removeExerciseFromCurrentPlan,
     closePlanInstructionsPopup,
     getPlanExerciseDetailsLines,
 
