@@ -49,44 +49,157 @@
         <!-- PARAMÈTRES -->
         <div class="plan-default-settings">
 
-            <h3>Paramètres du plan</h3>
+    <h3>Paramètres du plan</h3>
 
-            <div class="plan-parameter">
-                <label for="plan-sets">Séries</label>
-                <input type="number" id="plan-sets" min="1" value="3">
+<div class="plan-settings-grid">
+
+    <div class="plan-settings-column">
+
+        <div class="plan-parameter">
+            <label for="plan-sets">Série</label>
+
+            <div class="plan-default-number-control">
+                <input
+                    type="number"
+                    id="plan-sets"
+                    class="plan-default-number-input"
+                    data-min-chars="3"
+                    min="1"
+                    max="999"
+                    step="1"
+                    value="3"
+                >
+
+                <div class="plan-default-arrow-stack">
+                    <button type="button" class="plan-number-arrow" data-direction="1">▲</button>
+                    <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="plan-parameter">
+            <label for="plan-rest">Repos</label>
+
+            <div class="plan-default-number-control">
+                <input
+                    type="number"
+                    id="plan-rest"
+                    class="plan-default-number-input"
+                    data-min-chars="3"
+                    min="0"
+                    max="999"
+                    step="15"
+                    value="90"
+                >
+
+                <div class="plan-default-arrow-stack">
+                    <button type="button" class="plan-number-arrow" data-direction="1">▲</button>
+                    <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
+                </div>
             </div>
 
-            <div class="plan-parameter">
-                <label for="plan-reps">Répétitions</label>
-                <input type="number" id="plan-reps" min="1" value="10">
-            </div>
+            <span>sec</span>
+        </div>
 
-            <div class="plan-parameter">
-                <label for="plan-time">Durée</label>
-                <input type="number" id="plan-time" min="1" value="30">
-                <span>sec</span>
-            </div>
 
-            <div class="plan-parameter">
-                <label for="plan-rest">Repos</label>
-                <input type="number" id="plan-rest" min="0" value="90">
-                <span>sec</span>
-            </div>
+        <div class="plan-parameter">
+            <label>Tempo</label>
 
-            <div class="plan-parameter">
+            <div class="tempo-inputs">
 
-                <label>Tempo</label>
+                <div class="plan-default-number-control plan-default-tempo-control">
+                    <button type="button" class="plan-number-arrow" data-direction="1">▲</button>
+                    <input type="number" id="plan-tempo-1" class="plan-default-number-input" data-min-chars="1" min="0" max="999" step="1" value="3">
+                    <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
+                </div>
 
-                <div class="tempo-inputs">
-                    <input type="number" id="plan-tempo-1" min="0" value="3">
-                    <input type="number" id="plan-tempo-2" min="0" value="1">
-                    <input type="number" id="plan-tempo-3" min="0" value="1">
-                    <input type="number" id="plan-tempo-4" min="0" value="0">
+                <div class="plan-default-number-control plan-default-tempo-control">
+                    <button type="button" class="plan-number-arrow" data-direction="1">▲</button>
+                    <input type="number" id="plan-tempo-2" class="plan-default-number-input" data-min-chars="1" min="0" max="999" step="1" value="1">
+                    <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
+                </div>
+
+                <div class="plan-default-number-control plan-default-tempo-control">
+                    <button type="button" class="plan-number-arrow" data-direction="1">▲</button>
+                    <input type="number" id="plan-tempo-3" class="plan-default-number-input" data-min-chars="1" min="0" max="999" step="1" value="1">
+                    <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
+                </div>
+
+                <div class="plan-default-number-control plan-default-tempo-control">
+                    <button type="button" class="plan-number-arrow" data-direction="1">▲</button>
+                    <input type="number" id="plan-tempo-4" class="plan-default-number-input" data-min-chars="1" min="0" max="999" step="1" value="0">
+                    <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
                 </div>
 
             </div>
-
         </div>
+
+    </div>
+
+
+<div class="plan-volume-column">
+
+    <h4>Volume</h4>
+
+    <div class="plan-volume-settings">
+
+        <div class="plan-parameter">
+            <label for="plan-reps">Répétition</label>
+
+            <div class="plan-default-number-control">
+                <input
+                    type="number"
+                    id="plan-reps"
+                    class="plan-default-number-input"
+                    data-min-chars="3"
+                    min="1"
+                    max="999"
+                    step="1"
+                    value="10"
+                >
+
+                <div class="plan-default-arrow-stack">
+                    <button type="button" class="plan-number-arrow" data-direction="1">▲</button>
+                    <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
+                </div>
+            </div>
+
+            <span>Rep</span>
+        </div>
+
+
+        <div class="plan-parameter">
+            <label for="plan-time">Durée</label>
+
+            <div class="plan-default-number-control">
+                <input
+                    type="number"
+                    id="plan-time"
+                    class="plan-default-number-input"
+                    data-min-chars="3"
+                    min="1"
+                    max="999"
+                    step="15"
+                    value="30"
+                >
+
+                <div class="plan-default-arrow-stack">
+                    <button type="button" class="plan-number-arrow" data-direction="1">▲</button>
+                    <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
+                </div>
+            </div>
+
+            <span>sec</span>
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+</div>
 
     </div>
 

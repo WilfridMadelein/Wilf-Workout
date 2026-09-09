@@ -1,3 +1,7 @@
+import {
+    setupNumberInput
+} from "../ui/ui.js";
+
 // ============================================================
 // DÉPENDANCES
 // ============================================================
@@ -37,83 +41,71 @@ function configurePlanRender(dependencies) {
 // AFFICHAGE DU PLAN
 // ============================================================
 
-function createPlanNumberInput(value, onChange, options = {}) {
-    const container = document.createElement("div");
-    container.classList.add("plan-number-control");
+function createPlanNumberInput(
+    value,
+    onChange,
+    options = {}
+) {
+    const container =
+        document.createElement("div");
 
-    const upButton = document.createElement("button");
+    container.classList.add(
+        "plan-number-control"
+    );
+
+    const upButton =
+        document.createElement("button");
+
     upButton.type = "button";
     upButton.textContent = "▲";
-    upButton.classList.add("plan-number-arrow");
+    upButton.classList.add(
+        "plan-number-arrow"
+    );
 
-    const input = document.createElement("input");
+    const input =
+        document.createElement("input");
+
     input.type = "number";
     input.value = value ?? "";
-    input.classList.add("plan-number-input");
+    input.classList.add(
+        "plan-number-input"
+    );
 
-    const downButton = document.createElement("button");
+    const downButton =
+        document.createElement("button");
+
     downButton.type = "button";
     downButton.textContent = "▼";
-    downButton.classList.add("plan-number-arrow");
+    downButton.classList.add(
+        "plan-number-arrow"
+    );
 
-    if (options.min !== undefined) {
-        input.min = options.min;
-    }
+    const control =
+        setupNumberInput(input, {
+            ...options,
+            onChange
+        });
 
-    if (options.step !== undefined) {
-        input.step = options.step;
-    }
+const useSnapStep = () =>
+    typeof options.snapStep === "function"
+        ? options.snapStep()
+        : options.snapStep === true;
 
-    function updateWidth() {
-        const length = String(input.value || "0").length;
-        input.style.width = `${Math.max(2, length + 1)}ch`;
-    }
+upButton.addEventListener(
+    "click",
+    () => control.step(1, useSnapStep())
+);
 
-    function changeValue(amount) {
-        const currentValue = Number(input.value) || 0;
-        const step = Number(input.step) || 1;
+downButton.addEventListener(
+    "click",
+    () => control.step(-1, useSnapStep())
+);
 
-        let newValue = currentValue + amount * step;
-
-        if (input.min !== "") {
-            newValue = Math.max(
-                Number(input.min),
-                newValue
-            );
-        }
-
-        input.value = newValue;
-
-        updateWidth();
-        onChange(newValue);
-    }
-
-    upButton.addEventListener("click", () => {
-        changeValue(1);
-    });
-
-    downButton.addEventListener("click", () => {
-        changeValue(-1);
-    });
-
-    input.addEventListener("input", () => {
-        updateWidth();
-    });
-
-    input.addEventListener("change", () => {
-        const newValue = input.value === ""
-            ? null
-            : Number(input.value);
-
-        updateWidth();
-        onChange(newValue);
-    });
-
-    container.appendChild(upButton);
-    container.appendChild(input);
-    container.appendChild(downButton);
-
-    updateWidth();
+    container.append(
+        upButton,
+        input,
+        downButton
+    );
 
     return container;
 }
@@ -412,7 +404,11 @@ function renderPlanExercises() {
                         },
                         {
                             min: 0,
-                            step: 0.5
+                            max: 9999.9,
+                            step: 2.5,
+                            decimals: 1,
+                            minChars: 3,
+                            snapStep: true
                         }
                     )
                 );
@@ -470,6 +466,7 @@ function renderPlanExercises() {
                         },
                         {
                             min: 1,
+                            max: 999,
                             step: 1
                         }
                     )
@@ -500,7 +497,14 @@ function renderPlanExercises() {
                         },
                         {
                             min: 1,
-                            step: 1
+                            max: 999,
+                            step: () =>
+                                planExercise.valueUnit === "sec"
+                                    ? 15
+                                    : 1,
+
+                            snapStep: () => 
+                                planExercise.valueUnit === "sec"
                         }
                     )
                 );
@@ -575,7 +579,9 @@ function renderPlanExercises() {
                             },
                             {
                                 min: 0,
-                                step: 1
+                                max: 999,
+                                step: 1,
+                                minChars: 1
                             }
                         );
 
@@ -627,7 +633,9 @@ function renderPlanExercises() {
                         },
                         {
                             min: 0,
-                            step: 1
+                            max: 999,
+                            step: 15,
+                            snapStep: true
                         }
                     )
                 );

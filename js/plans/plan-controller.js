@@ -1,3 +1,8 @@
+import {
+    setupNumberInput,
+    updateNumberInputWidth
+} from "../ui/ui.js";
+
 let getCurrentPlan;
 let setCurrentPlan;
 
@@ -141,80 +146,144 @@ export function loadPlanDefaultsIntoInputs() {
 
     planTempoInputs[3].value =
         currentPlan.defaults.tempo.fourth;
+
+[
+    planSetsInput,
+    planRepsInput,
+    planTimeInput,
+    planRestInput,
+    ...planTempoInputs
+].forEach(input => {
+    updateNumberInputWidth(
+        input,
+        Number(
+            input.dataset.minChars
+        ) || 3
+    );
+});
+
 }
 
 export function setupPlanDefaultInputs() {
-    planSetsInput.addEventListener("change", () => {
-        const currentPlan = getCurrentPlan();
 
-        if (!currentPlan) return;
+    const bind = (
+        input,
+        options,
+        save
+    ) => {
+        const control =
+            setupNumberInput(input, {
+                ...options,
 
-        currentPlan.defaults.sets =
-            Number(planSetsInput.value);
-    });
+                onChange: value => {
+                    const plan =
+                        getCurrentPlan();
 
-    planRepsInput.addEventListener("change", () => {
-        const currentPlan = getCurrentPlan();
+                    if (!plan) return;
 
-        if (!currentPlan) return;
+                    save(
+                        plan.defaults,
+                        value
+                    );
+                }
+            });
 
-        currentPlan.defaults.reps =
-            Number(planRepsInput.value);
-    });
+        input
+            .closest(
+                ".plan-default-number-control"
+            )
+            ?.querySelectorAll(
+                "[data-direction]"
+            )
+            .forEach(button => {
+                button.addEventListener(
+                    "click",
+                    () => {
+                        control.step(
+                             Number(button.dataset.direction),
+                                options.snapStep === true
+                        );
+                    }
+                );
+            });
+    };
 
-    planTimeInput.addEventListener("change", () => {
-        const currentPlan = getCurrentPlan();
 
-        if (!currentPlan) return;
+    bind(
+        planSetsInput,
+        {
+            min: 1,
+            max: 999,
+            step: 1,
+            minChars: 3
+        },
+        (defaults, value) =>
+            defaults.sets = value
+    );
 
-        currentPlan.defaults.time =
-            Number(planTimeInput.value);
-    });
+    bind(
+        planRepsInput,
+        {
+            min: 1,
+            max: 999,
+            step: 1,
+            minChars: 3
+        },
+        (defaults, value) =>
+            defaults.reps = value
+    );
 
-    planRestInput.addEventListener("change", () => {
-        const currentPlan = getCurrentPlan();
+    bind(
+        planTimeInput,
+        {
+            min: 1,
+            max: 999,
+            step: 15,
+            minChars: 3,
+            snapStep: true
+        },
+        (defaults, value) =>
+            defaults.time = value
+    );
 
-        if (!currentPlan) return;
+    bind(
+        planRestInput,
+        {
+            min: 0,
+            max: 999,
+            step: 15,
+            minChars: 3,
+            snapStep: true
+        },
+        (defaults, value) =>
+            defaults.rest = value
+    );
 
-        currentPlan.defaults.rest =
-            Number(planRestInput.value);
-    });
 
-    planTempoInputs[0].addEventListener("change", () => {
-        const currentPlan = getCurrentPlan();
+    const tempoKeys = [
+        "first",
+        "second",
+        "third",
+        "fourth"
+    ];
 
-        if (!currentPlan) return;
-
-        currentPlan.defaults.tempo.first =
-            Number(planTempoInputs[0].value);
-    });
-
-    planTempoInputs[1].addEventListener("change", () => {
-        const currentPlan = getCurrentPlan();
-
-        if (!currentPlan) return;
-
-        currentPlan.defaults.tempo.second =
-            Number(planTempoInputs[1].value);
-    });
-
-    planTempoInputs[2].addEventListener("change", () => {
-        const currentPlan = getCurrentPlan();
-
-        if (!currentPlan) return;
-
-        currentPlan.defaults.tempo.third =
-            Number(planTempoInputs[2].value);
-    });
-
-    planTempoInputs[3].addEventListener("change", () => {
-        const currentPlan = getCurrentPlan();
-
-        if (!currentPlan) return;
-
-        currentPlan.defaults.tempo.fourth =
-            Number(planTempoInputs[3].value);
-    });
+    planTempoInputs.forEach(
+        (input, index) => {
+            bind(
+                input,
+                {
+                    min: 0,
+                    max: 999,
+                    step: 1,
+                    minChars: 1
+                },
+                (defaults, value) =>
+                    defaults.tempo[
+                        tempoKeys[index]
+                    ] = value
+            );
+        }
+    );
 }
 
 export function setupPlanController() {

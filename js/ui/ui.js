@@ -75,6 +75,143 @@ function setActive(element, active) {
     );
 }
 
+// ------------------------------------------------------------
+// Champs numériques
+// ------------------------------------------------------------
+
+function normalizeNumber(value, {
+    min = 0,
+    max = 999,
+    decimals = 0
+} = {}) {
+    let number = Number(
+        String(value).replace(",", ".")
+    );
+
+    if (!Number.isFinite(number)) {
+        number = min;
+    }
+
+    const factor = 10 ** decimals;
+
+    number =
+        Math.round(number * factor) /
+        factor;
+
+    return Math.min(
+        max,
+        Math.max(min, number)
+    );
+}
+
+
+function updateNumberInputWidth(input, minChars = 2) {
+    const length =
+        String(input.value || "0").length;
+
+    input.style.width =
+        `${Math.max(minChars, length)}ch`;
+}
+
+
+function setupNumberInput(input, {
+    min = 0,
+    max = 999,
+    step = 1,
+    decimals = 0,
+    minChars = 2,
+    onChange = () => {}
+} = {}) {
+
+    const getStep = () =>
+        typeof step === "function"
+            ? step()
+            : step;
+
+    const commit = value => {
+        const normalized =
+            normalizeNumber(value, {
+                min,
+                max,
+                decimals
+            });
+
+        input.value = normalized;
+
+        updateNumberInputWidth(
+            input,
+            minChars
+        );
+
+        onChange(normalized);
+    };
+
+    input.min = min;
+    input.max = max;
+
+    if (typeof step !== "function") {
+        input.step = step;
+    }
+
+    input.addEventListener("keydown", event => {
+        const blocked = ["e", "E", "+"];
+
+        if (min >= 0) {
+            blocked.push("-");
+        }
+
+        if (decimals === 0) {
+            blocked.push(".", ",");
+        }
+
+        if (blocked.includes(event.key)) {
+            event.preventDefault();
+        }
+    });
+
+    input.addEventListener("input", () => {
+        updateNumberInputWidth(
+            input,
+            minChars
+        );
+    });
+
+    input.addEventListener("change", () => {
+        commit(input.value);
+    });
+
+    updateNumberInputWidth(
+        input,
+        minChars
+    );
+
+return {
+    step(direction, snap = false) {
+        const current = normalizeNumber(
+            input.value,
+            { min, max, decimals }
+        );
+
+        const stepValue = getStep();
+
+        if (!snap || stepValue <= 1) {
+            commit(current + direction * stepValue);
+            return;
+        }
+
+        const ratio = current / stepValue;
+
+        const next =
+            direction > 0
+                ? (Math.floor(ratio) + 1) * stepValue
+                : (Math.ceil(ratio) - 1) * stepValue;
+
+        commit(next);
+    }
+};
+
+}
+
 // ============================================================
 // EXPORTS
 // ============================================================
@@ -84,5 +221,8 @@ export {
     showElement,
     hideElement,
     toggleElement,
-    setActive
+    setActive,
+    normalizeNumber,
+    updateNumberInputWidth,
+    setupNumberInput
 };
