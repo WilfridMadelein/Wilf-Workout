@@ -581,7 +581,11 @@ function renderPlanExercises() {
                                 min: 0,
                                 max: 999,
                                 step: 1,
-                                minChars: 1
+                                minChars: 1,
+                                zeroDisplay:
+                                    key === "first" || key === "third"
+                                        ? "X"
+                                        : null
                             }
                         );
 

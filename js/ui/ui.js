@@ -120,31 +120,38 @@ function setupNumberInput(input, {
     step = 1,
     decimals = 0,
     minChars = 2,
+    zeroDisplay = null,
     onChange = () => {}
 } = {}) {
+
+    if (zeroDisplay) {
+        input.type = "text";
+        input.inputMode = "numeric";
+    }
 
     const getStep = () =>
         typeof step === "function"
             ? step()
             : step;
 
-    const commit = value => {
-        const normalized =
-            normalizeNumber(value, {
-                min,
-                max,
-                decimals
-            });
+const displayValue = value => {
+    input.value =
+        value === 0 && zeroDisplay
+            ? zeroDisplay
+            : value;
 
-        input.value = normalized;
+    updateNumberInputWidth(input, minChars);
+};
 
-        updateNumberInputWidth(
-            input,
-            minChars
-        );
+const commit = value => {
+    const normalized = normalizeNumber(
+        value,
+        { min, max, decimals }
+    );
 
-        onChange(normalized);
-    };
+    displayValue(normalized);
+    onChange(normalized);
+};
 
     input.min = min;
     input.max = max;
@@ -180,9 +187,11 @@ function setupNumberInput(input, {
         commit(input.value);
     });
 
-    updateNumberInputWidth(
-        input,
-        minChars
+    displayValue(
+        normalizeNumber(
+        input.value,
+        { min, max, decimals }
+        )
     );
 
 return {

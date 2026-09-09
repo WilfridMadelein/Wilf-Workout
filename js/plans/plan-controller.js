@@ -87,7 +87,7 @@ export function ensurePlanDefaults(plan) {
     }
 
     if (plan.defaults.rest == null) {
-        plan.defaults.rest = 90;
+        plan.defaults.rest = 60;
     }
 
     if (!plan.defaults.tempo) {
@@ -105,7 +105,7 @@ export function ensurePlanDefaults(plan) {
         plan.defaults.tempo.second == null ||
         plan.defaults.tempo.second === ""
     ) {
-        plan.defaults.tempo.second = 1;
+        plan.defaults.tempo.second = 0;
     }
 
     if (
@@ -135,17 +135,22 @@ export function loadPlanDefaultsIntoInputs() {
     planTimeInput.value = currentPlan.defaults.time;
     planRestInput.value = currentPlan.defaults.rest;
 
-    planTempoInputs[0].value =
-        currentPlan.defaults.tempo.first;
+const tempoValues = [
+    currentPlan.defaults.tempo.first,
+    currentPlan.defaults.tempo.second,
+    currentPlan.defaults.tempo.third,
+    currentPlan.defaults.tempo.fourth
+];
 
-    planTempoInputs[1].value =
-        currentPlan.defaults.tempo.second;
+planTempoInputs.forEach((input, index) => {
+    const value = tempoValues[index];
+    const usesX = index === 0 || index === 2;
 
-    planTempoInputs[2].value =
-        currentPlan.defaults.tempo.third;
-
-    planTempoInputs[3].value =
-        currentPlan.defaults.tempo.fourth;
+    input.value =
+        usesX && value === 0
+            ? "X"
+            : value;
+});
 
 [
     planSetsInput,
@@ -275,8 +280,13 @@ export function setupPlanDefaultInputs() {
                     min: 0,
                     max: 999,
                     step: 1,
-                    minChars: 1
+                    minChars: 1,
+                    zeroDisplay:
+                        index === 0 || index === 2
+                            ? "X"
+                            : null
                 },
+
                 (defaults, value) =>
                     defaults.tempo[
                         tempoKeys[index]
@@ -317,11 +327,11 @@ export function setupPlanController() {
                 sets: 3,
                 reps: 10,
                 time: 30,
-                rest: 90,
+                rest: 60,
 
                 tempo: {
                     first: 3,
-                    second: 1,
+                    second: 0,
                     third: 1,
                     fourth: 0
                 }
