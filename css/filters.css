@@ -1,0 +1,249 @@
+/* =========================================================
+   FILTRES
+========================================================= */
+
+#exercise-filters {
+    border-top: 1px solid #ccc;
+}
+
+.filter-row {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    border-bottom: 1px solid #ddd;
+}
+
+.filter-title {
+    width: 150px;
+    min-width: 150px;
+    height: 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border: none;
+    background: transparent;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: left;
+    font-size: 14px;
+}
+
+.filter-title:hover {
+    background: #f5f5f5;
+}
+
+.filter-arrow {
+    font-size: 12px;
+}
+
+.filter-summary {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.filter-options {
+    display: none;
+    padding: 12px 10px 15px 160px;
+    border-bottom: 1px solid #ddd;
+}
+
+.filter-options.open {
+    display: block;
+}
+
+.filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.filter-button {
+    padding: 7px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #f5f5f5;
+    cursor: pointer;
+}
+
+.filter-button.active {
+    background: #333;
+    color: white;
+    border-color: #333;
+}
+
+.filter-button:hover {
+    opacity: 0.8;
+}
+
+
+/* =========================================================
+   RÉSUMÉS DES FILTRES
+========================================================= */
+
+.summary-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border: 1px solid #333;
+    border-radius: 6px;
+    background: #333;
+    color: white;
+    font-size: 13px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.summary-remove {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: white;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.summary-remove:hover {
+    opacity: 0.7;
+}
+
+/* =========================================================
+   SOUS-MUSCLES
+========================================================= */
+
+#submuscle-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 15px;
+    align-items: flex-start;
+}
+
+.submuscle-container {
+    min-width: 150px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+}
+
+.submuscle-title {
+    margin: 0 0 8px;
+}
+
+.submuscle-option {
+    display: block;
+    margin-top: 5px;
+}
+
+.submuscle-option input {
+    margin-right: 8px;
+}
+
+
+/* =========================================================
+   FILTRE DE PROGRESSION
+========================================================= */
+
+.progression-summary {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 4px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+}
+
+.progression-summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    min-height: 25px;
+    width: 100%;
+}
+
+.progression-summary-row > span:first-child {
+    width: 55px;
+    flex-shrink: 0;
+}
+
+.selected-items {
+    min-width: 0;
+    display: flex;
+    flex: 0 1 auto;
+    gap: 5px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.add-filter-button {
+    width: 25px;
+    min-width: 25px;
+    height: 25px;
+    border: 1px solid #aaa;
+    border-radius: 50%;
+    background: #f5f5f5;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 20px;
+}
+
+.add-filter-button:hover {
+    background: #e5e5e5;
+}
+
+#progression-filter-options {
+    padding-left: 10px;
+}
+
+.progression-filter-panel {
+    display: grid;
+    grid-template-columns:
+        220px minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+.progression-mode-column {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.progression-search-input {
+    width: 200px;
+    max-width: 100%;
+    box-sizing: border-box;
+
+    margin-top: 4px;
+    padding: 7px 9px;
+
+    border: 1px solid #aaa;
+    border-radius: 6px;
+
+    font-size: 14px;
+}
+
+.progression-mode-button {
+    width: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.progression-options {
+    display: flex;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+}

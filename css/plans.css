@@ -1,0 +1,571 @@
+/* =========================================================
+   PAGE PLANS
+========================================================= */
+
+#page-plans {
+    display: none;
+    padding: 20px;
+}
+
+#plan-home,
+#plan-creator {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+#new-plan-button,
+#create-plan-button,
+#cancel-plan-button {
+    padding: 10px 16px;
+    margin-top: 10px;
+    cursor: pointer;
+}
+
+#plan-name {
+    display: block;
+    width: 100%;
+    max-width: 500px;
+    padding: 10px;
+    margin: 8px 0 15px;
+    box-sizing: border-box;
+}
+
+.plan-card {
+    margin-top: 25px;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+
+/* =========================================================
+   ÉDITEUR DE PLAN
+========================================================= */
+
+#plan-editor {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+#back-to-plans-button {
+    padding: 7px 12px;
+    margin-bottom: 20px;
+    cursor: pointer;
+}
+
+.plan-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 30px;
+    margin-bottom: 20px;
+    align-items: start;
+}
+
+.plan-info {
+    min-width: 0;
+}
+
+.plan-info h2,
+.plan-default-settings h3 {
+    margin-top: 0;
+}
+
+.plan-default-settings {
+    min-width: 0;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.plan-parameter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.plan-parameter label {
+    width: 100px;
+}
+
+.plan-parameter input {
+    width: 80px;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+.tempo-inputs {
+    display: flex;
+    gap: 4px;
+}
+
+.tempo-inputs input {
+    width: 35px;
+    padding: 5px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.plan-exercises {
+    width: 100%;
+    max-width: none;
+    margin-top: 20px;
+    box-sizing: border-box;
+}
+
+#add-exercise-button {
+    padding: 10px 16px;
+    margin-top: 15px;
+    cursor: pointer;
+}
+
+#plan-exercise-browser-container {
+    width: 100%;
+    max-width: none;
+    margin-top: 20px;
+    box-sizing: border-box;
+}
+
+#plan-exercise-browser-container > #exercise-browser,
+#plan-exercise-browser-container .exercise-search-area,
+#plan-exercise-browser-container .exercise-main-row {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+}
+
+#plan-exercise-browser-container > #exercise-browser {
+    display: block;
+}
+
+
+
+
+
+
+
+
+/* =========================================================
+   FILTRES DU PLAN
+========================================================= */
+
+.plan-filters-box {
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.plan-filters-box h3 {
+    margin: 0 0 10px;
+}
+
+.plan-filter-row {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+}
+
+.plan-filter-title {
+    width: auto;
+    min-width: 0;
+    height: 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    box-sizing: border-box;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: left;
+    font-size: 14px;
+}
+
+.plan-filter-title:hover {
+    background: #f5f5f5;
+}
+
+.plan-filter-arrow {
+    font-size: 12px;
+}
+
+.plan-filter-summary {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.plan-filter-options {
+    display: none;
+    grid-column: 1 / -1;
+    padding: 12px 10px 15px 160px;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.plan-filter-options.open {
+    display: flex;
+}
+
+
+/* =========================================================
+   TABLEAU DES EXERCICES DU PLAN
+========================================================= */
+
+.plan-exercise-table {
+    width: 100%;
+    table-layout: auto;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.plan-exercise-table th,
+.plan-exercise-table td {
+    border: 1px solid #ddd;
+    padding: 6px 8px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.plan-exercise-table th {
+    font-weight: bold;
+}
+
+.plan-exercise-table td:first-child {
+    text-align: left;
+}
+
+.plan-exercise-table th:first-child,
+.plan-exercise-table td:first-child {
+    min-width: 220px;
+}
+
+.plan-exercise-table input,
+.plan-exercise-table select {
+    font: inherit;
+}
+
+
+/* =========================================================
+   NOM DE L'EXERCICE
+========================================================= */
+
+.plan-exercise-name {
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
+}
+
+
+/* =========================================================
+   PROGRESSION
+========================================================= */
+
+.plan-progression-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.plan-progression-buttons,
+.plan-combination-exercise-buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+}
+
+.plan-progression-button,
+.plan-order-button {
+    width: 18px;
+    height: 15px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: transparent;
+    color: #888;
+    cursor: pointer;
+    font-size: 9px;
+    line-height: 1;
+}
+
+.plan-progression-button:hover:not(:disabled),
+.plan-order-button:hover:not(:disabled) {
+    color: #222;
+}
+
+.plan-progression-button:disabled,
+.plan-order-button:disabled {
+    opacity: 0.25;
+    cursor: default;
+}
+
+
+/* =========================================================
+   CONTRÔLES NUMÉRIQUES
+========================================================= */
+
+.plan-number-control {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+}
+
+.plan-number-input {
+    min-width: 2ch;
+    max-width: 5ch;
+    padding: 0;
+    box-sizing: border-box;
+    border: none;
+    outline: none;
+    background: transparent;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.2;
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+.plan-number-input::-webkit-inner-spin-button,
+.plan-number-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.plan-number-arrow {
+    width: 18px;
+    height: 12px;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: transparent;
+    color: #888;
+    cursor: pointer;
+    font-size: 8px;
+    line-height: 1;
+}
+
+.plan-number-arrow:hover {
+    color: #222;
+}
+
+.plan-number-arrow:active {
+    transform: scale(0.9);
+}
+
+
+/* =========================================================
+   POIDS
+========================================================= */
+
+.plan-exercise-table td:nth-child(4) .plan-number-input {
+    min-width: 3ch;
+    max-width: 5ch;
+}
+
+.plan-weight-unit,
+.plan-value-unit {
+    padding: 2px 0;
+    margin-left: 3px;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 13px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+
+/* =========================================================
+   RÉPÉTITIONS / TEMPS
+========================================================= */
+
+.plan-value-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.plan-static-unit {
+    margin-left: 3px;
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   TEMPO
+========================================================= */
+
+.plan-tempo-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+}
+
+.plan-tempo-separator {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   SETS / COMBINAISONS
+========================================================= */
+
+.plan-combination-button {
+    padding: 2px 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 13px;
+    font-weight: 400;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.plan-combination-button:hover {
+    color: #555;
+}
+
+.plan-combination-group-order {
+    width: 38px;
+    padding: 4px !important;
+}
+
+.plan-combination-group-order-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+}
+
+.plan-delete-cell {
+    width: 38px;
+    padding: 4px !important;
+}
+
+.plan-delete-button {
+    padding: 2px 4px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.plan-delete-button:hover {
+    transform: scale(1.1);
+}
+
+
+/* =========================================================
+   MENU DES SETS
+========================================================= */
+
+.combination-menu {
+    position: absolute;
+    z-index: 100;
+    margin-top: 5px;
+    padding: 8px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+}
+
+.combination-menu-label {
+    margin-bottom: 5px;
+    font-size: 13px;
+}
+
+.combination-select {
+    padding: 4px;
+}
+
+
+/* =========================================================
+   COULEURS DES SETS
+========================================================= */
+
+.plan-set-colored-1 {
+    background-color: rgba(170, 120, 200, 0.10);
+}
+
+.plan-set-colored-2 {
+    background-color: rgba(100, 190, 140, 0.10);
+}
+
+.plan-set-colored-3 {
+    background-color: rgba(230, 170, 80, 0.10);
+}
+
+
+/* =========================================================
+   INSTRUCTIONS
+========================================================= */
+
+.plan-instructions-button {
+    padding: 2px 0;
+    border: none;
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.plan-instructions-button:hover {
+    color: #555;
+}
+
+.plan-instructions-popup {
+    position: absolute;
+    z-index: 1000;
+    width: 280px;
+    padding: 10px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    box-sizing: border-box;
+}
+
+.plan-instructions-textarea {
+    display: block;
+    width: 100%;
+    min-height: 90px;
+    max-height: 160px;
+    box-sizing: border-box;
+    resize: vertical;
+    border: none;
+    outline: none;
+    background: transparent;
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
