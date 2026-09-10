@@ -38,6 +38,8 @@ let updateFilterSummaries = () => {};
 let updatePlanFilterSummaries = () => {};
 let displayExerciseDetails = () => {};
 
+let addExerciseToCurrentPlan = () => {};
+
 function configureExerciseList(dependencies) {
     getExercises = dependencies.getExercises;
 
@@ -96,6 +98,9 @@ function configureExerciseList(dependencies) {
 
     displayExerciseDetails =
         dependencies.displayExerciseDetails;
+
+    addExerciseToCurrentPlan =
+        dependencies.addExerciseToCurrentPlan;
 }
 
 // ------------------------------------------------------------
@@ -247,6 +252,39 @@ function displayExercises() {
                 progressionElement
             );
         }
+
+        if (isPlanContext) {
+    const addButton =
+        document.createElement("button");
+
+    addButton.type = "button";
+    addButton.textContent = "+";
+
+    addButton.classList.add(
+        "add-filter-button",
+        "exercise-quick-add"
+    );
+
+    addButton.title =
+        "Ajouter au plan";
+
+    addButton.addEventListener(
+    "click",
+    event => {
+        event.stopPropagation();
+
+        if (!getIsPlanContext()) {
+            return;
+        }
+
+        addExerciseToCurrentPlan(
+            exercise
+        );
+    }
+    );
+
+    element.appendChild(addButton);
+}
 
         element.addEventListener(
             "click",

@@ -354,15 +354,17 @@
 }
 
 .plan-filter-row {
-    display: grid;
-    grid-template-columns: 150px 1fr;
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    gap: 6px;
+
     border-bottom: 1px solid #ddd;
 }
 
 .plan-filter-title {
-    width: auto;
-    min-width: 0;
+    width: 140px;
+    flex: 0 0 140px;
     height: 48px;
     display: flex;
     justify-content: space-between;
@@ -385,19 +387,18 @@
 
 .plan-filter-summary {
     min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
-    overflow: hidden;
-    white-space: nowrap;
+    display: contents;
 }
 
 .plan-filter-options {
     display: none;
-    grid-column: 1 / -1;
-    padding: 12px 10px 15px 160px;
+
+    width: 100%;
+    flex: 0 0 100%;
+
+    padding: 12px 10px 15px;
     box-sizing: border-box;
+
     flex-wrap: wrap;
     gap: 8px;
 }

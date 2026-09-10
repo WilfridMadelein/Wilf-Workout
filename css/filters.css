@@ -83,6 +83,17 @@
     opacity: 0.8;
 }
 
+.filter-button.equipment-irrelevant {
+    border-color: #b97a7a;
+    background: #f8e8e8;
+    color: #7a3535;
+}
+
+.filter-button.active.equipment-irrelevant {
+    border-color: #9c6262;
+    background: #704040;
+    color: #fff;
+}
 
 /* =========================================================
    RÉSUMÉS DES FILTRES

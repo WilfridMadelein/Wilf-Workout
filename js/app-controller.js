@@ -8,7 +8,7 @@ let tabExercises;
 let tabPlans;
 
 let planHome;
-let renderPlanList;
+let renderPlansList;
 let planEditor;
 
 let removeAddButton;
@@ -40,7 +40,7 @@ export function configureAppController(dependencies) {
         tabPlans,
 
         planHome,
-        renderPlanList,
+        renderPlansList,
         planEditor,
 
         removeAddButton,
@@ -164,28 +164,20 @@ export function setupAppController() {
         displayExercises();
     });
 
-    tabPlans.addEventListener("click", () => {
-        saveSearchState(searchPageState);
+tabPlans.addEventListener("click", () => {
+    saveSearchState(searchPageState);
 
-        pageExercises.style.display = "none";
-        pagePlans.style.display = "block";
+    pageExercises.style.display = "none";
+    pagePlans.style.display = "block";
 
-        planHome.style.display = "block";
-        planEditor.style.display = "none";
+    planEditor.style.display = "none";
+    planHome.style.display = "block";
 
-        renderPlansList();
+    renderPlansList();
 
-        planExerciseBrowserContainer.appendChild(
-            exerciseBrowser
-        );
+    tabExercises.classList.remove("active");
+    tabPlans.classList.add("active");
 
-        exerciseBrowser.style.display = "block";
-
-        loadSearchState(planSearchState);
-
-        tabExercises.classList.remove("active");
-        tabPlans.classList.add("active");
-
-        displayExercises();
-    });
+    setCurrentDetailContext("search");
+});
 }

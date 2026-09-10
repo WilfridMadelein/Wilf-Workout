@@ -374,6 +374,7 @@ function createEquipmentButtons() {
             }
 
             updateEquipmentAllButton();
+            updateEquipmentRelevance();
             displayExercises();
         });
 
@@ -644,6 +645,85 @@ function exerciseMatchesCategories(
     ) ?? false;
 }
 
+function getRelevantEquipment(
+    selectedCategories
+) {
+    const relevantEquipment =
+        new Set();
+
+    getExercises()
+        .filter(exercise =>
+            exerciseMatchesCategories(
+                exercise,
+                selectedCategories
+            )
+        )
+        .forEach(exercise => {
+            exercise.equipement?.forEach(
+                group => {
+                    group.forEach(equipment => {
+                        if (
+                            equipment !== "Aucun"
+                        ) {
+                            relevantEquipment.add(
+                                equipment
+                            );
+                        }
+                    });
+                }
+            );
+        });
+
+    return relevantEquipment;
+}
+
+
+function updateEquipmentRelevance() {
+    const relevantEquipment =
+        getRelevantEquipment(
+            getSelectedCategories()
+        );
+
+    getEquipmentFilters()
+        .querySelectorAll(
+            "[data-equipment]"
+        )
+        .forEach(button => {
+            const equipment =
+                button.dataset.equipment;
+
+            if (
+                equipment === "all" ||
+                equipment === "none"
+            ) {
+                return;
+            }
+
+            button.classList.toggle(
+                "equipment-irrelevant",
+                !relevantEquipment.has(
+                    equipment
+                )
+            );
+        });
+}
+
+
+function updateCategoryAllButton() {
+    const allButton =
+        document.querySelector(
+            '#category-filters [data-category="all"]'
+        );
+
+    if (!allButton) return;
+
+    allButton.classList.toggle(
+        "active",
+        getSelectedCategories().size ===
+            getCategoryOptions().length
+    );
+}
+
 function setupCategoryButtons() {
     const container =
         document.getElementById(
@@ -653,9 +733,43 @@ function setupCategoryButtons() {
     const selectedCategories =
         getSelectedCategories();
 
+    const categories =
+        getCategoryOptions();
+
     container.replaceChildren();
 
-    getCategoryOptions().forEach(category => {
+
+    const allButton =
+        document.createElement("button");
+
+    allButton.classList.add(
+        "filter-button"
+    );
+
+    allButton.dataset.category = "all";
+    allButton.textContent = "Tous";
+
+    allButton.addEventListener(
+        "click",
+        () => {
+            selectedCategories.clear();
+
+            categories.forEach(category =>
+                selectedCategories.add(
+                    category
+                )
+            );
+
+            setupCategoryButtons();
+            updateEquipmentRelevance();
+            displayExercises();
+        }
+    );
+
+    container.appendChild(allButton);
+
+
+    categories.forEach(category => {
         const button =
             document.createElement("button");
 
@@ -663,31 +777,54 @@ function setupCategoryButtons() {
             "filter-button"
         );
 
-        button.dataset.category = category;
-        button.textContent = category;
+        button.dataset.category =
+            category;
+
+        button.textContent =
+            category;
 
         button.classList.toggle(
             "active",
-            selectedCategories.has(category)
+            selectedCategories.has(
+                category
+            )
         );
 
-        button.addEventListener("click", () => {
-            if (selectedCategories.has(category)) {
-                selectedCategories.delete(category);
-            } else {
-                selectedCategories.add(category);
+        button.addEventListener(
+            "click",
+            () => {
+                if (
+                    selectedCategories.has(
+                        category
+                    )
+                ) {
+                    selectedCategories.delete(
+                        category
+                    );
+                } else {
+                    selectedCategories.add(
+                        category
+                    );
+                }
+
+                button.classList.toggle(
+                    "active",
+                    selectedCategories.has(
+                        category
+                    )
+                );
+
+                updateCategoryAllButton();
+                updateEquipmentRelevance();
+                displayExercises();
             }
-
-            button.classList.toggle(
-                "active",
-                selectedCategories.has(category)
-            );
-
-            displayExercises();
-        });
+        );
 
         container.appendChild(button);
     });
+
+    updateCategoryAllButton();
+    updateEquipmentRelevance();
 }
 
 function exerciseMatchesCategoryFilter(
@@ -1097,6 +1234,10 @@ export {
     exerciseMatchesCategoryFilter,
     getCategoryOptions,
     exerciseMatchesCategories,
+
+    getRelevantEquipment,
+    updateEquipmentRelevance,
+    updateCategoryAllButton,
 
     getProgressionOptions,
     createProgressionOptions,

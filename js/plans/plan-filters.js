@@ -25,6 +25,10 @@ let updateEquipmentAllButton = () => {};
 let updateFilterSummaries = () => {};
 let updateProgressionNavigation = () => {};
 
+let getRelevantEquipment = () => new Set();
+let updateCategoryAllButton = () => {};
+let updateEquipmentRelevance = () => {};
+
 function configurePlanFilters(dependencies) {
     getCurrentPlan =
         dependencies.getCurrentPlan;
@@ -76,6 +80,15 @@ function configurePlanFilters(dependencies) {
 
     updateProgressionNavigation =
         dependencies.updateProgressionNavigation;
+
+    getRelevantEquipment =
+        dependencies.getRelevantEquipment;
+
+    updateCategoryAllButton =
+        dependencies.updateCategoryAllButton;
+
+    updateEquipmentRelevance =
+        dependencies.updateEquipmentRelevance;
 }
 
 // ------------------------------------------------------------
@@ -241,64 +254,89 @@ function createPlanFilterRows() {
             "plan-equipment-summary"
         );
 
-    getCategoryOptions().forEach(category => {
-        const button =
-            document.createElement("button");
+const allCategoryButton =
+    document.createElement("button");
 
-        button.classList.add(
-            "filter-button"
-        );
+allCategoryButton.classList.add(
+    "filter-button"
+);
 
-        button.textContent = category;
-        button.dataset.category = category;
+allCategoryButton.dataset.category =
+    "all";
 
-        if (
-            selectedPlanCategories.has(
-                category
-            )
-        ) {
-            button.classList.add(
-                "active"
+allCategoryButton.textContent =
+    "Tous";
+
+allCategoryButton.addEventListener(
+    "click",
+    event => {
+        event.stopPropagation();
+
+        selectedPlanCategories.clear();
+
+        getCategoryOptions()
+            .forEach(category =>
+                selectedPlanCategories.add(
+                    category
+                )
             );
-        }
 
-        button.addEventListener(
-            "click",
-            event => {
-                event.stopPropagation();
+        updatePlanCategoryButtons();
+        updatePlanEquipmentRelevance();
 
-                if (
-                    selectedPlanCategories.has(
-                        category
-                    )
-                ) {
-                    selectedPlanCategories.delete(
-                        category
-                    );
+        syncPlanFiltersToSearch();
+        updatePlanFilterSummaries();
+        updatePlanProgressionFilters();
+    }
+);
 
-                    button.classList.remove(
-                        "active"
-                    );
-                } else {
-                    selectedPlanCategories.add(
-                        category
-                    );
+categoryOptions.appendChild(
+    allCategoryButton
+);
 
-                    button.classList.add(
-                        "active"
-                    );
-                }
+getCategoryOptions().forEach(category => {
+    const button =
+        document.createElement("button");
 
-                syncPlanFiltersToSearch();
-                updatePlanFilterSummaries();
-                updatePlanProgressionFilters();
+    button.classList.add(
+        "filter-button"
+    );
+
+    button.textContent = category;
+    button.dataset.category = category;
+
+    button.addEventListener(
+        "click",
+        event => {
+            event.stopPropagation();
+
+            if (
+                selectedPlanCategories.has(
+                    category
+                )
+            ) {
+                selectedPlanCategories.delete(
+                    category
+                );
+            } else {
+                selectedPlanCategories.add(
+                    category
+                );
             }
-        );
 
-        categoryOptions.appendChild(
-            button
-        );
-    });
+            updatePlanCategoryButtons();
+            updatePlanEquipmentRelevance();
+
+            syncPlanFiltersToSearch();
+            updatePlanFilterSummaries();
+            updatePlanProgressionFilters();
+        }
+    );
+
+    categoryOptions.appendChild(
+        button
+    );
+});
 
 const allEquipmentButton =
     document.createElement("button");
@@ -414,10 +452,68 @@ equipmentOptions.forEach(
     }
 );
 
+updatePlanCategoryButtons();
+updatePlanEquipmentRelevance();
 updatePlanEquipmentButtons();
 updatePlanFilterSummaries();
 
     updatePlanFilterSummaries();
+}
+
+function updatePlanCategoryButtons() {
+    const selected =
+        getSelectedPlanCategories();
+
+    const categories =
+        getCategoryOptions();
+
+    document
+        .querySelectorAll(
+            "#plan-category-filter-options [data-category]"
+        )
+        .forEach(button => {
+            const category =
+                button.dataset.category;
+
+            button.classList.toggle(
+                "active",
+                category === "all"
+                    ? selected.size ===
+                        categories.length
+                    : selected.has(category)
+            );
+        });
+}
+
+
+function updatePlanEquipmentRelevance() {
+    const relevantEquipment =
+        getRelevantEquipment(
+            getSelectedPlanCategories()
+        );
+
+    document
+        .querySelectorAll(
+            "#plan-equipment-filter-options [data-equipment]"
+        )
+        .forEach(button => {
+            const equipment =
+                button.dataset.equipment;
+
+            if (
+                equipment === "all" ||
+                equipment === "none"
+            ) {
+                return;
+            }
+
+            button.classList.toggle(
+                "equipment-irrelevant",
+                !relevantEquipment.has(
+                    equipment
+                )
+            );
+        });
 }
 
 function updatePlanEquipmentButtons() {
@@ -545,6 +641,8 @@ function syncPlanFiltersToSearch() {
             );
         });
 
+    updateCategoryAllButton();
+    updateEquipmentRelevance();
     updateEquipmentAllButton();
     updateFilterSummaries();
 
@@ -591,36 +689,46 @@ function updatePlanFilterSummaries() {
         return button;
     }
 
-    const categorySummary =
-        document.getElementById(
-            "plan-category-summary"
-        );
+const categories =
+    getCategoryOptions();
 
-    categorySummary.innerHTML = "";
+const categorySummary =
+    document.getElementById(
+        "plan-category-summary"
+    );
 
-    if (
-        selectedPlanCategories.size === 0
-    ) {
-        categorySummary.appendChild(
-            createSummaryButton(
-                "Aucun"
-            )
-        );
-    } else {
-        if (selectedPlanCategories.size === 0) {
+categorySummary.innerHTML = "";
+
+if (
+    selectedPlanCategories.size ===
+    categories.length
+) {
+    categorySummary.appendChild(
+        createSummaryButton("Tous")
+    );
+} else if (
+    selectedPlanCategories.size === 0
+) {
     categorySummary.appendChild(
         createSummaryButton("Aucun")
     );
 } else {
-    getCategoryOptions().forEach(category => {
-        if (selectedPlanCategories.has(category)) {
+    [...selectedPlanCategories]
+        .sort((a, b) =>
+            a.localeCompare(
+                b,
+                "fr",
+                { sensitivity: "base" }
+            )
+        )
+        .forEach(category => {
             categorySummary.appendChild(
-                createSummaryButton(category)
+                createSummaryButton(
+                    category
+                )
             );
-        }
-    });
+        });
 }
-    }
 
     const equipmentSummary =
         document.getElementById(

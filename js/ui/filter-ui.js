@@ -12,6 +12,10 @@ let updateEquipmentAllButton;
 let updateProgressionButtons;
 let displayExercises;
 
+let getCategoryOptions;
+let updateCategoryAllButton;
+let updateEquipmentRelevance;
+
 export function configureFilterUI(dependencies) {
     ({
         getSelectedCategories,
@@ -22,9 +26,15 @@ export function configureFilterUI(dependencies) {
         getSelectedProgressionsInclude,
         getSelectedProgressionsExclude,
         getSubmuscleFilters,
+
         createSubmuscleButtons,
         updateEquipmentAllButton,
         updateProgressionButtons,
+
+        getCategoryOptions,
+        updateCategoryAllButton,
+        updateEquipmentRelevance,
+        
         displayExercises
     } = dependencies);
 }
@@ -235,23 +245,47 @@ export function updateFilterSummaries() {
         return button;
     }
 
-    // Catégorie
-    const categorySummary =
-        document.getElementById("category-summary");
+// Catégorie
+const categorySummary =
+    document.getElementById(
+        "category-summary"
+    );
 
-    categorySummary.innerHTML = "";
+categorySummary.innerHTML = "";
 
-[...selectedCategories]
-    .sort((a, b) =>
-        a.localeCompare(b, "fr", {
-            sensitivity: "base"
-        })
-    )
-    .forEach(category => {
-        categorySummary.appendChild(
-            createSummaryButton(category)
-        );
-    });
+const categoryOptions =
+    getCategoryOptions();
+
+if (
+    selectedCategories.size ===
+    categoryOptions.length
+) {
+    categorySummary.appendChild(
+        createSummaryButton("Tous")
+    );
+} else if (
+    selectedCategories.size === 0
+) {
+    categorySummary.appendChild(
+        createSummaryButton("Aucun")
+    );
+} else {
+    [...selectedCategories]
+        .sort((a, b) =>
+            a.localeCompare(
+                b,
+                "fr",
+                { sensitivity: "base" }
+            )
+        )
+        .forEach(category => {
+            categorySummary.appendChild(
+                createSummaryButton(
+                    category
+                )
+            );
+        });
+}
 
     // Type
     const typeSummary =

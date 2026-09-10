@@ -107,6 +107,10 @@ import {
     getCategoryOptions,
     exerciseMatchesCategories,
 
+    getRelevantEquipment,
+    updateEquipmentRelevance,
+    updateCategoryAllButton,
+
     getProgressionOptions,
     createProgressionOptions,
     createProgressionButton,
@@ -245,7 +249,11 @@ configurePlanFilters({
 
     updateEquipmentAllButton,
     updateFilterSummaries,
-    updateProgressionNavigation
+    updateProgressionNavigation,
+
+    getRelevantEquipment,
+    updateCategoryAllButton,
+    updateEquipmentRelevance,
 });
 
 createPlanFilterRows();
@@ -308,6 +316,7 @@ configureExerciseList({
         document.getElementById("exercise-count"),
 
     getIsPlanContext: () =>
+        pagePlans.style.display === "block" &&
         planEditor.style.display === "block",
 
     getSelectedTypes: () => selectedTypes,
@@ -332,7 +341,8 @@ configureExerciseList({
     updateFilterSummaries,
     updatePlanFilterSummaries,
 
-    displayExerciseDetails
+    displayExerciseDetails,
+    addExerciseToCurrentPlan,
 });
 
 configureExerciseDetails({
@@ -407,6 +417,11 @@ configureFilterUI({
     createSubmuscleButtons,
     updateEquipmentAllButton,
     updateProgressionButtons,
+
+    getCategoryOptions,
+    updateCategoryAllButton,
+    updateEquipmentRelevance,
+
     displayExercises
 });
 
