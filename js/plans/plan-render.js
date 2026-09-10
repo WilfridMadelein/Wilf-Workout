@@ -19,6 +19,7 @@ let getPlanExerciseDetailsLines = () => [];
 let openCombinationMenu = () => {};
 let moveExerciseWithinCombination = () => {};
 let moveCombination = () => {};
+let setCombinationSets = () => {};
 
 
 function configurePlanRender(dependencies) {
@@ -35,6 +36,7 @@ function configurePlanRender(dependencies) {
     openCombinationMenu = dependencies.openCombinationMenu;
     moveExerciseWithinCombination = dependencies.moveExerciseWithinCombination;
     moveCombination = dependencies.moveCombination;
+    setCombinationSets = dependencies.setCombinationSets;
 }
 
 // ============================================================
@@ -655,8 +657,12 @@ setBlock.appendChild(setExercises);
                     createPlanNumberInput(
                         planExercise.sets,
                         value => {
-                            planExercise.sets =
-                                value ?? 1;
+                            setCombinationSets(
+                                planExercise,
+                                value ?? 1
+                            );
+
+                            renderPlanExercises();
                         },
                         {
                             min: 1,

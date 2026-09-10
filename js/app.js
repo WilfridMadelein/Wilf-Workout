@@ -26,6 +26,7 @@ import {
     planTimeInput,
     planRestInput,
     planTempoInputs,
+    planAutoExcludeProgressions,
 
     newPlanButton,
     plans,
@@ -154,6 +155,7 @@ import {
     getNextCombinationGroup,
     getCombinationGroups,
     normalizeCombinationNumbers,
+    setCombinationSets,
     moveExerciseToCombination,
     moveExerciseToNewCombination,
     getAvailableCombinationGroups,
@@ -203,6 +205,16 @@ configurePlanCombinations({
 
 configurePlanManager({
     getCurrentPlan: () => currentPlan,
+
+    getSelectedProgressionsExclude: () => selectedProgressionsExclude,
+
+    getPlanSearchState: () => planSearchState,
+
+    getAutoExcludeProgressions: () =>  planAutoExcludeProgressions.checked,
+
+    updateProgressionButtons,
+    displayExercises,
+
     renderPlanExercises,
     closePlanInstructionsPopup
 });
@@ -221,6 +233,7 @@ configurePlanRender({
     getPlanExerciseDetailsLines,
 
     openCombinationMenu,
+    setCombinationSets,
     moveExerciseWithinCombination,
     moveCombination
 });

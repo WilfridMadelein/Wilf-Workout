@@ -56,6 +56,7 @@ export const currentPlanName = document.getElementById("current-plan-name");
 export const editPlanNameButton = document.getElementById("edit-plan-name-button");
 export const currentPlanNameInput = document.getElementById("current-plan-name-input");
 export const backToPlansButton = document.getElementById("back-to-plans-button");
+export const planAutoExcludeProgressions = document.getElementById("plan-auto-exclude-progressions");
 
 // ------------------------------------------------------------
 // État — Détails

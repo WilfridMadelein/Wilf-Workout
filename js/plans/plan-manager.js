@@ -2,7 +2,10 @@
 // GESTION DES EXERCICES DU PLAN
 // ============================================================
 
-import { isIsometricExercise } from "../exercises/exercise-search.js";
+import { 
+    isIsometricExercise,
+    getProgressionName
+ } from "../exercises/exercise-search.js";
 
 import {
     getNextCombinationGroup,
@@ -13,11 +16,59 @@ let getCurrentPlan = () => null;
 let renderPlanExercises = () => {};
 let closePlanInstructionsPopup = () => {};
 
+let getSelectedProgressionsExclude = () => new Set();
+let getPlanSearchState =  () => null;
+let getAutoExcludeProgressions =  () => true;
+let updateProgressionButtons =  () => {};
+let displayExercises =  () => {};
+
 function configurePlanManager(dependencies) {
     getCurrentPlan = dependencies.getCurrentPlan;
     renderPlanExercises = dependencies.renderPlanExercises;
-    closePlanInstructionsPopup =
-        dependencies.closePlanInstructionsPopup;
+    closePlanInstructionsPopup = dependencies.closePlanInstructionsPopup;
+    getSelectedProgressionsExclude = dependencies.getSelectedProgressionsExclude;
+    getPlanSearchState = dependencies.getPlanSearchState;
+    getAutoExcludeProgressions = dependencies.getAutoExcludeProgressions;
+    updateProgressionButtons = dependencies.updateProgressionButtons;
+    displayExercises = dependencies.displayExercises;
+}
+
+function addProgressionToExclude(exercise) {
+    if (!getAutoExcludeProgressions()) {
+        return;
+    }
+
+    const progression =
+        getProgressionName(exercise);
+
+    if (!progression) return;
+
+    getSelectedProgressionsExclude()
+        .add(progression);
+
+    getPlanSearchState()
+        ?.progressionsExclude
+        ?.add(progression);
+
+    updateProgressionButtons();
+    displayExercises();
+}
+
+function removeProgressionFromExclude(exercise) {
+    const progression =
+        getProgressionName(exercise);
+
+    if (!progression) return;
+
+    getSelectedProgressionsExclude()
+        .delete(progression);
+
+    getPlanSearchState()
+        ?.progressionsExclude
+        ?.delete(progression);
+
+    updateProgressionButtons();
+    displayExercises();
 }
 
 // ------------------------------------------------------------
@@ -63,6 +114,8 @@ function addExerciseToCurrentPlan(exercise) {
         }
     });
 
+    addProgressionToExclude(exercise);
+
     renderPlanExercises();
 }
 
@@ -84,12 +137,19 @@ function removeExerciseFromCurrentPlan(planExercise) {
         return;
     }
 
-    closePlanInstructionsPopup();
+closePlanInstructionsPopup();
 
-    currentPlan.exercises.splice(index, 1);
+const removedExercise =
+    planExercise.exercise;
 
-    normalizeCombinationNumbers();
-    renderPlanExercises();
+currentPlan.exercises.splice(index, 1);
+
+removeProgressionFromExclude(
+    removedExercise
+);
+
+normalizeCombinationNumbers();
+renderPlanExercises();
 }
 
 // ------------------------------------------------------------

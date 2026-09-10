@@ -90,6 +90,20 @@ function normalizeCombinationNumbers() {
     });
 }
 
+function setCombinationSets(planExercise, sets) {
+    const currentPlan = getCurrentPlan();
+
+    if (!currentPlan) return;
+
+    const group = planExercise.combination?.group;
+
+    currentPlan.exercises.forEach(item => {
+        if (item.combination?.group === group) {
+            item.sets = sets;
+        }
+    });
+}
+
 // ------------------------------------------------------------
 // Déplacer un exercice vers un autre Set
 // ------------------------------------------------------------
@@ -119,6 +133,16 @@ function moveExerciseToCombination(
         return;
     }
 
+    const targetExercise =
+    exercises.find(item =>
+        item !== planExercise &&
+        item.combination?.group ===
+            targetGroup
+    );
+
+    const targetSets =
+        targetExercise?.sets;
+
     exercises.splice(currentIndex, 1);
 
     planExercise.combination.group =
@@ -143,6 +167,13 @@ function moveExerciseToCombination(
             0,
             planExercise
         );
+    }
+
+    if (targetSets != null) {
+    setCombinationSets(
+        planExercise,
+        targetSets
+    );
     }
 
     normalizeCombinationNumbers();
@@ -466,6 +497,7 @@ export {
     getNextCombinationGroup,
     getCombinationGroups,
     normalizeCombinationNumbers,
+    setCombinationSets,
     moveExerciseToCombination,
     moveExerciseToNewCombination,
     getAvailableCombinationGroups,
