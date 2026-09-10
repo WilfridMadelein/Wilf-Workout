@@ -104,6 +104,8 @@ import {
 
     setupCategoryButtons,
     exerciseMatchesCategoryFilter,
+    getCategoryOptions,
+    exerciseMatchesCategories,
 
     getProgressionOptions,
     createProgressionOptions,
@@ -231,6 +233,10 @@ configurePlanFilters({
     getSelectedEquipment: () => selectedEquipment,
 
     getEquipmentOptions: () => equipmentOptions,
+
+    getCategoryOptions,
+    exerciseMatchesCategories,
+
     getPlanSearchState: () => planSearchState,
 
     saveSearchState,
@@ -287,6 +293,7 @@ configureExerciseDisplay({
     getProgressionName,
 
     exerciseMatchesCategoryFilter,
+    exerciseMatchesCategories,
     exerciseMatchesEquipmentFilter,
 
     displayExerciseDetails
@@ -443,6 +450,13 @@ equipmentOptions.forEach(equipment => {
 
     searchPageState.equipment.add(equipment);
     planSearchState.equipment.add(equipment);
+});
+getCategoryOptions().forEach(category => {
+    selectedCategories.add(category);
+    selectedPlanCategories.add(category);
+
+    searchPageState.categories.add(category);
+    planSearchState.categories.add(category);
 });
 
 createPlanFilterRows();

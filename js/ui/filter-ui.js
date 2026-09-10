@@ -241,17 +241,17 @@ export function updateFilterSummaries() {
 
     categorySummary.innerHTML = "";
 
-    if (selectedCategories.has("cali")) {
+[...selectedCategories]
+    .sort((a, b) =>
+        a.localeCompare(b, "fr", {
+            sensitivity: "base"
+        })
+    )
+    .forEach(category => {
         categorySummary.appendChild(
-            createSummaryButton("Cali")
+            createSummaryButton(category)
         );
-    }
-
-    if (selectedCategories.has("gym")) {
-        categorySummary.appendChild(
-            createSummaryButton("Gym")
-        );
-    }
+    });
 
     // Type
     const typeSummary =

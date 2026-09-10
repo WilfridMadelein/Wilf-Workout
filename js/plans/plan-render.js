@@ -554,10 +554,16 @@ setBlock.appendChild(setExercises);
                     "plan-exercise-muscles"
                 );
 
+                const categoryText =
+                    exercise.catégorie?.join(" / ") || "";
+
+                const muscleText =
+                    muscleFamilies.join(" / ");
+
                 muscles.textContent =
-                    muscleFamilies.length
-                        ? muscleFamilies.join(" / ")
-                        : "—";
+                    [categoryText, muscleText]
+                        .filter(Boolean)
+                        .join(" | ") || "—";
 
 
                 const weight =

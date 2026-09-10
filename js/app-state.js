@@ -83,10 +83,10 @@ export const selectedMuscleFamilies = new Set();
 export const selectedSubmuscles = new Map();
 
 export const selectedEquipment = new Set();
-export const selectedCategories = new Set(["cali", "gym"]);
+export const selectedCategories = new Set();
 
 export const selectedPlanEquipment = new Set();
-export const selectedPlanCategories = new Set(["cali", "gym"]);
+export const selectedPlanCategories = new Set();
 
 // ------------------------------------------------------------
 // État — Recherche
@@ -100,7 +100,7 @@ export const searchPageState = {
     muscleFamilies: new Set(),
     submuscles: new Map(),
     equipment: new Set(),
-    categories: new Set(["cali", "gym"])
+    categories: new Set()
 };
 
 export const planSearchState = {
@@ -111,7 +111,7 @@ export const planSearchState = {
     muscleFamilies: new Set(),
     submuscles: new Map(),
     equipment: new Set(),
-    categories: new Set(["cali", "gym"])
+    categories: new Set()
 };
 
 // ------------------------------------------------------------

@@ -615,70 +615,88 @@ function updateTypeAllButton() {
 // Catégories
 // ------------------------------------------------------------
 
+function getCategoryOptions() {
+    const categories = new Set();
+
+    getExercises().forEach(exercise => {
+        exercise.catégorie?.forEach(category =>
+            categories.add(category)
+        );
+    });
+
+    return [...categories].sort((a, b) =>
+        a.localeCompare(b, "fr", {
+            sensitivity: "base"
+        })
+    );
+}
+
+function exerciseMatchesCategories(
+    exercise,
+    selectedCategories
+) {
+    if (selectedCategories.size === 0) {
+        return false;
+    }
+
+    return exercise.catégorie?.some(category =>
+        selectedCategories.has(category)
+    ) ?? false;
+}
+
 function setupCategoryButtons() {
-    const categoryFilters =
-        document.querySelector(
-            "#category-filters"
+    const container =
+        document.getElementById(
+            "category-filters"
         );
 
     const selectedCategories =
         getSelectedCategories();
 
-    const buttons =
-        categoryFilters.querySelectorAll(
-            ".filter-button"
+    container.replaceChildren();
+
+    getCategoryOptions().forEach(category => {
+        const button =
+            document.createElement("button");
+
+        button.classList.add(
+            "filter-button"
         );
 
-    buttons.forEach(button => {
-        button.addEventListener(
-            "click",
-            () => {
-                const category =
-                    button.dataset.category;
+        button.dataset.category = category;
+        button.textContent = category;
 
-                if (
-                    selectedCategories.has(
-                        category
-                    )
-                ) {
-                    selectedCategories.delete(
-                        category
-                    );
+        button.classList.toggle(
+            "active",
+            selectedCategories.has(category)
+        );
 
-                    button.classList.remove(
-                        "active"
-                    );
-                } else {
-                    selectedCategories.add(
-                        category
-                    );
-
-                    button.classList.add(
-                        "active"
-                    );
-                }
-
-                displayExercises();
+        button.addEventListener("click", () => {
+            if (selectedCategories.has(category)) {
+                selectedCategories.delete(category);
+            } else {
+                selectedCategories.add(category);
             }
-        );
+
+            button.classList.toggle(
+                "active",
+                selectedCategories.has(category)
+            );
+
+            displayExercises();
+        });
+
+        container.appendChild(button);
     });
 }
 
 function exerciseMatchesCategoryFilter(
     exercise
 ) {
-    const selectedCategories =
-        getSelectedCategories();
-
-    const matchesCali =
-        selectedCategories.has("cali") &&
-        exercise.cali;
-
-    const matchesGym =
-        selectedCategories.has("gym") &&
-        exercise.gym;
-
-    return matchesCali || matchesGym;
+    return exerciseMatchesCategories(
+        exercise,
+        getSelectedCategories()
+    );
 }
 
 // ------------------------------------------------------------
@@ -1077,6 +1095,8 @@ export {
 
     setupCategoryButtons,
     exerciseMatchesCategoryFilter,
+    getCategoryOptions,
+    exerciseMatchesCategories,
 
     getProgressionOptions,
     createProgressionOptions,

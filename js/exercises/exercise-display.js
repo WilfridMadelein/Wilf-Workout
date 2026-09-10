@@ -11,6 +11,7 @@ let getSelectedPlanCategories = () => new Set();
 let getSelectedPlanEquipment = () => new Set();
 
 let getProgressionName = () => "";
+let exerciseMatchesCategories = () => false;
 let exerciseMatchesCategoryFilter = () => false;
 let exerciseMatchesEquipmentFilter = () => false;
 
@@ -27,6 +28,9 @@ function configureExerciseDisplay(dependencies) {
 
     getProgressionName =
         dependencies.getProgressionName;
+
+    exerciseMatchesCategories =
+        dependencies.exerciseMatchesCategories;
 
     exerciseMatchesCategoryFilter =
         dependencies.exerciseMatchesCategoryFilter;
@@ -132,17 +136,14 @@ function exerciseMatchesPlanProgressionFilter(
     const selectedPlanCategories =
         getSelectedPlanCategories();
 
-    const matchesCali =
-        selectedPlanCategories.has("cali") &&
-        exercise.cali;
-
-    const matchesGym =
-        selectedPlanCategories.has("gym") &&
-        exercise.gym;
-
-    if (!matchesCali && !matchesGym) {
-        return false;
-    }
+if (
+    !exerciseMatchesCategories(
+        exercise,
+        selectedPlanCategories
+    )
+) {
+    return false;
+}
 
     return exerciseHasRequiredEquipmentForPlan(
         exercise

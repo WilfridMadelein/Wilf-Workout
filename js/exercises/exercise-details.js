@@ -193,13 +193,7 @@ function displayExerciseDetails(
 
         <p>
             <strong>Catégorie :</strong>
-            ${
-                exercise.cali && exercise.gym
-                    ? "Calisthénique, Gym"
-                    : exercise.cali
-                        ? "Calisthénique"
-                        : "Gym"
-            }
+            ${exercise.catégorie?.join(", ") || "—"}
         </p>
 
         ${getExerciseDetailsLines(exercise)

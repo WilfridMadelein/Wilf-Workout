@@ -171,8 +171,9 @@ export function setupAppController() {
         pagePlans.style.display = "block";
 
         planHome.style.display = "block";
-        planCreator.style.display = "none";
         planEditor.style.display = "none";
+
+        renderPlansList();
 
         planExerciseBrowserContainer.appendChild(
             exerciseBrowser

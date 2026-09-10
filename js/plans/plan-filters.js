@@ -13,6 +13,8 @@ let getSelectedCategories = () => new Set();
 let getSelectedEquipment = () => new Set();
 
 let getEquipmentOptions = () => [];
+let getCategoryOptions = () => [];
+let exerciseMatchesCategories = () => false;
 let getPlanSearchState = () => ({});
 
 let saveSearchState = () => {};
@@ -47,6 +49,12 @@ function configurePlanFilters(dependencies) {
 
     getEquipmentOptions =
         dependencies.getEquipmentOptions;
+        
+    getCategoryOptions =
+        dependencies.getCategoryOptions;
+
+    exerciseMatchesCategories =
+        dependencies.exerciseMatchesCategories;
 
     getPlanSearchState =
         dependencies.getPlanSearchState;
@@ -233,16 +241,7 @@ function createPlanFilterRows() {
             "plan-equipment-summary"
         );
 
-    [
-        {
-            value: "cali",
-            label: "Cali"
-        },
-        {
-            value: "gym",
-            label: "Gym"
-        }
-    ].forEach(category => {
+    getCategoryOptions().forEach(category => {
         const button =
             document.createElement("button");
 
@@ -250,15 +249,12 @@ function createPlanFilterRows() {
             "filter-button"
         );
 
-        button.textContent =
-            category.label;
-
-        button.dataset.category =
-            category.value;
+        button.textContent = category;
+        button.dataset.category = category;
 
         if (
             selectedPlanCategories.has(
-                category.value
+                category
             )
         ) {
             button.classList.add(
@@ -273,11 +269,11 @@ function createPlanFilterRows() {
 
                 if (
                     selectedPlanCategories.has(
-                        category.value
+                        category
                     )
                 ) {
                     selectedPlanCategories.delete(
-                        category.value
+                        category
                     );
 
                     button.classList.remove(
@@ -285,7 +281,7 @@ function createPlanFilterRows() {
                     );
                 } else {
                     selectedPlanCategories.add(
-                        category.value
+                        category
                     );
 
                     button.classList.add(
@@ -611,29 +607,19 @@ function updatePlanFilterSummaries() {
             )
         );
     } else {
-        if (
-            selectedPlanCategories.has(
-                "cali"
-            )
-        ) {
+        if (selectedPlanCategories.size === 0) {
+    categorySummary.appendChild(
+        createSummaryButton("Aucun")
+    );
+} else {
+    getCategoryOptions().forEach(category => {
+        if (selectedPlanCategories.has(category)) {
             categorySummary.appendChild(
-                createSummaryButton(
-                    "Cali"
-                )
+                createSummaryButton(category)
             );
         }
-
-        if (
-            selectedPlanCategories.has(
-                "gym"
-            )
-        ) {
-            categorySummary.appendChild(
-                createSummaryButton(
-                    "Gym"
-                )
-            );
-        }
+    });
+}
     }
 
     const equipmentSummary =
@@ -689,23 +675,14 @@ function exerciseMatchesPlanFilters(
         return false;
     }
 
-    const matchesCategory =
-        (
-            selectedPlanCategories.has(
-                "cali"
-            ) &&
-            exercise.cali
-        ) ||
-        (
-            selectedPlanCategories.has(
-                "gym"
-            ) &&
-            exercise.gym
-        );
-
-    if (!matchesCategory) {
-        return false;
-    }
+if (
+    !exerciseMatchesCategories(
+        exercise,
+        selectedPlanCategories
+    )
+) {
+    return false;
+}
 
     return exerciseMatchesPlanEquipment(
         exercise
