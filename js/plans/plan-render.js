@@ -110,52 +110,62 @@ downButton.addEventListener(
     return container;
 }
 
+function createVerticalArrowButtons({
+    containerClass,
+    buttonClass,
+    upDisabled = false,
+    downDisabled = false,
+    onUp,
+    onDown
+}) {
+    const container = document.createElement("div");
+    container.classList.add(containerClass);
+
+    const up = document.createElement("button");
+    up.type = "button";
+    up.textContent = "▲";
+    up.classList.add(buttonClass);
+    up.disabled = upDisabled;
+    up.addEventListener("click", onUp);
+
+    const down = document.createElement("button");
+    down.type = "button";
+    down.textContent = "▼";
+    down.classList.add(buttonClass);
+    down.disabled = downDisabled;
+    down.addEventListener("click", onDown);
+
+    container.append(up, down);
+    return container;
+}
+
 // ============================================================
 // RENDU DES EXERCICES DU PLAN
 // ============================================================
 
 function renderPlanExercises() {
-    getPlanExerciseList().innerHTML = "";
+    const list = getPlanExerciseList();
+    const plan = getCurrentPlan();
 
-    if (!getCurrentPlan() || getCurrentPlan().exercises.length === 0) {
-        getPlanExerciseList().textContent = "Aucun exercice ajouté.";
+    list.replaceChildren();
+
+    if (!plan || plan.exercises.length === 0) {
+        list.textContent = "Aucun exercice ajouté.";
         return;
     }
 
     normalizeCombinationNumbers();
 
-    const table = document.createElement("table");
-    table.classList.add("plan-exercise-table");
+    const planOrder = new Map(
+        plan.exercises.map((item, index) => [
+            item,
+            index + 1
+        ])
+    );
 
-    const headers = [
-        "Exercices",
-        "Progression",
-        "Muscles",
-        "Poids",
-        "Séries",
-        "Volume",
-        "Tempo",
-        "Pause",
-        "Instructions",
-        "Set",
-    ];
-
-    const thead = document.createElement("thead");
-    const headerRow = document.createElement("tr");
-
-    headers.forEach(text => {
-        const th = document.createElement("th");
-        th.textContent = text;
-        headerRow.appendChild(th);
-    });
-
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
-
-    // Regroupe les exercices par combinaison.
     const groups = [];
 
-    getCurrentPlan().exercises.forEach(planExercise => {
+    plan.exercises.forEach(planExercise => {
         const group = planExercise.combination.group;
 
         let groupData = groups.find(
@@ -174,56 +184,232 @@ function renderPlanExercises() {
         groupData.exercises.push(planExercise);
     });
 
-    const tbody = document.createElement("tbody");
+
+    const workout =
+        document.createElement("div");
+
+    workout.classList.add(
+        "plan-workout-content"
+    );
+
+    let supersetColorIndex = 0;
+
 
     groups.forEach((groupData, groupIndex) => {
-        const {
-            group,
-            exercises: groupExercises
-        } = groupData;
+        const group = groupData.group;
+        const groupExercises =
+            groupData.exercises;
+
+        const isSuperset =
+            groupExercises.length > 1;
+
+
+        // ====================================================
+        // SET
+        // ====================================================
+
+        const setBlock =
+            document.createElement("section");
+
+        setBlock.classList.add(
+            "plan-set-block"
+        );
+
+if (isSuperset) {
+    supersetColorIndex++;
+
+    const color =
+        ((supersetColorIndex - 1) % 3) + 1;
+
+    setBlock.classList.add(
+        "plan-set-superset",
+        `plan-set-colored-${color}`
+    );
+} else {
+    setBlock.classList.add(
+        "plan-set-single"
+    );
+}
+
+
+        // ----------------------------------------------------
+        // Titre et ordre du Set
+        // ----------------------------------------------------
+
+        const setHeader =
+            document.createElement("div");
+
+        setHeader.classList.add(
+            "plan-set-header"
+        );
+
+        const setOrder =
+            createVerticalArrowButtons({
+                containerClass:
+                    "plan-set-order-buttons",
+
+                buttonClass:
+                    "plan-order-button",
+
+                upDisabled:
+                    groupIndex === 0,
+
+                downDisabled:
+                    groupIndex ===
+                    groups.length - 1,
+
+                onUp: () =>
+                    moveCombination(
+                        group,
+                        -1
+                    ),
+
+                onDown: () =>
+                    moveCombination(
+                        group,
+                        1
+                    )
+            });
+
+        const setTitle =
+            document.createElement("strong");
+
+        setTitle.classList.add(
+            "plan-set-title"
+        );
+
+        setTitle.textContent =
+            `Set ${group}`;
+
+        setHeader.append(
+            setOrder,
+            setTitle
+        );
+
+        setBlock.appendChild(setHeader);
+
+        const setExercises =
+    document.createElement("div");
+
+setExercises.classList.add(
+    "plan-set-exercises"
+);
+
+setBlock.appendChild(setExercises);
+
+
+        // ====================================================
+        // EXERCICES DU SET
+        // ====================================================
 
         groupExercises.forEach(
             (planExercise, exerciseIndex) => {
-                const exercise = planExercise.exercise;
-                const row = document.createElement("tr");
 
-                const colorPosition = (group - 1) % 6;
+                const exercise =
+                    planExercise.exercise;
 
-                if (colorPosition === 0) {
-                    row.classList.add(
-                        "plan-set-colored-1"
-                    );
-                }
+                const planIndex =
+                    planOrder.get(planExercise);
 
-                if (colorPosition === 2) {
-                    row.classList.add(
-                        "plan-set-colored-2"
-                    );
-                }
+                const shell =
+                    document.createElement("div");
 
-                if (colorPosition === 4) {
-                    row.classList.add(
-                        "plan-set-colored-3"
-                    );
-                }
+                shell.classList.add(
+                    "plan-exercise-shell"
+                );
 
-                row.classList.add(`plan-set-${group}`);
 
                 // ------------------------------------------------
-                // Exercice
+                // Ordre dans un superset
                 // ------------------------------------------------
 
-                const exerciseCell =
-                    document.createElement("td");
+                if (isSuperset) {
+                    const exerciseOrder =
+                        createVerticalArrowButtons({
+                            containerClass:
+                                "plan-superset-order",
+
+                            buttonClass:
+                                "plan-order-button",
+
+                            upDisabled:
+                                exerciseIndex === 0,
+
+                            downDisabled:
+                                exerciseIndex ===
+                                groupExercises.length - 1,
+
+                            onUp: () =>
+                                moveExerciseWithinCombination(
+                                    planExercise,
+                                    -1
+                                ),
+
+                            onDown: () =>
+                                moveExerciseWithinCombination(
+                                    planExercise,
+                                    1
+                                )
+                        });
+
+                    shell.appendChild(
+                        exerciseOrder
+                    );
+                }
+
+
+                const card =
+                    document.createElement("div");
+
+                card.classList.add(
+                    "plan-exercise-card"
+                );
+
+
+                // =================================================
+                // LIGNE 1
+                // Numéro + exercice | progression
+                // =================================================
+
+                const line1 =
+                    document.createElement("div");
+
+                line1.classList.add(
+                    "plan-exercise-line",
+                    "plan-exercise-line-1"
+                );
+
+
+                const identity =
+                    document.createElement("div");
+
+                identity.classList.add(
+                    "plan-exercise-identity"
+                );
+
+
+                const number =
+                    document.createElement("span");
+
+                number.classList.add(
+                    "plan-exercise-number"
+                );
+
+                number.textContent =
+                    `${planIndex} -`;
+
 
                 const exerciseName =
                     document.createElement("button");
+
+                exerciseName.type = "button";
 
                 exerciseName.classList.add(
                     "plan-exercise-name"
                 );
 
-                exerciseName.textContent = exercise.nom;
+                exerciseName.textContent =
+                    exercise.nom;
 
                 exerciseName.addEventListener(
                     "click",
@@ -235,73 +421,33 @@ function renderPlanExercises() {
                     }
                 );
 
-                exerciseCell.appendChild(exerciseName);
-                row.appendChild(exerciseCell);
+                identity.append(
+                    number,
+                    exerciseName
+                );
 
-                // ------------------------------------------------
+
                 // Progression
-                // ------------------------------------------------
 
-                const progressionCell =
-                    document.createElement("td");
-
-                const progressionContainer =
+                const progression =
                     document.createElement("div");
 
-                progressionContainer.classList.add(
+                progression.classList.add(
                     "plan-progression-cell"
                 );
+
 
                 const progressionName =
                     document.createElement("span");
 
+                progressionName.classList.add(
+                    "plan-progression-name"
+                );
+
                 progressionName.textContent =
-                    getProgressionName(exercise) || "—";
+                    getProgressionName(exercise) ||
+                    "—";
 
-                const progressionButtons =
-                    document.createElement("div");
-
-                progressionButtons.classList.add(
-                    "plan-progression-buttons"
-                );
-
-                const progressionUp =
-                    document.createElement("button");
-
-                progressionUp.textContent = "▲";
-                progressionUp.classList.add(
-                    "plan-progression-button"
-                );
-
-                const progressionDown =
-                    document.createElement("button");
-
-                progressionDown.textContent = "▼";
-                progressionDown.classList.add(
-                    "plan-progression-button"
-                );
-
-                progressionButtons.appendChild(
-                    progressionUp
-                );
-
-                progressionButtons.appendChild(
-                    progressionDown
-                );
-
-                progressionContainer.appendChild(
-                    progressionName
-                );
-
-                progressionContainer.appendChild(
-                    progressionButtons
-                );
-
-                progressionCell.appendChild(
-                    progressionContainer
-                );
-
-                row.appendChild(progressionCell);
 
                 const nextProgression =
                     getPlanProgressionNeighbor(
@@ -315,56 +461,75 @@ function renderPlanExercises() {
                         -1
                     );
 
-                progressionUp.disabled =
-                    !nextProgression;
 
-                progressionDown.disabled =
-                    !previousProgression;
+                const progressionButtons =
+                    createVerticalArrowButtons({
+                        containerClass:
+                            "plan-progression-buttons",
 
-                progressionUp.addEventListener(
-                    "click",
-                    () => {
-                        if (!nextProgression) {
-                            return;
+                        buttonClass:
+                            "plan-progression-button",
+
+                        upDisabled:
+                            !nextProgression,
+
+                        downDisabled:
+                            !previousProgression,
+
+                        onUp: () => {
+                            if (!nextProgression) return;
+
+                            updatePlanExerciseProgression(
+                                planExercise,
+                                nextProgression
+                            );
+
+                            displayExerciseDetails(
+                                nextProgression,
+                                "plan"
+                            );
+                        },
+
+                        onDown: () => {
+                            if (!previousProgression) return;
+
+                            updatePlanExerciseProgression(
+                                planExercise,
+                                previousProgression
+                            );
+
+                            displayExerciseDetails(
+                                previousProgression,
+                                "plan"
+                            );
                         }
+                    });
 
-                        updatePlanExerciseProgression(
-                            planExercise,
-                            nextProgression
-                        );
 
-                        displayExerciseDetails(
-                            nextProgression,
-                            "plan"
-                        );
-                    }
+                progression.append(
+                    progressionName,
+                    progressionButtons
                 );
 
-                progressionDown.addEventListener(
-                    "click",
-                    () => {
-                        if (!previousProgression) {
-                            return;
-                        }
-
-                        updatePlanExerciseProgression(
-                            planExercise,
-                            previousProgression
-                        );
-
-                        displayExerciseDetails(
-                            previousProgression,
-                            "plan"
-                        );
-                    }
+                line1.append(
+                    identity,
+                    progression
                 );
 
-                // ------------------------------------------------
-                // Muscles
-                // ------------------------------------------------
 
-                const musclesCell =
-                    document.createElement("td");
+                // =================================================
+                // LIGNE 2
+                // Muscles | Poids
+                // =================================================
+
+                const line2 =
+                    document.createElement("div");
+
+                line2.classList.add(
+                    "plan-exercise-line",
+                    "plan-exercise-line-2"
+                );
+
 
                 const muscleFamilies = [
                     ...new Set(
@@ -374,28 +539,30 @@ function renderPlanExercises() {
                     )
                 ];
 
-                musclesCell.textContent =
+
+                const muscles =
+                    document.createElement("span");
+
+                muscles.classList.add(
+                    "plan-exercise-muscles"
+                );
+
+                muscles.textContent =
                     muscleFamilies.length
                         ? muscleFamilies.join(" / ")
                         : "—";
 
-                row.appendChild(musclesCell);
 
-                // ------------------------------------------------
-                // Poids
-                // ------------------------------------------------
-
-                const weightCell =
-                    document.createElement("td");
-
-                const weightContainer =
+                const weight =
                     document.createElement("div");
 
-                weightContainer.classList.add(
-                    "plan-value-container"
+                weight.classList.add(
+                    "plan-value-container",
+                    "plan-weight-control"
                 );
 
-                weightContainer.appendChild(
+
+                weight.appendChild(
                     createPlanNumberInput(
                         planExercise.weight,
                         value => {
@@ -413,156 +580,175 @@ function renderPlanExercises() {
                     )
                 );
 
-                const weightUnitSelect =
+
+                const weightUnit =
                     document.createElement("select");
 
-                ["lbs", "kg"].forEach(unit => {
-                    const option =
-                        document.createElement("option");
-
-                    option.value = unit;
-                    option.textContent = unit;
-                    option.selected =
-                        planExercise.weightUnit === unit;
-
-                    weightUnitSelect.appendChild(option);
-                });
-
-                weightUnitSelect.classList.add(
+                weightUnit.classList.add(
                     "plan-weight-unit"
                 );
 
-                weightUnitSelect.addEventListener(
+                ["lbs", "kg"].forEach(unit => {
+                    const option =
+                        document.createElement(
+                            "option"
+                        );
+
+                    option.value = unit;
+                    option.textContent = unit;
+
+                    weightUnit.appendChild(
+                        option
+                    );
+                });
+
+                weightUnit.value =
+                    planExercise.weightUnit;
+
+                weightUnit.addEventListener(
                     "change",
                     () => {
                         planExercise.weightUnit =
-                            weightUnitSelect.value;
+                            weightUnit.value;
                     }
                 );
 
-                weightContainer.appendChild(
-                    weightUnitSelect
+
+                weight.appendChild(weightUnit);
+
+                line2.append(
+                    muscles,
+                    weight
                 );
 
-                weightCell.appendChild(
-                    weightContainer
+
+                // =================================================
+                // LIGNE 3
+                // Séries X Volume | Tempo | Repos
+                // =================================================
+
+                const line3 =
+                    document.createElement("div");
+
+                line3.classList.add(
+                    "plan-exercise-line",
+                    "plan-exercise-line-3"
                 );
 
-                row.appendChild(weightCell);
 
-                // ------------------------------------------------
                 // Séries
-                // ------------------------------------------------
 
-                const setsCell =
-                    document.createElement("td");
-
-                setsCell.appendChild(
+                const setsControl =
                     createPlanNumberInput(
                         planExercise.sets,
                         value => {
                             planExercise.sets =
-                                value ?? 0;
+                                value ?? 1;
                         },
                         {
                             min: 1,
                             max: 999,
-                            step: 1
+                            step: 1,
+                            minChars: 3
                         }
-                    )
+                    );
+
+
+                // X
+
+                const multiplier =
+                    document.createElement("span");
+
+                multiplier.classList.add(
+                    "plan-volume-multiplier"
                 );
 
-                row.appendChild(setsCell);
+                multiplier.textContent = "X";
 
-                // ------------------------------------------------
+
                 // Volume
-                // ------------------------------------------------
 
-                const repsTimeCell =
-                    document.createElement("td");
-
-                const repsTimeContainer =
+                const volume =
                     document.createElement("div");
 
-                repsTimeContainer.classList.add(
-                    "plan-value-container"
+                volume.classList.add(
+                    "plan-value-container",
+                    "plan-volume-control"
                 );
 
-                repsTimeContainer.appendChild(
+
+                volume.appendChild(
                     createPlanNumberInput(
                         planExercise.value,
                         value => {
                             planExercise.value =
-                                value ?? 0;
+                                value ?? 1;
                         },
                         {
                             min: 1,
                             max: 999,
+
                             step: () =>
-                                planExercise.valueUnit === "sec"
+                                planExercise.valueUnit ===
+                                "sec"
                                     ? 15
                                     : 1,
 
-                            snapStep: () => 
-                                planExercise.valueUnit === "sec"
+                            snapStep: () =>
+                                planExercise.valueUnit ===
+                                "sec",
+
+                            minChars: 3
                         }
                     )
                 );
 
-                const valueUnitSelect =
+
+                const valueUnit =
                     document.createElement("select");
 
+                valueUnit.classList.add(
+                    "plan-value-unit"
+                );
+
                 [
-                    ["rep", "rep"],
+                    ["rep", "Rep"],
                     ["sec", "sec"]
                 ].forEach(([value, text]) => {
                     const option =
-                        document.createElement("option");
+                        document.createElement(
+                            "option"
+                        );
 
                     option.value = value;
                     option.textContent = text;
 
-                    valueUnitSelect.appendChild(option);
+                    valueUnit.appendChild(option);
                 });
 
-                valueUnitSelect.value =
+                valueUnit.value =
                     planExercise.valueUnit;
 
-                valueUnitSelect.addEventListener(
+                valueUnit.addEventListener(
                     "change",
                     () => {
                         planExercise.valueUnit =
-                            valueUnitSelect.value;
+                            valueUnit.value;
                     }
                 );
 
-                valueUnitSelect.classList.add(
-                    "plan-value-unit"
-                );
+                volume.appendChild(valueUnit);
 
-                repsTimeContainer.appendChild(
-                    valueUnitSelect
-                );
 
-                repsTimeCell.appendChild(
-                    repsTimeContainer
-                );
-
-                row.appendChild(repsTimeCell);
-
-                // ------------------------------------------------
                 // Tempo
-                // ------------------------------------------------
 
-                const tempoCell =
-                    document.createElement("td");
-
-                const tempoContainer =
+                const tempo =
                     document.createElement("div");
 
-                tempoContainer.classList.add(
+                tempo.classList.add(
                     "plan-tempo-container"
                 );
+
 
                 [
                     "first",
@@ -570,107 +756,146 @@ function renderPlanExercises() {
                     "third",
                     "fourth"
                 ].forEach((key, index) => {
-                    const tempoControl =
+
+                    tempo.appendChild(
                         createPlanNumberInput(
                             planExercise.tempo[key],
+
                             value => {
                                 planExercise.tempo[key] =
                                     value ?? 0;
                             },
+
                             {
                                 min: 0,
                                 max: 999,
                                 step: 1,
                                 minChars: 1,
+
                                 zeroDisplay:
-                                    key === "first" || key === "third"
+                                    key === "first" ||
+                                    key === "third"
                                         ? "X"
                                         : null
                             }
-                        );
-
-                    tempoContainer.appendChild(
-                        tempoControl
+                        )
                     );
+
 
                     if (index < 3) {
                         const separator =
-                            document.createElement("span");
+                            document.createElement(
+                                "span"
+                            );
 
                         separator.textContent = "·";
+
                         separator.classList.add(
                             "plan-tempo-separator"
                         );
 
-                        tempoContainer.appendChild(
-                            separator
-                        );
+                        tempo.appendChild(separator);
                     }
                 });
 
-                tempoCell.appendChild(
-                    tempoContainer
-                );
 
-                row.appendChild(tempoCell);
+                // Repos
 
-                // ------------------------------------------------
-                // Pause
-                // ------------------------------------------------
-
-                const restCell =
-                    document.createElement("td");
-
-                const restContainer =
+                const rest =
                     document.createElement("div");
 
-                restContainer.classList.add(
-                    "plan-value-container"
+                rest.classList.add(
+                    "plan-rest-control"
                 );
 
-                restContainer.appendChild(
+
+                rest.appendChild(
                     createPlanNumberInput(
                         planExercise.rest,
+
                         value => {
                             planExercise.rest =
                                 value ?? 0;
                         },
+
                         {
                             min: 0,
                             max: 999,
                             step: 15,
-                            snapStep: true
+                            snapStep: true,
+                            minChars: 3
                         }
                     )
                 );
 
-                const restUnit =
+
+                const restLabels =
+                    document.createElement("div");
+
+                restLabels.classList.add(
+                    "plan-rest-labels"
+                );
+
+
+                const seconds =
                     document.createElement("span");
 
-                restUnit.textContent = "sec";
-                restUnit.classList.add(
-                    "plan-static-unit"
+                seconds.textContent = "sec";
+
+
+                const restText =
+                    document.createElement("span");
+
+                restText.textContent = "repos";
+
+
+                restLabels.append(
+                    seconds,
+                    restText
                 );
 
-                restContainer.appendChild(
-                    restUnit
+                rest.appendChild(restLabels);
+
+
+                const volumeGroup =
+                    document.createElement("div");
+
+                volumeGroup.classList.add(
+                    "plan-line3-volume"
                 );
 
-                restCell.appendChild(
-                    restContainer
+                volumeGroup.append(
+                    setsControl,
+                    multiplier,
+                    volume
                 );
 
-                row.appendChild(restCell);
+                line3.append(
+                    volumeGroup,
+                    tempo,
+                    rest
+                );
 
-                // ------------------------------------------------
-                // Instructions
-                // ------------------------------------------------
 
-                const instructionsCell =
-                    document.createElement("td");
+                // =================================================
+                // LIGNE 4
+                // Instructions | Set | poubelle
+                // =================================================
+
+                const line4 =
+                    document.createElement("div");
+
+                line4.classList.add(
+                    "plan-exercise-line",
+                    "plan-exercise-line-4"
+                );
+
 
                 const instructionsButton =
                     document.createElement("button");
+
+                instructionsButton.type =
+                    "button";
 
                 instructionsButton.textContent =
                     "Instructions";
@@ -679,39 +904,35 @@ function renderPlanExercises() {
                     "plan-instructions-button"
                 );
 
-                instructionsButton.dataset
-                    .planExerciseIndex =
-                    getCurrentPlan().exercises.indexOf(
+
+                const exerciseArrayIndex =
+                    plan.exercises.indexOf(
                         planExercise
                     );
+
+                instructionsButton.dataset
+                    .planExerciseIndex =
+                    exerciseArrayIndex;
+
 
                 instructionsButton.addEventListener(
                     "click",
                     () => {
                         openPlanExerciseInstructions(
                             planExercise,
-                            getCurrentPlan().exercises.indexOf(
-                                planExercise
-                            )
+                            exerciseArrayIndex
                         );
                     }
                 );
 
-                instructionsCell.appendChild(
-                    instructionsButton
-                );
 
-                row.appendChild(instructionsCell);
-
-                // ------------------------------------------------
-                // Combinaison
-                // ------------------------------------------------
-
-                const combinationCell =
-                    document.createElement("td");
+                // Changement de Set
 
                 const combinationButton =
                     document.createElement("button");
+
+                combinationButton.type =
+                    "button";
 
                 combinationButton.textContent =
                     `S${group}`;
@@ -719,6 +940,9 @@ function renderPlanExercises() {
                 combinationButton.classList.add(
                     "plan-combination-button"
                 );
+
+                combinationButton.title =
+                    "Changer de Set";
 
                 combinationButton.addEventListener(
                     "click",
@@ -730,202 +954,62 @@ function renderPlanExercises() {
                     }
                 );
 
-                combinationCell.appendChild(
-                    combinationButton
+
+                // Suppression
+
+                const deleteButton =
+                    document.createElement("button");
+
+                deleteButton.type =
+                    "button";
+
+                deleteButton.textContent = "🗑";
+
+                deleteButton.classList.add(
+                    "plan-delete-button"
                 );
 
-                row.appendChild(combinationCell);
+                deleteButton.title =
+                    "Supprimer l'exercice";
 
-                // ------------------------------------------------
-                // Ordre dans la combinaison
-                // ------------------------------------------------
-
-                const combinationOrderCell =
-                    document.createElement("td");
-
-                if (groupExercises.length > 1) {
-                    const buttons =
-                        document.createElement("div");
-
-                    buttons.classList.add(
-                        "plan-combination-exercise-buttons"
-                    );
-
-                    const upButton =
-                        document.createElement("button");
-
-                    upButton.textContent = "▲";
-                    upButton.classList.add(
-                        "plan-order-button"
-                    );
-
-                    upButton.disabled =
-                        exerciseIndex === 0;
-
-                    upButton.addEventListener(
-                        "click",
-                        () => {
-                            moveExerciseWithinCombination(
-                                planExercise,
-                                -1
-                            );
-                        }
-                    );
-
-                    const downButton =
-                        document.createElement("button");
-
-                    downButton.textContent = "▼";
-                    downButton.classList.add(
-                        "plan-order-button"
-                    );
-
-                    downButton.disabled =
-                        exerciseIndex ===
-                        groupExercises.length - 1;
-
-                    downButton.addEventListener(
-                        "click",
-                        () => {
-                            moveExerciseWithinCombination(
-                                planExercise,
-                                1
-                            );
-                        }
-                    );
-
-                    buttons.appendChild(upButton);
-                    buttons.appendChild(downButton);
-
-                    combinationOrderCell.appendChild(
-                        buttons
-                    );
-                }
-
-                row.appendChild(
-                    combinationOrderCell
+                deleteButton.setAttribute(
+                    "aria-label",
+                    `Supprimer ${exercise.nom} du plan`
                 );
 
-                // ------------------------------------------------
-                // Ordre des combinaisons
-                // ------------------------------------------------
+                deleteButton.addEventListener(
+                    "click",
+                    () => {
+                        removeExerciseFromCurrentPlan(
+                            planExercise
+                        );
+                    }
+                );
 
-                if (exerciseIndex === 0) {
-                    const groupOrderCell =
-                        document.createElement("td");
 
-                    groupOrderCell.rowSpan =
-                        groupExercises.length;
+                line4.append(
+                    instructionsButton,
+                    combinationButton,
+                    deleteButton
+                );
 
-                    groupOrderCell.classList.add(
-                        "plan-combination-group-order"
-                    );
 
-                    const buttons =
-                        document.createElement("div");
+                card.append(
+                    line1,
+                    line2,
+                    line3,
+                    line4
+                );
 
-                    buttons.classList.add(
-                        "plan-combination-group-order-container"
-                    );
-
-                    const upButton =
-                        document.createElement("button");
-
-                    upButton.textContent = "▲";
-                    upButton.classList.add(
-                        "plan-order-button"
-                    );
-
-                    upButton.disabled =
-                        groupIndex === 0;
-
-                    upButton.addEventListener(
-                        "click",
-                        () => {
-                            moveCombination(
-                                group,
-                                -1
-                            );
-                        }
-                    );
-
-                    const downButton =
-                        document.createElement("button");
-
-                    downButton.textContent = "▼";
-                    downButton.classList.add(
-                        "plan-order-button"
-                    );
-
-                    downButton.disabled =
-                        groupIndex ===
-                        groups.length - 1;
-
-                    downButton.addEventListener(
-                        "click",
-                        () => {
-                            moveCombination(
-                                group,
-                                1
-                            );
-                        }
-                    );
-
-                    buttons.appendChild(upButton);
-                    buttons.appendChild(downButton);
-
-                    groupOrderCell.appendChild(
-                        buttons
-                    );
-
-                    row.appendChild(
-                        groupOrderCell
-                    );
-                }
-
-const deleteCell =
-    document.createElement("td");
-
-deleteCell.classList.add(
-    "plan-delete-cell"
-);
-
-const deleteButton =
-    document.createElement("button");
-
-deleteButton.type = "button";
-deleteButton.textContent = "🗑";
-deleteButton.classList.add(
-    "plan-delete-button"
-);
-
-deleteButton.setAttribute(
-    "aria-label",
-    `Supprimer ${exercise.nom} du plan`
-);
-
-deleteButton.title =
-    "Supprimer l'exercice";
-
-deleteButton.addEventListener(
-    "click",
-    () => {
-        removeExerciseFromCurrentPlan(
-            planExercise
-        );
-    }
-);
-
-deleteCell.appendChild(deleteButton);
-row.appendChild(deleteCell);
-
-                tbody.appendChild(row);
+                shell.appendChild(card);
+                setExercises.appendChild(shell);
             }
         );
+
+        workout.appendChild(setBlock);
     });
 
-    table.appendChild(tbody);
-    getPlanExerciseList().appendChild(table);
+    list.appendChild(workout);
 }
 
 // ============================================================
