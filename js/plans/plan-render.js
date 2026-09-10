@@ -189,7 +189,8 @@ function renderPlanExercises() {
         document.createElement("div");
 
     workout.classList.add(
-        "plan-workout-content"
+        "plan-workout-content",
+        "responsive-columns"
     );
 
     let supersetColorIndex = 0;
@@ -294,6 +295,12 @@ if (isSuperset) {
 setExercises.classList.add(
     "plan-set-exercises"
 );
+
+if (isSuperset) {
+    setExercises.classList.add(
+        "responsive-columns"
+    );
+}
 
 setBlock.appendChild(setExercises);
 
