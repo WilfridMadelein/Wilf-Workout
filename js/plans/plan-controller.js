@@ -7,15 +7,14 @@ let getCurrentPlan;
 let setCurrentPlan;
 
 let newPlanButton;
-let createPlanButton;
-let cancelPlanButton;
 let planHome;
-let planCreator;
-let planNameInput;
 let plansList;
 let planEditor;
 let currentPlanName;
 let backToPlansButton;
+let plans;
+let editPlanNameButton;
+let currentPlanNameInput;
 
 let planSetsInput;
 let planRepsInput;
@@ -40,14 +39,13 @@ export function configurePlanController(dependencies) {
         setCurrentPlan,
 
         newPlanButton,
-        createPlanButton,
-        cancelPlanButton,
+        plans,
         planHome,
-        planCreator,
-        planNameInput,
         plansList,
         planEditor,
         currentPlanName,
+        editPlanNameButton,
+        currentPlanNameInput,
         backToPlansButton,
 
         planSetsInput,
@@ -296,102 +294,270 @@ export function setupPlanDefaultInputs() {
     );
 }
 
-export function setupPlanController() {
-    newPlanButton.addEventListener("click", () => {
-        planHome.style.display = "none";
-        planCreator.style.display = "block";
 
-        planNameInput.value = "";
-        planNameInput.focus();
-    });
+// ------------------------------------------------------------
+// Résumé d'un plan
+// ------------------------------------------------------------
 
-    cancelPlanButton.addEventListener("click", () => {
-        planCreator.style.display = "none";
-        planHome.style.display = "block";
-    });
+function getPlanSetCount(plan) {
+    return new Set(
+        plan.exercises
+            .map(item => item.combination?.group)
+            .filter(Number.isInteger)
+    ).size;
+}
 
-    createPlanButton.addEventListener("click", () => {
-        const planName =
-            planNameInput.value.trim();
+function getPlanPrimaryMuscles(plan) {
+    const muscles = new Set();
 
-        if (planName === "") {
-            alert("Veuillez entrer un nom de plan.");
-            return;
-        }
-
-        const plan = {
-            id: Date.now(),
-            name: planName,
-
-            defaults: {
-                sets: 3,
-                reps: 10,
-                time: 30,
-                rest: 60,
-
-                tempo: {
-                    first: 3,
-                    second: 0,
-                    third: 1,
-                    fourth: 0
+    plan.exercises.forEach(planExercise => {
+        planExercise.exercise?.muscles_principaux
+            ?.forEach(([family]) => {
+                if (family) {
+                    muscles.add(family);
                 }
-            },
+            });
+    });
 
-            exercises: []
-        };
+    return [...muscles];
+}
 
-        plansList.innerHTML = `
-            <div class="plan-card">
-                <h3>${plan.name}</h3>
-                <p>0 exercice</p>
-                <button class="open-plan-button">
-                    Ouvrir le plan
-                </button>
-            </div>
-        `;
 
-        const openPlanButton =
-            plansList.querySelector(
-                ".open-plan-button"
-            );
+// ------------------------------------------------------------
+// Ouvrir un plan
+// ------------------------------------------------------------
 
-        openPlanButton.addEventListener("click", () => {
-            setCurrentPlan(plan);
+function openPlan(plan) {
+    setCurrentPlan(plan);
+    ensurePlanDefaults(plan);
+
+    planHome.style.display = "none";
+    planEditor.style.display = "block";
+
+    currentPlanName.textContent = plan.name;
+    currentPlanName.hidden = false;
+
+    currentPlanNameInput.value = plan.name;
+    currentPlanNameInput.hidden = true;
+
+    loadPlanDefaultsIntoInputs();
+    renderPlanExercises();
+
+    planExerciseBrowserContainer.appendChild(
+        exerciseBrowser
+    );
+
+    exerciseBrowser.style.display = "block";
+
+    loadSearchState(
+        getPlanSearchState()
+    );
+
+    displayExercises();
+}
+
+
+// ------------------------------------------------------------
+// Liste des plans
+// ------------------------------------------------------------
+
+export function renderPlansList() {
+    plansList.replaceChildren();
+
+    plans.forEach(plan => {
+        const card =
+            document.createElement("button");
+
+        card.type = "button";
+        card.classList.add("plan-card");
+
+        const exerciseCount =
+            plan.exercises.length;
+
+        const setCount =
+            getPlanSetCount(plan);
+
+        const muscles =
+            getPlanPrimaryMuscles(plan);
+
+
+        const title =
+            document.createElement("span");
+
+        title.classList.add(
+            "plan-card-title"
+        );
+
+        title.textContent = plan.name;
+
+
+        const exercises =
+            document.createElement("span");
+
+        exercises.classList.add(
+            "plan-card-info"
+        );
+
+        exercises.textContent =
+            `${exerciseCount} exercice${exerciseCount !== 1 ? "s" : ""}`;
+
+
+        const sets =
+            document.createElement("span");
+
+        sets.classList.add(
+            "plan-card-info"
+        );
+
+        sets.textContent =
+            `${setCount} set${setCount !== 1 ? "s" : ""}`;
+
+
+        const muscleList =
+            document.createElement("span");
+
+        muscleList.classList.add(
+            "plan-card-muscles"
+        );
+
+        muscleList.textContent =
+            muscles.length > 0
+                ? muscles.join(", ")
+                : "Aucun muscle principal";
+
+
+        card.append(
+            title,
+            exercises,
+            sets,
+            muscleList
+        );
+
+        card.addEventListener(
+            "click",
+            () => openPlan(plan)
+        );
+
+        plansList.appendChild(card);
+    });
+}
+
+
+// ------------------------------------------------------------
+// Modifier le nom
+// ------------------------------------------------------------
+
+function startPlanNameEditing() {
+    const plan = getCurrentPlan();
+
+    if (!plan) return;
+
+    currentPlanNameInput.value =
+        plan.name;
+
+    currentPlanName.hidden = true;
+    currentPlanNameInput.hidden = false;
+
+    currentPlanNameInput.focus();
+    currentPlanNameInput.select();
+}
+
+function finishPlanNameEditing() {
+    const plan = getCurrentPlan();
+
+    if (
+        !plan ||
+        currentPlanNameInput.hidden
+    ) {
+        return;
+    }
+
+    const name =
+        currentPlanNameInput.value.trim();
+
+    if (name) {
+        plan.name = name;
+    }
+
+    currentPlanName.textContent =
+        plan.name;
+
+    currentPlanNameInput.hidden = true;
+    currentPlanName.hidden = false;
+
+    renderPlansList();
+}
+
+export function setupPlanController() {
+
+    newPlanButton.addEventListener(
+        "click",
+        () => {
+            const plan = {
+                id: Date.now(),
+                name: `Plan ${plans.length + 1}`,
+                defaults: {},
+                exercises: []
+            };
 
             ensurePlanDefaults(plan);
 
-            planHome.style.display = "none";
-            planEditor.style.display = "block";
+            plans.push(plan);
 
-            currentPlanName.textContent =
-                plan.name;
+            renderPlansList();
+            openPlan(plan);
+        }
+    );
 
-            loadPlanDefaultsIntoInputs();
 
-            renderPlanExercises();
+    editPlanNameButton.addEventListener(
+        "click",
+        startPlanNameEditing
+    );
 
-            planExerciseBrowserContainer.appendChild(
-                exerciseBrowser
-            );
+    currentPlanName.addEventListener(
+        "click",
+        startPlanNameEditing
+    );
 
-            exerciseBrowser.style.display = "block";
 
-            loadSearchState(
-                getPlanSearchState()
-            );
+    currentPlanNameInput.addEventListener(
+        "blur",
+        finishPlanNameEditing
+    );
 
-            displayExercises();
-        });
+    currentPlanNameInput.addEventListener(
+        "keydown",
+        event => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                currentPlanNameInput.blur();
+            }
 
-        planCreator.style.display = "none";
-        planHome.style.display = "block";
-    });
+            if (event.key === "Escape") {
+                event.preventDefault();
 
-    backToPlansButton.addEventListener("click", () => {
-        planEditor.style.display = "none";
-        planHome.style.display = "block";
+                currentPlanNameInput.value =
+                    getCurrentPlan()?.name ?? "";
 
-        setCurrentDetailExercise(null);
-        setCurrentDetailContext("search");
-    });
+                currentPlanNameInput.blur();
+            }
+        }
+    );
+
+
+    backToPlansButton.addEventListener(
+        "click",
+        () => {
+            finishPlanNameEditing();
+
+            planEditor.style.display = "none";
+            planHome.style.display = "block";
+
+            renderPlansList();
+
+            setCurrentDetailExercise(null);
+            setCurrentDetailContext("search");
+        }
+    );
 }

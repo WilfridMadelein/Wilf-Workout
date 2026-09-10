@@ -28,11 +28,10 @@ import {
     planTempoInputs,
 
     newPlanButton,
-    createPlanButton,
-    cancelPlanButton,
+    plans,
+    editPlanNameButton,
+    currentPlanNameInput,
     planHome,
-    planCreator,
-    planNameInput,
     plansList,
     planEditor,
     currentPlanName,
@@ -175,6 +174,7 @@ import {
     ensurePlanDefaults,
     loadPlanDefaultsIntoInputs,
     setupPlanDefaultInputs,
+    renderPlansList,
     setupPlanController
 } from "./plans/plan-controller.js";
 
@@ -357,11 +357,10 @@ configurePlanController({
     setCurrentPlan,
 
     newPlanButton,
-    createPlanButton,
-    cancelPlanButton,
+    plans,
+    editPlanNameButton,
+    currentPlanNameInput,
     planHome,
-    planCreator,
-    planNameInput,
     plansList,
     planEditor,
     currentPlanName,
@@ -415,7 +414,7 @@ configureAppController({
     tabPlans,
 
     planHome,
-    planCreator,
+    renderPlansList,
     planEditor,
 
     removeAddButton,

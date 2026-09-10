@@ -9,20 +9,6 @@
 </div>
 
 
-<!-- CRÉATION DU PLAN -->
-<div id="plan-creator" style="display: none;">
-
-    <h2>Nouveau plan</h2>
-
-    <label for="plan-name">Nom du plan</label>
-
-    <input type="text" id="plan-name" placeholder="Ex : Jour 1 - Leg Day">
-
-    <button id="create-plan-button">Créer le plan</button>
-    <button id="cancel-plan-button">Annuler</button>
-
-</div>
-
 
 <!-- ÉDITION DU PLAN -->
 <div id="plan-editor" style="display: none;">
@@ -35,7 +21,34 @@
         <!-- INFORMATIONS -->
         <div class="plan-info">
 
-            <h2 id="current-plan-name"></h2>
+            <div class="plan-name-row">
+
+    <button
+        id="edit-plan-name-button"
+        class="plan-name-edit-button"
+        type="button"
+        aria-label="Modifier le nom du plan"
+        title="Modifier le nom du plan"
+    >
+        ✎
+    </button>
+
+    <h2
+        id="current-plan-name"
+        class="plan-name-display"
+        title="Modifier le nom du plan"
+    ></h2>
+
+    <input
+        id="current-plan-name-input"
+        class="plan-name-input"
+        type="text"
+        placeholder="Ex : Jour 1 - Leg Day"
+        maxlength="80"
+        hidden
+    >
+
+</div>
 
             <div class="plan-filters-box">
                 <h3>Filtre du plan</h3>

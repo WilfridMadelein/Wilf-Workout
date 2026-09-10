@@ -49,14 +49,12 @@ export const planTempoInputs = [
 // ------------------------------------------------------------
 
 export const newPlanButton = document.getElementById("new-plan-button");
-export const createPlanButton = document.getElementById("create-plan-button");
-export const cancelPlanButton = document.getElementById("cancel-plan-button");
 export const planHome = document.getElementById("plan-home");
-export const planCreator = document.getElementById("plan-creator");
-export const planNameInput = document.getElementById("plan-name");
 export const plansList = document.getElementById("plans-list");
 export const planEditor = document.getElementById("plan-editor");
 export const currentPlanName = document.getElementById("current-plan-name");
+export const editPlanNameButton = document.getElementById("edit-plan-name-button");
+export const currentPlanNameInput = document.getElementById("current-plan-name-input");
 export const backToPlansButton = document.getElementById("back-to-plans-button");
 
 // ------------------------------------------------------------
@@ -119,6 +117,8 @@ export const planSearchState = {
 // ------------------------------------------------------------
 // État — Plan actuel
 // ------------------------------------------------------------
+
+export const plans = [];
 
 export let currentPlan = null;
 

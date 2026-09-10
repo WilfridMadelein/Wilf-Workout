@@ -8,7 +8,7 @@ let tabExercises;
 let tabPlans;
 
 let planHome;
-let planCreator;
+let renderPlanList;
 let planEditor;
 
 let removeAddButton;
@@ -40,7 +40,7 @@ export function configureAppController(dependencies) {
         tabPlans,
 
         planHome,
-        planCreator,
+        renderPlanList,
         planEditor,
 
         removeAddButton,
