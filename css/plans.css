@@ -174,6 +174,8 @@
     border: 1px solid #d8d8d8;
     border-radius: 8px;
     box-sizing: border-box;
+
+    container: plan-settings / inline-size;
 }
 
 .plan-default-settings h3 {
@@ -328,10 +330,12 @@
 }
 
 
-
-
-
-
+@container plan-settings (max-width: 430px) {
+    .plan-settings-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
 
 
 /* =========================================================
@@ -595,26 +599,32 @@
 
     display: grid;
     grid-template-columns:
+        max-content
         minmax(0, 1fr)
-        auto
-        minmax(0, 1fr);
+        max-content;
 
     align-items: center;
-    gap: 12px;
+    column-gap: 10px;
 }
 
 .plan-line3-volume {
+    min-width: 0;
+
     display: flex;
     align-items: center;
     justify-self: start;
-    gap: 10px;
+
+    gap: 6px;
+    white-space: nowrap;
 }
 
 .plan-exercise-line-3 .plan-tempo-container {
+    min-width: 0;
     justify-self: center;
 }
 
 .plan-exercise-line-3 .plan-rest-control {
+    min-width: 0;
     justify-self: end;
 }
 

@@ -8,14 +8,19 @@
 
 .filter-row {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
+    gap: 6px;
+
     min-height: 48px;
+    padding: 6px 10px;
+
     border-bottom: 1px solid #ddd;
 }
 
 .filter-title {
-    width: 150px;
-    min-width: 150px;
+    width: 140px;
+    flex: 0 0 140px;
     height: 48px;
     display: flex;
     justify-content: space-between;
@@ -38,19 +43,15 @@
 }
 
 .filter-summary {
-    flex: 1;
     min-width: 0;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
-    overflow: hidden;
-    white-space: nowrap;
+}
+.filter-summary:not(.progression-summary) {
+    display: contents;
 }
 
 .filter-options {
     display: none;
-    padding: 12px 10px 15px 160px;
+    padding: 12px 10px 15px;
     border-bottom: 1px solid #ddd;
 }
 
@@ -110,7 +111,10 @@
     font-size: 16px;
     line-height: 1;
 }
-
+#progression-include-summary .summary-remove,
+#progression-exclude-summary .summary-remove {
+    order: -1;
+}
 .summary-remove:hover {
     opacity: 0.7;
 }
@@ -120,15 +124,21 @@
 ========================================================= */
 
 #submuscle-filters {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(150px, 1fr)
+        );
+
     gap: 15px;
     margin-top: 15px;
-    align-items: flex-start;
+    align-items: start;
 }
 
 .submuscle-container {
-    min-width: 150px;
+    min-width: 0;
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 6px;
@@ -166,23 +176,38 @@
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    gap: 8px;
+    flex-wrap: wrap;
+
+    gap: 6px 8px;
     min-height: 25px;
     width: 100%;
 }
-
 .progression-summary-row > span:first-child {
     width: 55px;
     flex-shrink: 0;
 }
+.progression-summary-row .add-filter-button {
+    order: -1;
+}
+.progression-summary-row .selected-items {
+    display: contents;
+}
 
 .selected-items {
     min-width: 0;
+
     display: flex;
-    flex: 0 1 auto;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+
     gap: 5px;
-    overflow: hidden;
-    white-space: nowrap;
+
+    overflow: visible;
+    white-space: normal;
+}
+
+.selected-items:empty {
+    display: none;
 }
 
 .add-filter-button {
@@ -206,26 +231,30 @@
 }
 
 .progression-filter-panel {
-    display: grid;
-    grid-template-columns:
-        220px minmax(0, 1fr);
-    gap: 20px;
-    align-items: start;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
 
 .progression-mode-column {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+
     gap: 8px;
+    padding-bottom: 12px;
+
+    border-bottom: 1px solid #ddd;
 }
 
 .progression-search-input {
-    width: 200px;
-    max-width: 100%;
-    box-sizing: border-box;
+    flex: 1 1 180px;
+    width: auto;
+    min-width: 140px;
 
-    margin-top: 4px;
+    box-sizing: border-box;
+    margin: 0;
     padding: 7px 9px;
 
     border: 1px solid #aaa;
