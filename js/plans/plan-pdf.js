@@ -1,4 +1,5 @@
 import { getProgressionName } from "../exercises/exercise-search.js";
+import { getPlanExerciseDetailsLines } from "../exercises/exercise-details.js";
 
 let plans = [];
 let downloadPlansButton;
@@ -161,6 +162,16 @@ const PDF_SET_COLORS = [
     [252, 244, 232]
 ];
 
+const PDF_SET_GAP = 6;
+const PDF_SET_PADDING = 3;
+const PDF_SET_TITLE_HEIGHT = 6;
+const PDF_SET_ROW_GAP = 3;
+
+const PDF_CARD_MIN_HEIGHT = 43;
+const PDF_HEADER_LINE_HEIGHT = 4.2;
+const PDF_BODY_LINE_HEIGHT = 3.6;
+const PDF_INSTRUCTION_LINE_HEIGHT = 3.1;
+
 function getPlanGroups(plan) {
     const groups = [];
 
@@ -228,32 +239,27 @@ function generatePlansPdf(selectedPlans) {
 function drawPlan(doc, plan, date) {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
-
     const margin = 12;
     const contentWidth = pageWidth - margin * 2;
-
+    const setWidth = (contentWidth - PDF_SET_GAP) / 2;
     let y = margin;
 
-    // Nom du plan
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
     doc.text(plan.name, margin, y);
 
-    // Date
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     doc.text(`Téléchargé le ${date}`, margin, y + 6);
 
-    // Résumé
     const exerciseCount = plan.exercises.length;
     const setCount = getPlanSetCount(plan);
     const muscles = getPlanPrimaryMuscles(plan);
 
     doc.setFontSize(10);
-
     doc.text(
         `${exerciseCount} exercice${exerciseCount !== 1 ? "s" : ""} | ` +
-            `${setCount} set${setCount !== 1 ? "s" : ""}`,
+        `${setCount} set${setCount !== 1 ? "s" : ""}`,
         margin,
         y + 12
     );
@@ -264,13 +270,12 @@ function drawPlan(doc, plan, date) {
     );
 
     doc.text(muscleLines, margin, y + 18);
-
     y += 23 + muscleLines.length * 4;
 
     doc.line(margin, y, pageWidth - margin, y);
     y += 7;
 
-    if (plan.exercises.length === 0) {
+    if (!plan.exercises.length) {
         doc.text("Aucun exercice.", margin, y);
         return;
     }
@@ -282,237 +287,282 @@ function drawPlan(doc, plan, date) {
     const groups = getPlanGroups(plan);
     let supersetColorIndex = 0;
 
-    groups.forEach(groupData => {
-        const isSuperset = groupData.exercises.length > 1;
-        let fillColor = null;
+    for (let index = 0; index < groups.length; index++) {
+        const group = groups[index];
 
-        if (isSuperset) {
-            fillColor =
-                PDF_SET_COLORS[
-                    supersetColorIndex % PDF_SET_COLORS.length
-                ];
+        // ----------------------------------------------------
+        // Set seul
+        // ----------------------------------------------------
 
-            supersetColorIndex++;
+        if (group.exercises.length === 1) {
+            const left = createSetLayout(doc, group, planOrder, setWidth, null);
+
+            const nextGroup = groups[index + 1];
+            const right = nextGroup?.exercises.length === 1
+                ? createSetLayout(doc, nextGroup, planOrder, setWidth, null)
+                : null;
+
+            const rowHeight = Math.max(left.height, right?.height ?? 0);
+
+            if (y + rowHeight > pageHeight - margin) {
+                doc.addPage();
+                y = drawContinuationHeader(doc, plan.name, margin);
+            }
+
+            drawSingleSetBlock(doc, left, margin, y, setWidth);
+
+            if (right) {
+                drawSingleSetBlock(
+                    doc,
+                    right,
+                    margin + setWidth + PDF_SET_GAP,
+                    y,
+                    setWidth
+                );
+
+                index++;
+            }
+
+            y += rowHeight + 5;
+            continue;
         }
 
-        const result = drawSet(doc, {
-            groupData,
-            planOrder,
-            x: margin,
-            y,
-            width: contentWidth,
-            pageHeight,
-            margin,
-            fillColor,
-            planName: plan.name
-        });
+        // ----------------------------------------------------
+        // Superset
+        // ----------------------------------------------------
 
-        y = result.y;
-    });
+        const fillColor =
+            PDF_SET_COLORS[supersetColorIndex++ % PDF_SET_COLORS.length];
+
+        const multi = createSetLayout(
+            doc,
+            group,
+            planOrder,
+            setWidth,
+            fillColor
+        );
+
+        const nextGroup = groups[index + 1];
+
+        const nextSingle =
+            multi.oddSuperset &&
+            nextGroup?.exercises.length === 1
+                ? createSetLayout(doc, nextGroup, planOrder, setWidth, null)
+                : null;
+
+        const blockHeight = getMultiSetHeight(multi, nextSingle);
+
+        if (y + blockHeight > pageHeight - margin) {
+            doc.addPage();
+            y = drawContinuationHeader(doc, plan.name, margin);
+        }
+
+const slot = drawMultiSetBlock(
+    doc,
+    multi,
+    margin,
+    y,
+    setWidth,
+    blockHeight,
+    nextSingle
+);
+
+        if (nextSingle && slot) {
+            drawSingleSetBlock(
+                doc,
+                nextSingle,
+                slot.x,
+                slot.y,
+                setWidth
+            );
+
+            index++;
+        }
+
+        y += blockHeight + 5;
+    }
 }
 
-function drawSet(
-    doc,
-    {
-        groupData,
-        planOrder,
-        x,
-        y,
-        width,
-        pageHeight,
-        margin,
-        fillColor,
-        planName
-    }
-) {
-    const outerPadding = 4;
-    const titleHeight = 7;
-    const rowGap = 4;
-    const columnGap = 5;
+function createSetLayout(doc, groupData, planOrder, setWidth, fillColor) {
+    const cardWidth = setWidth - PDF_SET_PADDING * 2;
 
-    const columnWidth =
-        (width - outerPadding * 2 - columnGap) / 2;
-
-    const layouts = groupData.exercises.map(planExercise =>
+    const cards = groupData.exercises.map(planExercise =>
         getExerciseCardLayout(
             doc,
             planExercise,
             planOrder.get(planExercise) - 1,
-            columnWidth
+            cardWidth
         )
     );
 
     const rows = [];
 
-    for (let index = 0; index < layouts.length; index += 2) {
+    for (let index = 0; index < cards.length; index += 2) {
         rows.push({
-            left: layouts[index],
-            right: layouts[index + 1] ?? null
+            left: cards[index],
+            right: cards[index + 1] ?? null,
+            height: Math.max(cards[index].height, cards[index + 1]?.height ?? 0)
         });
     }
 
-    let rowIndex = 0;
-
-    while (rowIndex < rows.length) {
-        const startY = y;
-        const availableHeight = pageHeight - margin - startY;
-
-        const minimumHeight =
-            titleHeight +
-            outerPadding * 2 +
-            rows[rowIndex].left.height;
-
-        if (availableHeight < minimumHeight) {
-            doc.addPage();
-            y = drawContinuationHeader(doc, planName, margin);
-            continue;
-        }
-
-        const rowsForPage = [];
-        let contentHeight = titleHeight + outerPadding * 2;
-
-        while (rowIndex < rows.length) {
-            const row = rows[rowIndex];
-
-            const rowHeight = Math.max(
-                row.left.height,
-                row.right?.height ?? 0
-            );
-
-            const extraHeight =
-                rowHeight +
-                (rowsForPage.length > 0 ? rowGap : 0);
-
-            if (
-                rowsForPage.length > 0 &&
-                contentHeight + extraHeight > availableHeight
-            ) {
-                break;
-            }
-
-            rowsForPage.push({
-                ...row,
-                height: rowHeight
-            });
-
-            contentHeight += extraHeight;
-            rowIndex++;
-        }
-
-        drawSetPageBlock(doc, {
-            group: groupData.group,
-            rows: rowsForPage,
-            x,
-            y,
-            width,
-            outerPadding,
-            titleHeight,
-            rowGap,
-            columnGap,
-            columnWidth,
-            fillColor,
-            continuation:
-                startY !== y ||
-                rowIndex < rows.length
-        });
-
-        y += contentHeight + 5;
-
-        if (rowIndex < rows.length) {
-            doc.addPage();
-            y = drawContinuationHeader(doc, planName, margin);
-        }
-    }
-
-    return { y };
-}
-
-function drawSetPageBlock(
-    doc,
-    {
-        group,
-        rows,
-        x,
-        y,
-        width,
-        outerPadding,
-        titleHeight,
-        rowGap,
-        columnGap,
-        columnWidth,
-        fillColor,
-        continuation
-    }
-) {
-    const blockHeight =
-        titleHeight +
-        outerPadding * 2 +
+    const height =
+        PDF_SET_TITLE_HEIGHT +
+        PDF_SET_PADDING * 2 +
         rows.reduce(
             (total, row, index) =>
-                total +
-                row.height +
-                (index > 0 ? rowGap : 0),
+                total + row.height + (index ? PDF_SET_ROW_GAP : 0),
             0
         );
 
-    // Fond extérieur du Set
-    if (fillColor) {
-        doc.setFillColor(...fillColor);
-    } else {
-        doc.setFillColor(255, 255, 255);
+    return {
+        group: groupData.group,
+        rows,
+        fillColor,
+        height,
+        isSingle: cards.length === 1,
+        oddSuperset: cards.length > 1 && cards.length % 2 === 1
+    };
+}
+
+function getLastMultiRowY(layout, y) {
+    let rowY = y + PDF_SET_TITLE_HEIGHT + PDF_SET_PADDING;
+
+    for (let index = 0; index < layout.rows.length - 1; index++) {
+        rowY += layout.rows[index].height + PDF_SET_ROW_GAP;
     }
 
-    doc.setDrawColor(190, 190, 190);
-    doc.roundedRect(
-        x,
-        y,
-        width,
-        blockHeight,
-        2,
-        2,
-        "FD"
-    );
+    return rowY;
+}
 
-    // Titre du Set
+function getMultiSetHeight(layout, singleLayout) {
+    if (!layout.oddSuperset || !singleLayout) return layout.height;
+
+    const slotOffset = getLastMultiRowY(layout, 0);
+    const cardOffset = PDF_SET_TITLE_HEIGHT + PDF_SET_PADDING;
+
+    return Math.max(
+        layout.height + cardOffset,
+        slotOffset + singleLayout.height
+    );
+}
+
+function drawSingleSetBlock(doc, layout, x, y, setWidth) {
     doc.setTextColor(30, 30, 30);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
+    doc.text(`Set ${layout.group}`, x + PDF_SET_PADDING, y + 5);
 
-    doc.text(
-        continuation
-            ? `Set ${group}`
-            : `Set ${group}`,
-        x + outerPadding,
-        y + 5
+    drawExerciseCard(
+        doc,
+        layout.rows[0].left,
+        x + PDF_SET_PADDING,
+        y + PDF_SET_TITLE_HEIGHT + PDF_SET_PADDING,
+        setWidth - PDF_SET_PADDING * 2
+    );
+}
+
+function drawRoundedLShape(doc, x, y, width, height, cutX, cutY, radius, fillColor) {
+    const right = x + width;
+    const bottom = y + height;
+    const cx = cutX - x;
+    const cy = cutY - y;
+    const r = Math.min(radius, 3);
+    const k = r * 0.5522847498;
+
+    doc.setFillColor(...fillColor);
+    doc.setDrawColor(190, 190, 190);
+
+    doc.lines(
+        [
+            [width - 2 * r, 0],
+            [k, 0, r, r - k, r, r],
+            [0, cy - 2 * r],
+            [0, k, -(r - k), r, -r, r],
+            [cx - width + 2 * r, 0],
+            [-(r - k), 0, -r, r - k, -r, r],
+            [0, height - cy - 2 * r],
+            [0, k, -(r - k), r, -r, r],
+            [-cx + 2 * r, 0],
+            [-k, 0, -r, -(r - k), -r, -r],
+            [0, -(height - 2 * r)],
+            [0, -k, r - k, -r, r, -r]
+        ],
+        x + r,
+        y,
+        [1, 1],
+        "FD",
+        true
+    );
+}
+
+function drawMultiSetBlock(doc, layout, x, y, setWidth, blockHeight, nestedSingle) {
+    const fullWidth = setWidth * 2 + PDF_SET_GAP;
+    const cardWidth = setWidth - PDF_SET_PADDING * 2;
+let slot = null;
+
+if (layout.oddSuperset && nestedSingle) {
+    const slotY = getLastMultiRowY(layout, y);
+    const cutX = x + setWidth + PDF_SET_GAP / 2;
+    const cutY = slotY - PDF_SET_ROW_GAP / 2;
+
+    drawRoundedLShape(
+        doc,
+        x,
+        y,
+        fullWidth,
+        blockHeight,
+        cutX,
+        cutY,
+        2,
+        layout.fillColor
     );
 
-    // Exercices
-    let cardY = y + titleHeight + outerPadding;
+    slot = {
+        x: x + setWidth + PDF_SET_GAP,
+        y: slotY
+    };
+} else {
+    doc.setFillColor(...layout.fillColor);
+    doc.setDrawColor(190, 190, 190);
+    doc.roundedRect(x, y, fullWidth, blockHeight, 2, 2, "FD");
+}
 
-    rows.forEach(row => {
+    doc.setTextColor(30, 30, 30);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text(`Set ${layout.group}`, x + PDF_SET_PADDING, y + 5);
+
+let cardY = y + PDF_SET_TITLE_HEIGHT + PDF_SET_PADDING;
+const lastRowIndex = layout.rows.length - 1;
+const nestedOffset = nestedSingle
+    ? PDF_SET_TITLE_HEIGHT + PDF_SET_PADDING
+    : 0;
+
+layout.rows.forEach((row, index) => {
+    if (index === lastRowIndex) cardY += nestedOffset;
+
+    drawExerciseCard(
+        doc,
+        row.left,
+        x + PDF_SET_PADDING,
+        cardY,
+        cardWidth
+    );
+
+    if (row.right) {
         drawExerciseCard(
             doc,
-            row.left,
-            x + outerPadding,
+            row.right,
+            x + setWidth + PDF_SET_GAP + PDF_SET_PADDING,
             cardY,
-            columnWidth
+            cardWidth
         );
+    }
 
-        if (row.right) {
-            drawExerciseCard(
-                doc,
-                row.right,
-                x +
-                    outerPadding +
-                    columnWidth +
-                    columnGap,
-                cardY,
-                columnWidth
-            );
-        }
+    cardY += row.height + PDF_SET_ROW_GAP;
+});
 
-        cardY += row.height + rowGap;
-    });
+    return slot;
 }
 
 function drawContinuationHeader(
@@ -536,131 +586,223 @@ function drawContinuationHeader(
 // CARTE D'EXERCICE
 // ============================================================
 
-function getExerciseCardLayout(
-    doc,
-    planExercise,
-    index,
-    width
-) {
+function isExclusivelyGym(exercise) {
+    const categories = exercise.catégorie ?? [];
+    return categories.length > 0 &&
+        categories.every(category => category === "Gym A" || category === "Gym B");
+}
+
+function getPdfInstructions(planExercise) {
+    const saved = planExercise.details?.instructions;
+
+    const text = saved == null
+        ? getPlanExerciseDetailsLines(planExercise.exercise ?? {}).join("\n")
+        : String(saved);
+
+    return text.replace(/\r\n?/g, "\n").trimEnd();
+}
+
+function wrapInstructionText(doc, text, width) {
+    return text.split("\n").flatMap(line => {
+        const cleanLine = line.trimEnd();
+        return cleanLine ? doc.splitTextToSize(cleanLine, width) : [""];
+    });
+}
+
+function getExerciseCardLayout(doc, planExercise, index, width) {
     const exercise = planExercise.exercise ?? {};
     const innerWidth = width - 8;
+    const progression = getProgressionName(exercise) || "";
+    const headerGap = 4;
+    const titleWidth = progression ? innerWidth * 0.62 : innerWidth;
+    const progressionWidth = progression
+        ? innerWidth - titleWidth - headerGap
+        : 0;
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
 
     const titleLines = doc.splitTextToSize(
         `${index + 1} - ${exercise.nom ?? "Exercice"}`,
-        innerWidth
+        titleWidth
     );
-
-    const progression =
-        getProgressionName(exercise);
-
-    const categories =
-        exercise.catégorie?.join(" / ") || "-";
-
-    const muscles =
-        [
-            ...new Set(
-                (exercise.muscles_principaux ?? [])
-                    .map(muscle => muscle[0])
-                    .filter(Boolean)
-            )
-        ].join(" / ") || "-";
-
-    const unit =
-        planExercise.valueUnit === "sec"
-            ? "sec"
-            : "Rep";
-
-    const lines = [
-        progression
-            ? `Progression : ${progression}`
-            : null,
-
-        `${categories} | ${muscles}`,
-
-        `Poids : ${formatNumber(planExercise.weight)} ${
-            planExercise.weightUnit ?? "lbs"
-        }`,
-
-        `${planExercise.sets ?? 1} X ${formatNumber(
-            planExercise.value
-        )} ${unit}`,
-
-        `Tempo : ${formatTempo(planExercise.tempo)}`,
-
-        `Repos : ${formatNumber(planExercise.rest)} sec`
-    ].filter(Boolean);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
 
-    const bodyLines = lines.flatMap(line =>
-        doc.splitTextToSize(line, innerWidth)
+    const progressionLines = progression
+        ? doc.splitTextToSize(progression, progressionWidth)
+        : [];
+
+    const muscles = [
+        ...new Set(
+            (exercise.muscles_principaux ?? [])
+                .map(muscle => muscle[0])
+                .filter(Boolean)
+        )
+    ].join(" / ") || "-";
+
+    const unit = planExercise.valueUnit === "sec" ? "sec" : "Rep";
+    const weight = Number(planExercise.weight) || 0;
+    const showWeight = weight !== 0 || isExclusivelyGym(exercise);
+
+    const bodyRows = [{
+        type: "text",
+        lines: doc.splitTextToSize(muscles, innerWidth)
+    }];
+
+    if (showWeight) {
+        bodyRows.push({
+            type: "mixed",
+            label: "Poids : ",
+            value: `${formatNumber(planExercise.weight)} ${planExercise.weightUnit ?? "lbs"}`
+        });
+    }
+
+    bodyRows.push(
+        {
+            type: "mixed",
+            label: "Série de ",
+            value: `${planExercise.sets ?? 1} X ${formatNumber(planExercise.value)} ${unit}`
+        },
+        {
+            type: "mixed",
+            label: "Tempo : ",
+            value: formatTempo(planExercise.tempo)
+        },
+        {
+            type: "text",
+            lines: [`Repos : ${formatNumber(planExercise.rest)} sec`]
+        }
     );
 
-    const height = Math.max(
-        42,
-        9 +
-            titleLines.length * 4.5 +
-            bodyLines.length * 4
+    const instructions = getPdfInstructions(planExercise);
+    let instructionLines = [];
+
+    if (instructions) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        instructionLines = wrapInstructionText(doc, instructions, innerWidth - 5);
+    }
+
+    const headerLineCount = Math.max(
+        titleLines.length,
+        progressionLines.length,
+        1
     );
+
+    const bodyHeight = bodyRows.reduce(
+        (height, row) =>
+            height + (row.lines?.length ?? 1) * PDF_BODY_LINE_HEIGHT,
+        0
+    );
+
+    const instructionHeight = instructionLines.length
+        ? instructionLines.length * PDF_INSTRUCTION_LINE_HEIGHT + 3.6
+        : 0;
+
+    const contentHeight =
+        5 +
+        headerLineCount * PDF_HEADER_LINE_HEIGHT +
+        1.5 +
+        bodyHeight +
+        (instructionHeight ? 1.5 + instructionHeight : 0) +
+        3;
 
     return {
         titleLines,
-        bodyLines,
-        height
+        progressionLines,
+        headerLineCount,
+        bodyRows,
+        instructionLines,
+        instructionHeight,
+        height: Math.max(PDF_CARD_MIN_HEIGHT, contentHeight)
     };
 }
 
-function drawExerciseCard(
-    doc,
-    layout,
-    x,
-    y,
-    width
-) {
+function drawExerciseCard(doc, layout, x, y, width) {
     const padding = 4;
-    let textY = y + 6;
+    const left = x + padding;
+    const right = x + width - padding;
+    let textY = y + 5;
 
     doc.setFillColor(255, 255, 255);
     doc.setDrawColor(185, 185, 185);
-
-    doc.roundedRect(
-        x,
-        y,
-        width,
-        layout.height,
-        2,
-        2,
-        "FD"
-    );
+    doc.roundedRect(x, y, width, layout.height, 2, 2, "FD");
 
     doc.setTextColor(20);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
 
-    doc.text(
-        layout.titleLines,
-        x + padding,
-        textY
-    );
-
-    textY +=
-        layout.titleLines.length * 4.5 + 2;
+    layout.titleLines.forEach((line, index) => {
+        doc.text(line, left, textY + index * PDF_HEADER_LINE_HEIGHT);
+    });
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8.5);
 
-    layout.bodyLines.forEach(line => {
+    layout.progressionLines.forEach((line, index) => {
         doc.text(
             line,
-            x + padding,
-            textY
+            right,
+            textY + index * PDF_HEADER_LINE_HEIGHT,
+            { align: "right" }
         );
+    });
 
-        textY += 4;
+    textY += layout.headerLineCount * PDF_HEADER_LINE_HEIGHT + 1.5;
+
+    layout.bodyRows.forEach(row => {
+        if (row.type === "mixed") {
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8.5);
+            doc.text(row.label, left, textY);
+
+            const labelWidth = doc.getTextWidth(row.label);
+
+            doc.setFont("helvetica", "bold");
+            doc.text(row.value, left + labelWidth, textY);
+
+            textY += PDF_BODY_LINE_HEIGHT;
+            return;
+        }
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8.5);
+
+        row.lines.forEach(line => {
+            doc.text(line, left, textY);
+            textY += PDF_BODY_LINE_HEIGHT;
+        });
+    });
+
+    if (!layout.instructionLines.length) return;
+
+    const boxWidth = width - padding * 2;
+    const boxY = y + layout.height - 3 - layout.instructionHeight;
+
+    doc.setDrawColor(145, 145, 145);
+    doc.roundedRect(
+        left,
+        boxY,
+        boxWidth,
+        layout.instructionHeight,
+        1,
+        1
+    );
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(30);
+
+    layout.instructionLines.forEach((line, index) => {
+        if (!line) return;
+
+        doc.text(
+            line,
+            left + 2.5,
+            boxY + 3.3 + index * PDF_INSTRUCTION_LINE_HEIGHT
+        );
     });
 }
 
