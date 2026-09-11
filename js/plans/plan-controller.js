@@ -299,7 +299,7 @@ export function setupPlanDefaultInputs() {
 // Résumé d'un plan
 // ------------------------------------------------------------
 
-function getPlanSetCount(plan) {
+export function getPlanSetCount(plan) {
     return new Set(
         plan.exercises
             .map(item => item.combination?.group)
@@ -307,7 +307,7 @@ function getPlanSetCount(plan) {
     ).size;
 }
 
-function getPlanPrimaryMuscles(plan) {
+export function getPlanPrimaryMuscles(plan) {
     const muscles = new Set();
 
     plan.exercises.forEach(planExercise => {

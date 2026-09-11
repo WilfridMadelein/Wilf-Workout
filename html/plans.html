@@ -2,12 +2,55 @@
 <div id="plan-home">
 
     <h2>Mes plans</h2>
-    <button id="new-plan-button">+ Nouveau plan</button>
+    <div class="plan-home-actions">
+    <button id="new-plan-button">
+        + Nouveau plan
+    </button>
+
+    <button id="download-plans-button">
+        Télécharger mes plans
+    </button>
+</div>
 
     <div
     id="plans-list"
     class="responsive-columns"
 ></div>
+
+<div
+    id="plan-pdf-modal"
+    class="plan-pdf-modal"
+    hidden
+>
+    <div class="plan-pdf-dialog">
+
+        <h3>Télécharger mes plans</h3>
+
+        <p>
+            Sélectionne les plans à inclure et
+            utilise les flèches pour choisir leur ordre.
+        </p>
+
+        <div id="plan-pdf-selection-list"></div>
+
+        <div class="plan-pdf-actions">
+            <button
+                id="cancel-plan-pdf-button"
+                type="button"
+            >
+                Annuler
+            </button>
+
+            <button
+                id="confirm-plan-pdf-button"
+                type="button"
+            >
+                Télécharger en PDF
+            </button>
+        </div>
+
+    </div>
+</div>
 
 </div>
 

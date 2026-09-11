@@ -29,6 +29,12 @@ import {
     planAutoExcludeProgressions,
 
     newPlanButton,
+    downloadPlansButton,
+    planPdfModal,
+    planPdfSelectionList,
+    cancelPlanPdfButton,
+    confirmPlanPdfButton,
+
     plans,
     editPlanNameButton,
     currentPlanNameInput,
@@ -182,9 +188,16 @@ import {
     ensurePlanDefaults,
     loadPlanDefaultsIntoInputs,
     setupPlanDefaultInputs,
+    getPlanSetCount,
+    getPlanPrimaryMuscles,
     renderPlansList,
     setupPlanController
 } from "./plans/plan-controller.js";
+
+import {
+    configurePlanPdf,
+    setupPlanPdf
+} from "./plans/plan-pdf.js";
 
 import {
     configureFilterUI,
@@ -382,6 +395,19 @@ configureExerciseDetails({
     
 });
 
+configurePlanPdf({
+    plans,
+
+    downloadPlansButton,
+    planPdfModal,
+    planPdfSelectionList,
+    cancelPlanPdfButton,
+    confirmPlanPdfButton,
+
+    getPlanSetCount,
+    getPlanPrimaryMuscles
+});
+
 configurePlanController({
     getCurrentPlan: () => currentPlan,
     setCurrentPlan,
@@ -500,4 +526,5 @@ displayExercises();
 
 setupPlanDefaultInputs();
 setupPlanController();
+setupPlanPdf();
 setupAppController();

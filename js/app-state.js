@@ -49,6 +49,12 @@ export const planTempoInputs = [
 // ------------------------------------------------------------
 
 export const newPlanButton = document.getElementById("new-plan-button");
+export const downloadPlansButton = document.getElementById("download-plans-button");
+export const planPdfModal = document.getElementById("plan-pdf-modal");
+export const planPdfSelectionList = document.getElementById("plan-pdf-selection-list");
+export const cancelPlanPdfButton = document.getElementById("cancel-plan-pdf-button");
+export const confirmPlanPdfButton = document.getElementById("confirm-plan-pdf-button");
+
 export const planHome = document.getElementById("plan-home");
 export const plansList = document.getElementById("plans-list");
 export const planEditor = document.getElementById("plan-editor");
