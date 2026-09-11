@@ -33,39 +33,66 @@ function configurePlanManager(dependencies) {
     displayExercises = dependencies.displayExercises;
 }
 
-function addProgressionToExclude(exercise) {
-    if (!getAutoExcludeProgressions()) {
-        return;
+function getAutoExcludedProgressions(plan) {
+    if (!plan) return new Set();
+
+    if (!(plan.autoExcludedProgressions instanceof Set)) {
+        plan.autoExcludedProgressions = new Set(plan.autoExcludedProgressions ?? []);
     }
 
-    const progression =
-        getProgressionName(exercise);
+    return plan.autoExcludedProgressions;
+}
 
-    if (!progression) return;
+function removeAutoExcludedProgression(progression) {
+    const currentPlan = getCurrentPlan();
+    if (!currentPlan) return;
 
-    getSelectedProgressionsExclude()
-        .add(progression);
+    getAutoExcludedProgressions(currentPlan).delete(progression);
+    getPlanSearchState()?.progressionsExclude?.delete(progression);
+}
 
-    getPlanSearchState()
-        ?.progressionsExclude
-        ?.add(progression);
+function syncPlanAutoExcludedProgressions(nextPlan) {
+    const currentPlan = getCurrentPlan();
+    const selectedExclude = getSelectedProgressionsExclude();
+    const stateExclude = getPlanSearchState()?.progressionsExclude;
+
+    if (!stateExclude) return;
+
+    if (currentPlan && currentPlan !== nextPlan) {
+        getAutoExcludedProgressions(currentPlan).forEach(progression => {
+            selectedExclude.delete(progression);
+            stateExclude.delete(progression);
+        });
+    }
+
+    getAutoExcludedProgressions(nextPlan).forEach(progression => {
+        selectedExclude.add(progression);
+        stateExclude.add(progression);
+    });
+}
+
+function addProgressionToExclude(exercise) {
+    if (!getAutoExcludeProgressions()) return;
+
+    const progression = getProgressionName(exercise);
+    const currentPlan = getCurrentPlan();
+
+    if (!progression || !currentPlan) return;
+
+    getAutoExcludedProgressions(currentPlan).add(progression);
+    getSelectedProgressionsExclude().add(progression);
+    getPlanSearchState()?.progressionsExclude?.add(progression);
 
     updateProgressionButtons();
     displayExercises();
 }
 
 function removeProgressionFromExclude(exercise) {
-    const progression =
-        getProgressionName(exercise);
-
+    const progression = getProgressionName(exercise);
     if (!progression) return;
 
-    getSelectedProgressionsExclude()
-        .delete(progression);
-
-    getPlanSearchState()
-        ?.progressionsExclude
-        ?.delete(progression);
+    removeAutoExcludedProgression(progression);
+    getSelectedProgressionsExclude().delete(progression);
 
     updateProgressionButtons();
     displayExercises();
@@ -216,5 +243,7 @@ export {
     configurePlanManager,
     addExerciseToCurrentPlan,
     removeExerciseFromCurrentPlan,
+    removeAutoExcludedProgression,
+    syncPlanAutoExcludedProgressions,
     updatePlanExerciseProgression,
 };

@@ -33,6 +33,8 @@ let renderPlanExercises;
 let setCurrentDetailExercise;
 let setCurrentDetailContext;
 
+let syncPlanAutoExcludedProgressions = () => {};
+
 export function configurePlanController(dependencies) {
     ({
         getCurrentPlan,
@@ -63,7 +65,9 @@ export function configurePlanController(dependencies) {
         renderPlanExercises,
 
         setCurrentDetailExercise,
-        setCurrentDetailContext
+        setCurrentDetailContext,
+        syncPlanAutoExcludedProgressions
+
     } = dependencies);
 }
 
@@ -328,6 +332,7 @@ export function getPlanPrimaryMuscles(plan) {
 // ------------------------------------------------------------
 
 function openPlan(plan) {
+    syncPlanAutoExcludedProgressions(plan);
     setCurrentPlan(plan);
     ensurePlanDefaults(plan);
 

@@ -175,6 +175,8 @@ import {
     addExerciseToCurrentPlan,
     removeExerciseFromCurrentPlan,
     updatePlanExerciseProgression,
+    removeAutoExcludedProgression,
+    syncPlanAutoExcludedProgressions
 } from "./plans/plan-manager.js";
 
 import {
@@ -437,7 +439,8 @@ configurePlanController({
     renderPlanExercises,
 
     setCurrentDetailExercise,
-    setCurrentDetailContext
+    setCurrentDetailContext,
+    syncPlanAutoExcludedProgressions
 
 });
 
@@ -460,6 +463,15 @@ configureFilterUI({
     getCategoryOptions,
     updateCategoryAllButton,
     updateEquipmentRelevance,
+
+    onProgressionExcludeRemoved: progression => {
+    if (
+        pagePlans.style.display === "block" &&
+        planEditor.style.display === "block"
+    ) {
+        removeAutoExcludedProgression(progression);
+    }
+    },
 
     displayExercises
 });

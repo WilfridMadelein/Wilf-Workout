@@ -16,6 +16,8 @@ let getCategoryOptions;
 let updateCategoryAllButton;
 let updateEquipmentRelevance;
 
+let onProgressionExcludeRemoved = () => {};
+
 export function configureFilterUI(dependencies) {
     ({
         getSelectedCategories,
@@ -34,7 +36,8 @@ export function configureFilterUI(dependencies) {
         getCategoryOptions,
         updateCategoryAllButton,
         updateEquipmentRelevance,
-        
+        onProgressionExcludeRemoved,
+
         displayExercises
     } = dependencies);
 }
@@ -399,19 +402,16 @@ if (selectedTypes.size === 0) {
         }
     );
 
-    selectedProgressionsExclude.forEach(
-        progression => {
-            progressionExcludeSummary.appendChild(
-                createSummaryButton(progression, () => {
-                    selectedProgressionsExclude.delete(
-                        progression
-                    );
+selectedProgressionsExclude.forEach(progression => {
+    progressionExcludeSummary.appendChild(
+        createSummaryButton(progression, () => {
+            selectedProgressionsExclude.delete(progression);
+            onProgressionExcludeRemoved(progression);
 
-                    updateProgressionButtons();
-                    displayExercises();
-                })
-            );
-        }
+            updateProgressionButtons();
+            displayExercises();
+        })
     );
+});
 }
 
