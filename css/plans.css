@@ -68,7 +68,9 @@
 
 .plan-card {
     width: 100%;
+    max-width: 100%;
     min-width: 0;
+    box-sizing: border-box;
     padding: 18px;
 
     display: flex;
@@ -121,8 +123,10 @@
 
 .plan-card-footer {
     width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) max-content;
     align-items: end;
     gap: 8px;
     margin-top: 10px;
@@ -191,7 +195,8 @@
     display: none;
 }
 
-#plan-notes-input.counter-visible {
+#plan-notes-input.counter-visible,
+.plan-card-notes-input.counter-visible {
     padding-right: 72px;
 }
 

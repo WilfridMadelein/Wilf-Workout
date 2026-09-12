@@ -373,13 +373,13 @@ export function getPlanPrimaryMuscles(plan) {
 // Notes et équipements du plan
 // ------------------------------------------------------------
 
-function updatePlanNotesCounter() {
-    const length = planNotesInput.value.length;
+function updateNotesCounter(textarea, counter) {
+    const length = textarea.value.length;
     const visible = length >= 450;
 
-    planNotesCounter.textContent = `${length} / 500`;
-    planNotesCounter.hidden = !visible;
-    planNotesInput.classList.toggle("counter-visible", visible);
+    counter.textContent = `${length} / 500`;
+    counter.hidden = !visible;
+    textarea.classList.toggle("counter-visible", visible);
 }
 
 function resizePlanNotesTextarea(textarea) {
@@ -502,7 +502,7 @@ function renderPlanMetadataEditor() {
     planAutoAddEquipment.checked = plan.includeEquipment;
     planNotesInput.value = plan.notes.slice(0, 500);
     resizePlanNotesTextarea(planNotesInput);
-    updatePlanNotesCounter();
+    updatePlanNotesCounter(planNotesInput, planNotesCounter);
     renderPlanEquipmentEditor();
 }
 
@@ -607,9 +607,20 @@ export function renderPlansList() {
         notes.placeholder = "Ajouter des notes...";
         notes.value = plan.notes.slice(0, 500);
 
+        const notesWrap = document.createElement("div");
+        notesWrap.classList.add("plan-notes-input-wrap");
+
+        const notesCounter = document.createElement("span");
+        notesCounter.classList.add("plan-notes-counter");
+        notesCounter.hidden = true;
+        notesCounter.textContent = "0 / 500";
+
         notes.addEventListener("input", () => {
-            plan.notes = notes.value.slice(0, 500);
+            if (notes.value.length > 500) notes.value = notes.value.slice(0, 500);
+
+            plan.notes = notes.value;
             resizePlanNotesTextarea(notes);
+            updateNotesCounter(notes, notesCounter);
             schedulePlanSave(plan);
         });
 
@@ -617,7 +628,8 @@ export function renderPlansList() {
             notes.addEventListener(type, event => event.stopPropagation());
         });
 
-        notesBox.append(notesLabel, notes);
+        notesWrap.append(notes, notesCounter);
+        notesBox.append(notesLabel, notesWrap);
 
         const deleteButton = document.createElement("button");
         deleteButton.type = "button";
@@ -644,7 +656,10 @@ export function renderPlansList() {
 
         plansList.appendChild(card);
 
-        requestAnimationFrame(() => resizePlanNotesTextarea(notes));
+        requestAnimationFrame(() => {
+            resizePlanNotesTextarea(notes);
+            updateNotesCounter(notes, notesCounter);
+        });
     });
 }
 
@@ -753,7 +768,7 @@ planNotesInput.addEventListener("input", () => {
     }
 
     resizePlanNotesTextarea(planNotesInput);
-    updatePlanNotesCounter();
+    updatePlanNotesCounter(planNotesInput, planNotesCounter);
 });
 
 planAutoAddEquipment.addEventListener("change", () => {
