@@ -137,8 +137,8 @@ function addExerciseToCurrentPlan(exercise) {
             fourth: currentPlan.defaults.tempo.fourth
         },
 
-        weight: 0,
-        weightUnit: "lbs",
+        weight: currentPlan.defaults.weight,
+        weightUnit: currentPlan.defaults.weightUnit,
 
         combination: {
             group: getNextCombinationGroup()

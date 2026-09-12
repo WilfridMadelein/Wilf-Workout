@@ -36,6 +36,11 @@ export const planSetsInput = document.getElementById("plan-sets");
 export const planRepsInput = document.getElementById("plan-reps");
 export const planTimeInput = document.getElementById("plan-time");
 export const planRestInput = document.getElementById("plan-rest");
+export const planWeightInput = document.getElementById("plan-weight");
+
+export const planWeightUnitButtons = [
+    ...document.querySelectorAll("[data-weight-unit]")
+];
 
 export const planTempoInputs = [
     document.getElementById("plan-tempo-1"),

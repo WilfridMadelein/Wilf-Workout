@@ -42,7 +42,10 @@ import {
     planRepsInput,
     planTimeInput,
     planRestInput,
+    planWeightInput,
+    planWeightUnitButtons,
     planTempoInputs,
+
     planAutoExcludeProgressions,
     planAutoAddEquipment,
 
@@ -507,6 +510,8 @@ getSelectedPlanEquipment: () => selectedPlanEquipment,
     planRepsInput,
     planTimeInput,
     planRestInput,
+    planWeightInput,
+    planWeightUnitButtons,
     planTempoInputs,
 
     planExerciseBrowserContainer,

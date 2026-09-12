@@ -8,7 +8,7 @@ import {
 // STOCKAGE DES PLANS
 // ============================================================
 
-const PLAN_SCHEMA_VERSION = 2;
+const PLAN_SCHEMA_VERSION = 2.1;
 const saveTimers = new Map();
 
 // ------------------------------------------------------------
@@ -177,6 +177,19 @@ function migratePlanRecord(record) {
     plan.filtersInitialized = false;
     version = 2;
     }
+    if (version < 2.1) {
+    plan.defaults ??= {};
+
+    if (plan.defaults.weight == null) {
+        plan.defaults.weight = 0;
+    }
+
+    if (!["kg", "lbs"].includes(plan.defaults.weightUnit)) {
+        plan.defaults.weightUnit = "lbs";
+    }
+
+    version = 2.1;
+}
 
     plan.schemaVersion = version;
     return plan;
@@ -208,6 +221,11 @@ function serializePlan(plan) {
             reps: plan.defaults?.reps ?? 10,
             time: plan.defaults?.time ?? 30,
             rest: plan.defaults?.rest ?? 60,
+
+            weight: plan.defaults?.weight ?? 0,
+            weightUnit: ["kg", "lbs"].includes(plan.defaults?.weightUnit)
+                ? plan.defaults.weightUnit
+                : "lbs",
 
             tempo: {
                 first: plan.defaults?.tempo?.first ?? 3,
@@ -267,6 +285,11 @@ function hydratePlan(record, exercises) {
             reps: savedPlan.defaults?.reps ?? 10,
             time: savedPlan.defaults?.time ?? 30,
             rest: savedPlan.defaults?.rest ?? 60,
+
+            weight: savedPlan.defaults?.weight ?? 0,
+            weightUnit: ["kg", "lbs"].includes(savedPlan.defaults?.weightUnit)
+                ? savedPlan.defaults.weightUnit
+                : "lbs",
 
             tempo: {
                 first: savedPlan.defaults?.tempo?.first ?? 3,

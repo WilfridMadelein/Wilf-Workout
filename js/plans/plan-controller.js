@@ -38,6 +38,8 @@ let planSetsInput;
 let planRepsInput;
 let planTimeInput;
 let planRestInput;
+let planWeightInput;
+let planWeightUnitButtons;
 let planTempoInputs;
 
 let planExerciseBrowserContainer;
@@ -95,6 +97,8 @@ export function configurePlanController(dependencies) {
         planRepsInput,
         planTimeInput,
         planRestInput,
+        planWeightInput,
+        planWeightUnitButtons,
         planTempoInputs,
 
         planExerciseBrowserContainer,
@@ -138,6 +142,14 @@ export function ensurePlanDefaults(plan) {
         plan.defaults.rest = 60;
     }
 
+    if (plan.defaults.weight == null) {
+        plan.defaults.weight = 0;
+    }
+
+    if (!["kg", "lbs"].includes(plan.defaults.weightUnit)) {
+        plan.defaults.weightUnit = "lbs";
+    }
+
     if (!plan.defaults.tempo) {
         plan.defaults.tempo = {};
     }
@@ -171,6 +183,15 @@ export function ensurePlanDefaults(plan) {
     }
 }
 
+function updatePlanWeightUnitButtons(unit) {
+    planWeightUnitButtons.forEach(button => {
+        const active = button.dataset.weightUnit === unit;
+
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+    });
+}
+
 export function loadPlanDefaultsIntoInputs() {
     const currentPlan = getCurrentPlan();
 
@@ -182,6 +203,9 @@ export function loadPlanDefaultsIntoInputs() {
     planRepsInput.value = currentPlan.defaults.reps;
     planTimeInput.value = currentPlan.defaults.time;
     planRestInput.value = currentPlan.defaults.rest;
+    planWeightInput.value = currentPlan.defaults.weight;
+
+    updatePlanWeightUnitButtons(currentPlan.defaults.weightUnit);
 
 const tempoValues = [
     currentPlan.defaults.tempo.first,
@@ -205,6 +229,7 @@ planTempoInputs.forEach((input, index) => {
     planRepsInput,
     planTimeInput,
     planRestInput,
+    planWeightInput,
     ...planTempoInputs
 ].forEach(input => {
     updateNumberInputWidth(
@@ -309,6 +334,20 @@ export function setupPlanDefaultInputs() {
             defaults.rest = value
     );
 
+    bind(
+    planWeightInput,
+    {
+        min: 0,
+        max: 9999.9,
+        step: 2.5,
+        decimals: 1,
+        minChars: 3,
+        snapStep: true
+    },
+    (defaults, value) =>
+        defaults.weight = value
+    );
+
 
     const tempoKeys = [
         "first",
@@ -339,6 +378,21 @@ export function setupPlanDefaultInputs() {
             );
         }
     );
+
+    const weightUnitSwitch =
+    planWeightUnitButtons[0]?.closest(".plan-weight-unit-switch");
+
+    weightUnitSwitch?.addEventListener("click", () => {
+    const plan = getCurrentPlan();
+    if (!plan) return;
+
+    const unit = plan.defaults.weightUnit === "kg" ? "lbs" : "kg";
+
+    plan.defaults.weightUnit = unit;
+    updatePlanWeightUnitButtons(unit);
+    schedulePlanSave(plan);
+    });
+
 }
 
 

@@ -458,6 +458,34 @@
     margin-top: 10px;
 }
 
+/* Poids */
+
+.plan-weight-title {
+    margin: 0 0 8px;
+    padding-top: 8px;
+}
+
+.plan-weight-row {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 4px;
+    padding-top: 12px;
+    white-space: nowrap;
+}
+
+.plan-weight-title {
+    margin-right: auto;
+    font-weight: 400;
+}
+
+.plan-weight-row .plan-default-number-control,
+.plan-weight-row .plan-weight-unit-switch {
+    flex: 0 0 auto;
+}
+
 /* Paramètres */
 
 .plan-parameter {
@@ -506,6 +534,49 @@
 .plan-default-number-input::-webkit-outer-spin-button {
     -webkit-appearance: none;
     margin: 0;
+}
+
+.plan-weight-unit-switch {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    padding: 1px;
+
+    border: 1px solid #555;
+    border-radius: 999px;
+
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.plan-weight-unit-button {
+    position: relative;
+
+    min-width: 31px;
+    padding: 3px 6px;
+    margin: 0;
+
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+
+    color: inherit;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 400;
+
+    cursor: pointer;
+}
+
+.plan-weight-unit-button + .plan-weight-unit-button {
+    margin-left: -4px;
+}
+
+.plan-weight-unit-button.active {
+    z-index: 1;
+    background: #111;
+    box-shadow: 0 0 0 1px #aaa;
+    font-weight: 700;
 }
 
 
