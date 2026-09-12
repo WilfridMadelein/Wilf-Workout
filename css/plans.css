@@ -113,6 +113,88 @@
     color: #666;
 }
 
+.plan-card-equipment {
+    width: 100%;
+    margin-top: 4px;
+    font-size: 14px;
+}
+
+.plan-card-footer {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: end;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+/* Notes et équipements */
+
+.plan-card-notes {
+    min-width: 0;
+    padding: 7px 9px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+.plan-card-notes strong {
+    display: block;
+    margin-bottom: 3px;
+    font-size: 13px;
+}
+
+.plan-card-notes-input {
+    width: 100%;
+    height: auto;
+    padding: 0;
+    box-sizing: border-box;
+    resize: none;
+    overflow-y: hidden;
+    line-height: 1.4;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 13px;
+}
+
+.plan-delete-button {
+    padding: 5px 7px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.plan-delete-button:hover {
+    background: #f6eaea;
+    border-color: #b98787;
+}
+
+.plan-notes-input-wrap {
+    position: relative;
+    width: 100%;
+}
+
+.plan-notes-counter {
+    position: absolute;
+    right: 9px;
+    bottom: 7px;
+    font-size: 11px;
+    color: #777;
+    pointer-events: none;
+}
+
+.plan-notes-counter[hidden] {
+    display: none;
+}
+
+#plan-notes-input.counter-visible {
+    padding-right: 72px;
+}
+
 /* =========================================================
    TÉLÉCHARGEMENT PDF
 ========================================================= */
@@ -197,6 +279,16 @@
     display: flex;
     justify-content: flex-end;
     gap: 10px;
+}
+
+.plan-delete-dialog {
+    width: min(100%, 460px);
+}
+
+.plan-delete-confirm {
+    border-color: #a66;
+    background: #7d3535;
+    color: #fff;
 }
 
 /* =========================================================
@@ -511,19 +603,21 @@
     display: flex;
 }
 
-.plan-auto-exclude-progressions {
+.plan-filter-checkbox {
     display: flex;
     align-items: center;
     gap: 8px;
-
     padding: 10px;
     margin-top: 4px;
-
     font-size: 14px;
     cursor: pointer;
 }
 
-.plan-auto-exclude-progressions input {
+.plan-filter-checkbox + .plan-filter-checkbox {
+    margin-top: 0;
+}
+
+.plan-filter-checkbox input {
     margin: 0;
     cursor: pointer;
 }
@@ -531,6 +625,72 @@
 /* =========================================================
    EXERCICES DU PLAN
 ========================================================= */
+
+/* Notes et équipements */
+
+.plan-notes-editor {
+    width: 100%;
+    margin: 0 0 18px;
+}
+
+.plan-notes-editor > label {
+    display: block;
+    margin-bottom: 7px;
+    font-weight: 700;
+}
+
+#plan-notes-input {
+    width: 100%;
+    height: auto;
+    padding: 10px 12px;
+    box-sizing: border-box;
+    resize: none;
+    overflow-y: hidden;
+    line-height: 1.4;
+    border: 1px solid #ccc;
+    border-radius: 7px;
+    font: inherit;
+}
+
+.plan-equipment-editor[hidden],
+.plan-equipment-options[hidden] {
+    display: none;
+}
+
+.plan-equipment-editor {
+    margin-bottom: 8px;
+}
+
+.plan-equipment-editor-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+#plan-equipment-selected {
+    display: contents;
+}
+
+.plan-equipment-chip .summary-remove {
+    order: -1;
+}
+
+.plan-equipment-empty {
+    color: #777;
+    font-size: 14px;
+}
+
+.plan-equipment-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 7px;
+    background: #fafafa;
+}
 
 #plan-exercise-list {
     width: 100%;

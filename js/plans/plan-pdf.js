@@ -236,6 +236,99 @@ function generatePlansPdf(selectedPlans) {
 // PLAN
 // ============================================================
 
+function drawWrappedPdfText(doc, text, x, y, width, lineHeight = 4) {
+    const paragraphs = String(text ?? "")
+        .replace(/\r\n?/g, "\n")
+        .split("\n");
+
+    paragraphs.forEach(paragraph => {
+        const clean = paragraph.trimEnd();
+
+        if (!clean) {
+            y += lineHeight;
+            return;
+        }
+
+        const lines = doc.splitTextToSize(clean, width);
+
+        lines.forEach(line => {
+            doc.text(line, x, y);
+            y += lineHeight;
+        });
+    });
+
+    return y;
+}
+
+function drawLabeledPdfText(doc, label, text, x, y, width, lineHeight = 4) {
+    const value = String(text ?? "").replace(/\r\n?/g, "\n");
+    const paragraphs = value.split("\n");
+    let firstLine = true;
+
+    paragraphs.forEach(paragraph => {
+        const words = paragraph.trimEnd().split(/\s+/).filter(Boolean);
+
+        if (!words.length) {
+            y += lineHeight;
+            firstLine = false;
+            return;
+        }
+
+        let currentX = x;
+        let availableWidth = width;
+
+        if (firstLine) {
+            doc.setFont("helvetica", "bold");
+            doc.text(label, x, y);
+
+            currentX += doc.getTextWidth(label);
+            availableWidth -= doc.getTextWidth(label);
+        }
+
+        doc.setFont("helvetica", "normal");
+
+        let line = "";
+
+        words.forEach(word => {
+            const candidate = line ? `${line} ${word}` : word;
+
+            if (doc.getTextWidth(candidate) <= availableWidth) {
+                line = candidate;
+                return;
+            }
+
+            if (line) {
+                doc.text(line, currentX, y);
+                y += lineHeight;
+                currentX = x;
+                availableWidth = width;
+                line = word;
+            } else {
+                const parts = doc.splitTextToSize(word, availableWidth);
+
+                parts.forEach((part, index) => {
+                    doc.text(part, currentX, y);
+
+                    if (index < parts.length - 1) {
+                        y += lineHeight;
+                        currentX = x;
+                        availableWidth = width;
+                    }
+                });
+
+                line = "";
+            }
+        });
+
+        if (line) doc.text(line, currentX, y);
+
+        y += lineHeight;
+        firstLine = false;
+    });
+
+    return y;
+}
+
 function drawPlan(doc, plan, date) {
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
@@ -252,28 +345,70 @@ function drawPlan(doc, plan, date) {
     doc.setFontSize(9);
     doc.text(`Téléchargé le ${date}`, margin, y + 6);
 
-    const exerciseCount = plan.exercises.length;
-    const setCount = getPlanSetCount(plan);
-    const muscles = getPlanPrimaryMuscles(plan);
+const exerciseCount = plan.exercises.length;
+const setCount = getPlanSetCount(plan);
+const muscles = getPlanPrimaryMuscles(plan);
+const notes = String(plan.notes ?? "").slice(0, 500).trim();
+let detailsY = y + 12;
 
-    doc.setFontSize(10);
-    doc.text(
-        `${exerciseCount} exercice${exerciseCount !== 1 ? "s" : ""} | ` +
-        `${setCount} set${setCount !== 1 ? "s" : ""}`,
-        margin,
-        y + 12
-    );
+doc.setFontSize(10);
 
-    const muscleLines = doc.splitTextToSize(
-        `Muscles principaux : ${muscles.join(", ") || "aucun"}`,
-        contentWidth
-    );
+doc.setFont("helvetica", "bold");
 
-    doc.text(muscleLines, margin, y + 18);
-    y += 23 + muscleLines.length * 4;
+detailsY = drawWrappedPdfText(
+    doc,
+    `${exerciseCount} exercice${exerciseCount !== 1 ? "s" : ""} | ` +
+    `${setCount} set${setCount !== 1 ? "s" : ""}`,
+    margin,
+    detailsY,
+    contentWidth
+);
 
-    doc.line(margin, y, pageWidth - margin, y);
-    y += 7;
+doc.setFont("helvetica", "normal");
+
+detailsY += 2;
+
+detailsY = drawLabeledPdfText(
+    doc,
+    "Muscles principaux : ",
+    muscles.join(", ") || "aucun",
+    margin,
+    detailsY,
+    contentWidth
+);
+
+detailsY += 2;
+
+if (plan.includeEquipment) {
+detailsY = drawLabeledPdfText(
+    doc,
+    "Équipements : ",
+    plan.equipment?.length ? plan.equipment.join(", ") : "Aucun",
+    margin,
+    detailsY,
+    contentWidth
+);
+
+    detailsY += 2;
+}
+
+if (notes) {
+detailsY = drawLabeledPdfText(
+    doc,
+    "Notes : ",
+    notes,
+    margin,
+    detailsY,
+    contentWidth
+);
+
+    detailsY += 2;
+}
+
+y = detailsY + 2;
+
+doc.line(margin, y, pageWidth - margin, y);
+y += 7;
 
     if (!plan.exercises.length) {
         doc.text("Aucun exercice.", margin, y);

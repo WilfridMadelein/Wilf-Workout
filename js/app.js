@@ -27,6 +27,19 @@ import {
     planRestInput,
     planTempoInputs,
     planAutoExcludeProgressions,
+    planAutoAddEquipment,
+
+planNotesInput,
+planEquipmentEditor,
+planEquipmentSelected,
+addPlanEquipmentButton,
+planEquipmentOptions,
+
+planDeleteModal,
+planDeleteMessage,
+cancelPlanDeleteButton,
+confirmPlanDeleteButton,
+planNotesCounter,
 
     newPlanButton,
     downloadPlansButton,
@@ -193,7 +206,8 @@ import {
     getPlanSetCount,
     getPlanPrimaryMuscles,
     renderPlansList,
-    setupPlanController
+    setupPlanController,
+    addEquipmentToCurrentPlan
 } from "./plans/plan-controller.js";
 
 import {
@@ -282,6 +296,9 @@ configurePlanFilters({
     getRelevantEquipment,
     updateCategoryAllButton,
     updateEquipmentRelevance,
+
+    getAutoAddEquipmentToPlan: () => planAutoAddEquipment.checked,
+    addEquipmentToCurrentPlan
 });
 
 createPlanFilterRows();
@@ -423,6 +440,22 @@ configurePlanController({
     planEditor,
     currentPlanName,
     backToPlansButton,
+
+planAutoAddEquipment,
+planNotesInput,
+planNotesCounter,
+planEquipmentEditor,
+planEquipmentSelected,
+addPlanEquipmentButton,
+planEquipmentOptions,
+
+planDeleteModal,
+planDeleteMessage,
+cancelPlanDeleteButton,
+confirmPlanDeleteButton,
+
+getEquipmentOptions: () => equipmentOptions,
+getSelectedPlanEquipment: () => selectedPlanEquipment,
 
     planSetsInput,
     planRepsInput,

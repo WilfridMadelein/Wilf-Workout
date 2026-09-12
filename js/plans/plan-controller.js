@@ -16,6 +16,24 @@ let plans;
 let editPlanNameButton;
 let currentPlanNameInput;
 
+let planAutoAddEquipment;
+let planNotesInput;
+let planNotesCounter;
+let planEquipmentEditor;
+let planEquipmentSelected;
+let addPlanEquipmentButton;
+let planEquipmentOptions;
+
+let planDeleteModal;
+let planDeleteMessage;
+let cancelPlanDeleteButton;
+let confirmPlanDeleteButton;
+
+let getEquipmentOptions = () => [];
+let getSelectedPlanEquipment = () => new Set();
+
+let pendingPlanDeletion = null;
+
 let planSetsInput;
 let planRepsInput;
 let planTimeInput;
@@ -49,6 +67,22 @@ export function configurePlanController(dependencies) {
         editPlanNameButton,
         currentPlanNameInput,
         backToPlansButton,
+
+        planAutoAddEquipment,
+        planNotesInput,
+        planNotesCounter,
+        planEquipmentEditor,
+        planEquipmentSelected,
+        addPlanEquipmentButton,
+        planEquipmentOptions,
+
+        planDeleteModal,
+        planDeleteMessage,
+        cancelPlanDeleteButton,
+        confirmPlanDeleteButton,
+
+        getEquipmentOptions,
+        getSelectedPlanEquipment,
 
         planSetsInput,
         planRepsInput,
@@ -326,6 +360,137 @@ export function getPlanPrimaryMuscles(plan) {
     return [...muscles];
 }
 
+// ------------------------------------------------------------
+// Notes et équipements du plan
+// ------------------------------------------------------------
+
+function updatePlanNotesCounter() {
+    const length = planNotesInput.value.length;
+    const visible = length >= 450;
+
+    planNotesCounter.textContent = `${length} / 500`;
+    planNotesCounter.hidden = !visible;
+    planNotesInput.classList.toggle("counter-visible", visible);
+}
+
+function resizePlanNotesTextarea(textarea) {
+    const style = getComputedStyle(textarea);
+    const lineHeight = parseFloat(style.lineHeight) || 20;
+    const verticalExtra =
+        parseFloat(style.paddingTop) +
+        parseFloat(style.paddingBottom) +
+        parseFloat(style.borderTopWidth) +
+        parseFloat(style.borderBottomWidth);
+
+    const maxHeight = lineHeight * 4 + verticalExtra;
+
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+    textarea.style.overflowY =
+        textarea.scrollHeight > maxHeight ? "auto" : "hidden";
+}
+
+function ensurePlanMetadata(plan) {
+    if (typeof plan.notes !== "string") plan.notes = "";
+    plan.notes = plan.notes.slice(0, 500);
+
+    if (!Array.isArray(plan.equipment)) plan.equipment = [];
+    if (typeof plan.includeEquipment !== "boolean") plan.includeEquipment = false;
+}
+
+export function addEquipmentToCurrentPlan(...equipmentNames) {
+    const plan = getCurrentPlan();
+    if (!plan) return;
+
+    ensurePlanMetadata(plan);
+
+    const validEquipment = new Set(getEquipmentOptions());
+    let changed = false;
+
+    equipmentNames.forEach(equipment => {
+        if (!validEquipment.has(equipment) || plan.equipment.includes(equipment)) return;
+        plan.equipment.push(equipment);
+        changed = true;
+    });
+
+    if (changed) renderPlanEquipmentEditor();
+}
+
+function removeEquipmentFromCurrentPlan(equipment) {
+    const plan = getCurrentPlan();
+    if (!plan) return;
+
+    plan.equipment = plan.equipment.filter(item => item !== equipment);
+    renderPlanEquipmentEditor();
+}
+
+function renderPlanEquipmentEditor() {
+    const plan = getCurrentPlan();
+    if (!plan) return;
+
+    ensurePlanMetadata(plan);
+
+    planEquipmentEditor.hidden = !plan.includeEquipment;
+    planEquipmentOptions.hidden = true;
+    planEquipmentSelected.replaceChildren();
+    planEquipmentOptions.replaceChildren();
+
+    if (!plan.includeEquipment) return;
+
+    if (!plan.equipment.length) {
+        const empty = document.createElement("span");
+        empty.classList.add("plan-equipment-empty");
+        empty.textContent = "Aucun";
+        planEquipmentSelected.appendChild(empty);
+    }
+
+    plan.equipment.forEach(equipment => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.classList.add("summary-button", "plan-equipment-chip");
+
+        const remove = document.createElement("span");
+        remove.classList.add("summary-remove");
+        remove.textContent = "−";
+
+        const label = document.createElement("span");
+        label.textContent = equipment;
+
+        button.append(remove, label);
+        button.addEventListener("click", () => removeEquipmentFromCurrentPlan(equipment));
+        planEquipmentSelected.appendChild(button);
+    });
+
+    getEquipmentOptions()
+        .filter(equipment => !plan.equipment.includes(equipment))
+        .forEach(equipment => {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.classList.add("filter-button");
+            button.textContent = equipment;
+            button.addEventListener("click", () => addEquipmentToCurrentPlan(equipment));
+            planEquipmentOptions.appendChild(button);
+        });
+
+    if (!planEquipmentOptions.children.length) {
+        const empty = document.createElement("span");
+        empty.textContent = "Tous les équipements sont déjà ajoutés.";
+        planEquipmentOptions.appendChild(empty);
+    }
+}
+
+function renderPlanMetadataEditor() {
+    const plan = getCurrentPlan();
+    if (!plan) return;
+
+    ensurePlanMetadata(plan);
+
+    planAutoAddEquipment.checked = plan.includeEquipment;
+    planNotesInput.value = plan.notes.slice(0, 500);
+    resizePlanNotesTextarea(planNotesInput);
+    updatePlanNotesCounter();
+    renderPlanEquipmentEditor();
+}
 
 // ------------------------------------------------------------
 // Ouvrir un plan
@@ -334,7 +499,9 @@ export function getPlanPrimaryMuscles(plan) {
 function openPlan(plan) {
     syncPlanAutoExcludedProgressions(plan);
     setCurrentPlan(plan);
+
     ensurePlanDefaults(plan);
+    ensurePlanMetadata(plan);
 
     planHome.style.display = "none";
     planEditor.style.display = "block";
@@ -346,6 +513,7 @@ function openPlan(plan) {
     currentPlanNameInput.hidden = true;
 
     loadPlanDefaultsIntoInputs();
+    renderPlanMetadataEditor();
     renderPlanExercises();
 
     planExerciseBrowserContainer.appendChild(
@@ -370,83 +538,131 @@ export function renderPlansList() {
     plansList.replaceChildren();
 
     plans.forEach(plan => {
-        const card =
-            document.createElement("button");
+        ensurePlanMetadata(plan);
 
-        card.type = "button";
+        const card = document.createElement("div");
         card.classList.add("plan-card");
+        card.tabIndex = 0;
+        card.setAttribute("role", "button");
 
-        const exerciseCount =
-            plan.exercises.length;
+        const exerciseCount = plan.exercises.length;
+        const setCount = getPlanSetCount(plan);
+        const muscles = getPlanPrimaryMuscles(plan);
 
-        const setCount =
-            getPlanSetCount(plan);
-
-        const muscles =
-            getPlanPrimaryMuscles(plan);
-
-
-        const title =
-            document.createElement("span");
-
-        title.classList.add(
-            "plan-card-title"
-        );
-
+        const title = document.createElement("span");
+        title.classList.add("plan-card-title");
         title.textContent = plan.name;
 
+        const exercises = document.createElement("span");
+        exercises.classList.add("plan-card-info");
+        exercises.textContent = `${exerciseCount} exercice${exerciseCount !== 1 ? "s" : ""}`;
 
-        const exercises =
-            document.createElement("span");
+        const sets = document.createElement("span");
+        sets.classList.add("plan-card-info");
+        sets.textContent = `${setCount} set${setCount !== 1 ? "s" : ""}`;
 
-        exercises.classList.add(
-            "plan-card-info"
-        );
+        const muscleList = document.createElement("span");
+        muscleList.classList.add("plan-card-muscles");
+        muscleList.textContent = muscles.length ? muscles.join(", ") : "Aucun muscle principal";
 
-        exercises.textContent =
-            `${exerciseCount} exercice${exerciseCount !== 1 ? "s" : ""}`;
+        card.append(title, exercises, sets, muscleList);
 
+        if (plan.includeEquipment) {
+            const equipment = document.createElement("span");
+            equipment.classList.add("plan-card-equipment");
+            equipment.textContent = `Équipements : ${plan.equipment.length ? plan.equipment.join(", ") : "Aucun"}`;
+            card.appendChild(equipment);
+        }
 
-        const sets =
-            document.createElement("span");
+        const footer = document.createElement("div");
+        footer.classList.add("plan-card-footer");
 
-        sets.classList.add(
-            "plan-card-info"
-        );
+        const notesBox = document.createElement("div");
+        notesBox.classList.add("plan-card-notes");
 
-        sets.textContent =
-            `${setCount} set${setCount !== 1 ? "s" : ""}`;
+        const notesLabel = document.createElement("strong");
+        notesLabel.textContent = "Notes :";
 
+        const notes = document.createElement("textarea");
+        notes.classList.add("plan-card-notes-input");
+        notes.rows = 1;
+        notes.maxLength = 500;
+        notes.placeholder = "Ajouter des notes...";
+        notes.value = plan.notes.slice(0, 500);
 
-        const muscleList =
-            document.createElement("span");
+        notes.addEventListener("input", () => {
+            plan.notes = notes.value.slice(0, 500);
+            resizePlanNotesTextarea(notes);
+        });
 
-        muscleList.classList.add(
-            "plan-card-muscles"
-        );
+        ["click", "mousedown", "keydown"].forEach(type => {
+            notes.addEventListener(type, event => event.stopPropagation());
+        });
 
-        muscleList.textContent =
-            muscles.length > 0
-                ? muscles.join(", ")
-                : "Aucun muscle principal";
+        notesBox.append(notesLabel, notes);
 
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.classList.add("plan-delete-button");
+        deleteButton.textContent = "🗑";
+        deleteButton.title = "Supprimer le plan";
+        deleteButton.setAttribute("aria-label", `Supprimer ${plan.name}`);
 
-        card.append(
-            title,
-            exercises,
-            sets,
-            muscleList
-        );
+        deleteButton.addEventListener("click", event => {
+            event.stopPropagation();
+            openPlanDeleteModal(plan);
+        });
 
-        card.addEventListener(
-            "click",
-            () => openPlan(plan)
-        );
+        footer.append(notesBox, deleteButton);
+        card.appendChild(footer);
+
+        card.addEventListener("click", () => openPlan(plan));
+
+        card.addEventListener("keydown", event => {
+            if (event.target !== card || !["Enter", " "].includes(event.key)) return;
+            event.preventDefault();
+            openPlan(plan);
+        });
 
         plansList.appendChild(card);
+
+        requestAnimationFrame(() => resizePlanNotesTextarea(notes));
     });
 }
 
+// ------------------------------------------------------------
+// Supprimer un plan
+// ------------------------------------------------------------
+
+function openPlanDeleteModal(plan) {
+    pendingPlanDeletion = plan;
+    planDeleteMessage.textContent =
+        `Vous êtes sur le point de supprimer de manière permanente votre plan "${plan.name}". Souhaitez-vous continuer ?`;
+
+    planDeleteModal.hidden = false;
+}
+
+function closePlanDeleteModal() {
+    pendingPlanDeletion = null;
+    planDeleteModal.hidden = true;
+}
+
+function deletePendingPlan() {
+    if (!pendingPlanDeletion) return;
+
+    const plan = pendingPlanDeletion;
+    const index = plans.indexOf(plan);
+
+    if (index !== -1) plans.splice(index, 1);
+
+    if (getCurrentPlan() === plan) {
+        syncPlanAutoExcludedProgressions(null);
+        setCurrentPlan(null);
+    }
+
+    closePlanDeleteModal();
+    renderPlansList();
+}
 
 // ------------------------------------------------------------
 // Modifier le nom
@@ -495,6 +711,48 @@ function finishPlanNameEditing() {
 
 export function setupPlanController() {
 
+planNotesInput.addEventListener("input", () => {
+    const plan = getCurrentPlan();
+
+    if (planNotesInput.value.length > 500) {
+        planNotesInput.value = planNotesInput.value.slice(0, 500);
+    }
+
+    if (plan) plan.notes = planNotesInput.value;
+
+    resizePlanNotesTextarea(planNotesInput);
+    updatePlanNotesCounter();
+});
+
+planAutoAddEquipment.addEventListener("change", () => {
+    const plan = getCurrentPlan();
+    if (!plan) return;
+
+    ensurePlanMetadata(plan);
+    plan.includeEquipment = planAutoAddEquipment.checked;
+
+    if (plan.includeEquipment) {
+        addEquipmentToCurrentPlan(...getSelectedPlanEquipment());
+    }
+
+    renderPlanMetadataEditor();
+});
+
+addPlanEquipmentButton.addEventListener("click", () => {
+    planEquipmentOptions.hidden = !planEquipmentOptions.hidden;
+});
+
+cancelPlanDeleteButton.addEventListener("click", closePlanDeleteModal);
+confirmPlanDeleteButton.addEventListener("click", deletePendingPlan);
+
+planDeleteModal.addEventListener("click", event => {
+    if (event.target === planDeleteModal) closePlanDeleteModal();
+});
+
+document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && !planDeleteModal.hidden) closePlanDeleteModal();
+});
+
     newPlanButton.addEventListener(
         "click",
         () => {
@@ -502,7 +760,10 @@ export function setupPlanController() {
                 id: Date.now(),
                 name: `Plan ${plans.length + 1}`,
                 defaults: {},
-                exercises: []
+                exercises: [],
+                notes: "",
+                equipment: [],
+                includeEquipment: false
             };
 
             ensurePlanDefaults(plan);

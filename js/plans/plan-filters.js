@@ -29,66 +29,32 @@ let getRelevantEquipment = () => new Set();
 let updateCategoryAllButton = () => {};
 let updateEquipmentRelevance = () => {};
 
+let getAutoAddEquipmentToPlan = () => false;
+let addEquipmentToCurrentPlan = () => {};
+
 function configurePlanFilters(dependencies) {
-    getCurrentPlan =
-        dependencies.getCurrentPlan;
-
-    getCurrentDetailExercise =
-        dependencies.getCurrentDetailExercise;
-
-    getCurrentDetailContext =
-        dependencies.getCurrentDetailContext;
-
-    getSelectedPlanCategories =
-        dependencies.getSelectedPlanCategories;
-
-    getSelectedPlanEquipment =
-        dependencies.getSelectedPlanEquipment;
-
-    getSelectedCategories =
-        dependencies.getSelectedCategories;
-
-    getSelectedEquipment =
-        dependencies.getSelectedEquipment;
-
-    getEquipmentOptions =
-        dependencies.getEquipmentOptions;
-        
-    getCategoryOptions =
-        dependencies.getCategoryOptions;
-
-    exerciseMatchesCategories =
-        dependencies.exerciseMatchesCategories;
-
-    getPlanSearchState =
-        dependencies.getPlanSearchState;
-
-    saveSearchState =
-        dependencies.saveSearchState;
-
-    displayExercises =
-        dependencies.displayExercises;
-
-    renderPlanExercises =
-        dependencies.renderPlanExercises;
-
-    updateEquipmentAllButton =
-        dependencies.updateEquipmentAllButton;
-
-    updateFilterSummaries =
-        dependencies.updateFilterSummaries;
-
-    updateProgressionNavigation =
-        dependencies.updateProgressionNavigation;
-
-    getRelevantEquipment =
-        dependencies.getRelevantEquipment;
-
-    updateCategoryAllButton =
-        dependencies.updateCategoryAllButton;
-
-    updateEquipmentRelevance =
-        dependencies.updateEquipmentRelevance;
+    getCurrentPlan = dependencies.getCurrentPlan;
+    getCurrentDetailExercise = dependencies.getCurrentDetailExercise;
+    getCurrentDetailContext = dependencies.getCurrentDetailContext;
+    getSelectedPlanCategories = dependencies.getSelectedPlanCategories;
+    getSelectedPlanEquipment = dependencies.getSelectedPlanEquipment;
+    getSelectedCategories = dependencies.getSelectedCategories;
+    getSelectedEquipment = dependencies.getSelectedEquipment;
+    getEquipmentOptions = dependencies.getEquipmentOptions;
+    getCategoryOptions = dependencies.getCategoryOptions;
+    exerciseMatchesCategories = dependencies.exerciseMatchesCategories;
+    getPlanSearchState = dependencies.getPlanSearchState;
+    saveSearchState = dependencies.saveSearchState;
+    displayExercises = dependencies.displayExercises;
+    renderPlanExercises = dependencies.renderPlanExercises;
+    updateEquipmentAllButton = dependencies.updateEquipmentAllButton;
+    updateFilterSummaries = dependencies.updateFilterSummaries;
+    updateProgressionNavigation = dependencies.updateProgressionNavigation;
+    getRelevantEquipment = dependencies.getRelevantEquipment;
+    updateCategoryAllButton = dependencies.updateCategoryAllButton;
+    updateEquipmentRelevance = dependencies.updateEquipmentRelevance;
+    getAutoAddEquipmentToPlan = dependencies.getAutoAddEquipmentToPlan;
+    addEquipmentToCurrentPlan = dependencies.addEquipmentToCurrentPlan;
 }
 
 // ------------------------------------------------------------
@@ -362,6 +328,10 @@ allEquipmentButton.addEventListener(
                 )
         );
 
+        if (getAutoAddEquipmentToPlan()) {
+            addEquipmentToCurrentPlan(...selectedPlanEquipment);
+        }
+
         updatePlanEquipmentButtons();
         syncPlanFiltersToSearch();
         updatePlanFilterSummaries();
@@ -425,19 +395,15 @@ equipmentOptions.forEach(
             event => {
                 event.stopPropagation();
 
-                if (
-                    selectedPlanEquipment.has(
-                        equipment
-                    )
-                ) {
-                    selectedPlanEquipment.delete(
-                        equipment
-                    );
-                } else {
-                    selectedPlanEquipment.add(
-                        equipment
-                    );
-                }
+if (selectedPlanEquipment.has(equipment)) {
+    selectedPlanEquipment.delete(equipment);
+} else {
+    selectedPlanEquipment.add(equipment);
+
+    if (getAutoAddEquipmentToPlan()) {
+        addEquipmentToCurrentPlan(equipment);
+    }
+}
 
                 updatePlanEquipmentButtons();
                 syncPlanFiltersToSearch();

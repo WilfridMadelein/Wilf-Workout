@@ -64,6 +64,20 @@ export const currentPlanNameInput = document.getElementById("current-plan-name-i
 export const backToPlansButton = document.getElementById("back-to-plans-button");
 export const planAutoExcludeProgressions = document.getElementById("plan-auto-exclude-progressions");
 
+export const planAutoAddEquipment = document.getElementById("plan-auto-add-equipment");
+export const planNotesCounter = document.getElementById("plan-notes-counter");
+
+export const planNotesInput = document.getElementById("plan-notes-input");
+export const planEquipmentEditor = document.getElementById("plan-equipment-editor");
+export const planEquipmentSelected = document.getElementById("plan-equipment-selected");
+export const addPlanEquipmentButton = document.getElementById("add-plan-equipment-button");
+export const planEquipmentOptions = document.getElementById("plan-equipment-options");
+
+export const planDeleteModal = document.getElementById("plan-delete-modal");
+export const planDeleteMessage = document.getElementById("plan-delete-message");
+export const cancelPlanDeleteButton = document.getElementById("cancel-plan-delete-button");
+export const confirmPlanDeleteButton = document.getElementById("confirm-plan-delete-button");
+
 // ------------------------------------------------------------
 // État — Détails
 // ------------------------------------------------------------

@@ -51,6 +51,31 @@
 
     </div>
 </div>
+<div
+    id="plan-delete-modal"
+    class="plan-pdf-modal"
+    hidden
+>
+    <div class="plan-pdf-dialog plan-delete-dialog">
+        <h3>Supprimer le plan</h3>
+
+        <p id="plan-delete-message"></p>
+
+        <div class="plan-pdf-actions">
+            <button id="cancel-plan-delete-button" type="button">
+                Retour en arrière
+            </button>
+
+            <button
+                id="confirm-plan-delete-button"
+                class="plan-delete-confirm"
+                type="button"
+            >
+                Je supprime
+            </button>
+        </div>
+    </div>
+</div>
 
 </div>
 
@@ -98,18 +123,18 @@
 
             <div class="plan-filters-box">
                 <h3>Filtre du plan</h3>
-                <div id="plan-category-filters"></div>
-                <div id="plan-equipment-filters"></div>
-                <label class="plan-auto-exclude-progressions">
-                    <input
-                        type="checkbox"
-                        id="plan-auto-exclude-progressions"
-                        checked
-                    >
-                    <span>
-                        Exclure les progressions ajoutées au plan
-                    </span>
-                </label>
+<div id="plan-category-filters"></div>
+<div id="plan-equipment-filters"></div>
+
+<label class="plan-filter-checkbox">
+    <input type="checkbox" id="plan-auto-add-equipment">
+    <span>Ajouter les équipements sélectionnés au plan</span>
+</label>
+
+<label class="plan-filter-checkbox">
+    <input type="checkbox" id="plan-auto-exclude-progressions" checked>
+    <span>Exclure les progressions ajoutées au plan</span>
+</label>
             </div>
 
         </div>
@@ -276,10 +301,45 @@
     <!-- EXERCICES DU PLAN -->
     <div class="plan-exercises">
 
-        <h2>Plan d'entraînement</h2>
+<h2>Plan d'entraînement</h2>
 
-        <div id="plan-exercise-list"></div>
-        <div id="plan-exercise-browser-container"></div>
+<div class="plan-notes-editor">
+    <div id="plan-equipment-editor" class="plan-equipment-editor" hidden>
+        <div class="plan-equipment-editor-row">
+            <strong>Équipements :</strong>
+
+            <button
+                id="add-plan-equipment-button"
+                class="add-filter-button"
+                type="button"
+                aria-label="Ajouter un équipement"
+                title="Ajouter un équipement"
+            >+</button>
+
+            <div id="plan-equipment-selected"></div>
+        </div>
+
+        <div id="plan-equipment-options" class="plan-equipment-options" hidden></div>
+    </div>
+
+    <label for="plan-notes-input">Notes :</label>
+
+    <div class="plan-notes-input-wrap">
+        <textarea
+            id="plan-notes-input"
+            rows="1"
+            maxlength="500"
+            placeholder="Ajouter des notes au plan..."
+        ></textarea>
+
+        <span id="plan-notes-counter" class="plan-notes-counter" hidden>
+            0 / 500
+        </span>
+    </div>
+</div>
+
+<div id="plan-exercise-list"></div>
+<div id="plan-exercise-browser-container"></div>
 
     </div>
 
