@@ -4,10 +4,12 @@
 
 let getCurrentPlan = () => null;
 let renderPlanExercises = () => {};
+let schedulePlanSave = () => {};
 
 function configurePlanCombinations(dependencies) {
     getCurrentPlan = dependencies.getCurrentPlan;
     renderPlanExercises = dependencies.renderPlanExercises;
+    schedulePlanSave = dependencies.schedulePlanSave;
 }
 
 // ------------------------------------------------------------
@@ -102,6 +104,8 @@ function setCombinationSets(planExercise, sets) {
             item.sets = sets;
         }
     });
+
+    schedulePlanSave(currentPlan);
 }
 
 // ------------------------------------------------------------
@@ -177,6 +181,7 @@ function moveExerciseToCombination(
     }
 
     normalizeCombinationNumbers();
+    schedulePlanSave(currentPlan);
     renderPlanExercises();
 }
 
@@ -217,6 +222,7 @@ function moveExerciseToNewCombination(
     );
 
     normalizeCombinationNumbers();
+    schedulePlanSave(currentPlan);
     renderPlanExercises();
 }
 
@@ -401,6 +407,7 @@ function moveExerciseWithinCombination(
         exercises[index]
     ];
 
+    schedulePlanSave(currentPlan);
     renderPlanExercises();
 }
 
@@ -485,6 +492,7 @@ function moveCombination(
     // Set 1, Set 2, Set 3...
     normalizeCombinationNumbers();
 
+    schedulePlanSave(currentPlan);
     renderPlanExercises();
 }
 

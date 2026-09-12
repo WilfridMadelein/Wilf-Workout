@@ -53,6 +53,10 @@ let setCurrentDetailContext;
 
 let syncPlanAutoExcludedProgressions = () => {};
 
+let savePlanNow = async () => {};
+let deletePlanFromStorage = async () => {};
+let schedulePlanSave = () => {};
+
 export function configurePlanController(dependencies) {
     ({
         getCurrentPlan,
@@ -100,7 +104,11 @@ export function configurePlanController(dependencies) {
 
         setCurrentDetailExercise,
         setCurrentDetailContext,
-        syncPlanAutoExcludedProgressions
+        syncPlanAutoExcludedProgressions,
+
+        savePlanNow,
+        deletePlanFromStorage,
+        schedulePlanSave,
 
     } = dependencies);
 }
@@ -217,15 +225,12 @@ export function setupPlanDefaultInputs() {
                 ...options,
 
                 onChange: value => {
-                    const plan =
-                        getCurrentPlan();
+                    const plan = getCurrentPlan();
 
                     if (!plan) return;
 
-                    save(
-                        plan.defaults,
-                        value
-                    );
+                    save(plan.defaults,value);
+                    schedulePlanSave(plan);
                 }
             });
 
@@ -413,7 +418,11 @@ export function addEquipmentToCurrentPlan(...equipmentNames) {
         changed = true;
     });
 
-    if (changed) renderPlanEquipmentEditor();
+    if (changed) {
+        schedulePlanSave(plan);
+        renderPlanEquipmentEditor();
+    }
+
 }
 
 function removeEquipmentFromCurrentPlan(equipment) {
@@ -421,6 +430,7 @@ function removeEquipmentFromCurrentPlan(equipment) {
     if (!plan) return;
 
     plan.equipment = plan.equipment.filter(item => item !== equipment);
+    schedulePlanSave(plan);
     renderPlanEquipmentEditor();
 }
 
@@ -593,6 +603,7 @@ export function renderPlansList() {
         notes.addEventListener("input", () => {
             plan.notes = notes.value.slice(0, 500);
             resizePlanNotesTextarea(notes);
+            schedulePlanSave(plan);
         });
 
         ["click", "mousedown", "keydown"].forEach(type => {
@@ -647,12 +658,19 @@ function closePlanDeleteModal() {
     planDeleteModal.hidden = true;
 }
 
-function deletePendingPlan() {
+async function deletePendingPlan() {
     if (!pendingPlanDeletion) return;
 
     const plan = pendingPlanDeletion;
-    const index = plans.indexOf(plan);
 
+    try {
+        await deletePlanFromStorage(plan.id);
+    } catch (error) {
+        console.error("Impossible de supprimer le plan du stockage :", error);
+        return;
+    }
+
+    const index = plans.indexOf(plan);
     if (index !== -1) plans.splice(index, 1);
 
     if (getCurrentPlan() === plan) {
@@ -707,6 +725,10 @@ function finishPlanNameEditing() {
     currentPlanName.hidden = false;
 
     renderPlansList();
+
+    savePlanNow(plan).catch(error => {
+    console.error("Impossible de sauvegarder le nom du plan :", error);
+    });
 }
 
 export function setupPlanController() {
@@ -718,7 +740,10 @@ planNotesInput.addEventListener("input", () => {
         planNotesInput.value = planNotesInput.value.slice(0, 500);
     }
 
-    if (plan) plan.notes = planNotesInput.value;
+    if (plan) {
+        plan.notes = planNotesInput.value;
+        schedulePlanSave(plan);
+    }
 
     resizePlanNotesTextarea(planNotesInput);
     updatePlanNotesCounter();
@@ -730,6 +755,7 @@ planAutoAddEquipment.addEventListener("change", () => {
 
     ensurePlanMetadata(plan);
     plan.includeEquipment = planAutoAddEquipment.checked;
+    schedulePlanSave(plan);
 
     if (plan.includeEquipment) {
         addEquipmentToCurrentPlan(...getSelectedPlanEquipment());
@@ -755,9 +781,11 @@ document.addEventListener("keydown", event => {
 
     newPlanButton.addEventListener(
         "click",
-        () => {
+        async () => {
             const plan = {
-                id: Date.now(),
+                id: crypto.randomUUID?.() ?? Date.now(),
+                createdAt: Date.now(),
+
                 name: `Plan ${plans.length + 1}`,
                 defaults: {},
                 exercises: [],
@@ -769,6 +797,12 @@ document.addEventListener("keydown", event => {
             ensurePlanDefaults(plan);
 
             plans.push(plan);
+
+            try {
+                await savePlanNow(plan);
+            } catch (error) {
+                console.error("Impossible de sauvegarder le nouveau plan :", error);
+            }
 
             renderPlansList();
             openPlan(plan);

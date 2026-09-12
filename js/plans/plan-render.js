@@ -20,6 +20,7 @@ let openCombinationMenu = () => {};
 let moveExerciseWithinCombination = () => {};
 let moveCombination = () => {};
 let setCombinationSets = () => {};
+let schedulePlanSave = () => {};
 
 
 function configurePlanRender(dependencies) {
@@ -37,6 +38,7 @@ function configurePlanRender(dependencies) {
     moveExerciseWithinCombination = dependencies.moveExerciseWithinCombination;
     moveCombination = dependencies.moveCombination;
     setCombinationSets = dependencies.setCombinationSets;
+    schedulePlanSave = dependencies.schedulePlanSave;
 }
 
 // ============================================================
@@ -581,8 +583,8 @@ setBlock.appendChild(setExercises);
                     createPlanNumberInput(
                         planExercise.weight,
                         value => {
-                            planExercise.weight =
-                                value ?? 0;
+                            planExercise.weight = value ?? 0;
+                            schedulePlanSave(getCurrentPlan());
                         },
                         {
                             min: 0,
@@ -620,11 +622,9 @@ setBlock.appendChild(setExercises);
                 weightUnit.value =
                     planExercise.weightUnit;
 
-                weightUnit.addEventListener(
-                    "change",
-                    () => {
-                        planExercise.weightUnit =
-                            weightUnit.value;
+                weightUnit.addEventListener("change", () => {
+                        planExercise.weightUnit = weightUnit.value;
+                        schedulePlanSave(getCurrentPlan());
                     }
                 );
 
@@ -657,11 +657,7 @@ setBlock.appendChild(setExercises);
                     createPlanNumberInput(
                         planExercise.sets,
                         value => {
-                            setCombinationSets(
-                                planExercise,
-                                value ?? 1
-                            );
-
+                            setCombinationSets(planExercise, value ?? 1);
                             renderPlanExercises();
                         },
                         {
@@ -700,8 +696,8 @@ setBlock.appendChild(setExercises);
                     createPlanNumberInput(
                         planExercise.value,
                         value => {
-                            planExercise.value =
-                                value ?? 1;
+                            planExercise.value = value ?? 1;
+                            schedulePlanSave(getCurrentPlan());
                         },
                         {
                             min: 1,
@@ -748,11 +744,9 @@ setBlock.appendChild(setExercises);
                 valueUnit.value =
                     planExercise.valueUnit;
 
-                valueUnit.addEventListener(
-                    "change",
-                    () => {
-                        planExercise.valueUnit =
-                            valueUnit.value;
+                valueUnit.addEventListener("change", () => {
+                        planExercise.valueUnit = valueUnit.value;
+                        schedulePlanSave(getCurrentPlan());
                     }
                 );
 
@@ -781,8 +775,8 @@ setBlock.appendChild(setExercises);
                             planExercise.tempo[key],
 
                             value => {
-                                planExercise.tempo[key] =
-                                    value ?? 0;
+                                planExercise.tempo[key] = value ?? 0;
+                                chedulePlanSave(getCurrentPlan());
                             },
 
                             {
@@ -833,8 +827,8 @@ setBlock.appendChild(setExercises);
                         planExercise.rest,
 
                         value => {
-                            planExercise.rest =
-                                value ?? 0;
+                            planExercise.rest = value ?? 0;
+                            chedulePlanSave(getCurrentPlan());
                         },
 
                         {
@@ -1106,8 +1100,8 @@ function openPlanExerciseInstructions(
     textarea.focus();
 
     function saveInstructions() {
-        planExercise.details.instructions =
-            textarea.value.slice(0, 200);
+        planExercise.details.instructions = textarea.value.slice(0, 200);
+        schedulePlanSave(getCurrentPlan());
     }
 
     popup._saveInstructions =

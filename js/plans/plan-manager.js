@@ -21,6 +21,7 @@ let getPlanSearchState =  () => null;
 let getAutoExcludeProgressions =  () => true;
 let updateProgressionButtons =  () => {};
 let displayExercises =  () => {};
+let schedulePlanSave = () => {};
 
 function configurePlanManager(dependencies) {
     getCurrentPlan = dependencies.getCurrentPlan;
@@ -31,6 +32,7 @@ function configurePlanManager(dependencies) {
     getAutoExcludeProgressions = dependencies.getAutoExcludeProgressions;
     updateProgressionButtons = dependencies.updateProgressionButtons;
     displayExercises = dependencies.displayExercises;
+    schedulePlanSave = dependencies.schedulePlanSave;
 }
 
 function getAutoExcludedProgressions(plan) {
@@ -49,6 +51,8 @@ function removeAutoExcludedProgression(progression) {
 
     getAutoExcludedProgressions(currentPlan).delete(progression);
     getPlanSearchState()?.progressionsExclude?.delete(progression);
+
+    schedulePlanSave(currentPlan);
 }
 
 function syncPlanAutoExcludedProgressions(nextPlan) {
@@ -142,7 +146,7 @@ function addExerciseToCurrentPlan(exercise) {
     });
 
     addProgressionToExclude(exercise);
-
+    schedulePlanSave(currentPlan);
     renderPlanExercises();
 }
 
@@ -171,11 +175,10 @@ const removedExercise =
 
 currentPlan.exercises.splice(index, 1);
 
-removeProgressionFromExclude(
-    removedExercise
-);
+removeProgressionFromExclude(removedExercise);
 
 normalizeCombinationNumbers();
+schedulePlanSave();
 renderPlanExercises();
 }
 
@@ -231,6 +234,7 @@ function updatePlanExerciseProgression(
             "rep";
     }
 
+    schedulePlanSave(currentPlan);
     renderPlanExercises();
 }
 

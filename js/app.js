@@ -3,6 +3,13 @@
 // ============================================================
 
 import {
+    loadPlans,
+    savePlanNow,
+    schedulePlanSave,
+    deletePlanFromStorage,
+} from "./storage/plan-storage.js";
+
+import {
     exerciseList,
     searchInput,
     exerciseBrowser,
@@ -229,23 +236,23 @@ import {
 
 configurePlanCombinations({
     getCurrentPlan: () => currentPlan,
-    renderPlanExercises
+    renderPlanExercises,
+    schedulePlanSave,
 });
 
 configurePlanManager({
     getCurrentPlan: () => currentPlan,
 
     getSelectedProgressionsExclude: () => selectedProgressionsExclude,
-
     getPlanSearchState: () => planSearchState,
-
     getAutoExcludeProgressions: () =>  planAutoExcludeProgressions.checked,
 
     updateProgressionButtons,
     displayExercises,
-
     renderPlanExercises,
-    closePlanInstructionsPopup
+    closePlanInstructionsPopup,
+
+    schedulePlanSave,
 });
 
 configurePlanRender({
@@ -264,7 +271,9 @@ configurePlanRender({
     openCombinationMenu,
     setCombinationSets,
     moveExerciseWithinCombination,
-    moveCombination
+    moveCombination,
+
+    schedulePlanSave,
 });
 
 configurePlanFilters({
@@ -473,7 +482,11 @@ getSelectedPlanEquipment: () => selectedPlanEquipment,
 
     setCurrentDetailExercise,
     setCurrentDetailContext,
-    syncPlanAutoExcludedProgressions
+    syncPlanAutoExcludedProgressions,
+
+    savePlanNow,
+    deletePlanFromStorage,
+    schedulePlanSave,
 
 });
 
@@ -541,35 +554,50 @@ configureAppController({
     setCurrentDetailContext
 });
 
-// Initialisation
+// ============================================================
+// INITIALISATION
+// ============================================================
 
-equipmentOptions.forEach(equipment => {
-    selectedEquipment.add(equipment);
-    selectedPlanEquipment.add(equipment);
+async function initializeApp() {
+    try {
+        const storedPlans = await loadPlans(exercises);
+        plans.splice(0, plans.length, ...storedPlans);
+    } catch (error) {
+        console.error("Impossible de charger les plans sauvegardés :", error);
+    }
 
-    searchPageState.equipment.add(equipment);
-    planSearchState.equipment.add(equipment);
-});
-getCategoryOptions().forEach(category => {
-    selectedCategories.add(category);
-    selectedPlanCategories.add(category);
+    equipmentOptions.forEach(equipment => {
+        selectedEquipment.add(equipment);
+        selectedPlanEquipment.add(equipment);
 
-    searchPageState.categories.add(category);
-    planSearchState.categories.add(category);
-});
+        searchPageState.equipment.add(equipment);
+        planSearchState.equipment.add(equipment);
+    });
 
-createPlanFilterRows();
+    getCategoryOptions().forEach(category => {
+        selectedCategories.add(category);
+        selectedPlanCategories.add(category);
 
-createMuscleButtons();
-createEquipmentButtons();
-setupEquipmentAllButton();
-setupTypeButtons();
-setupCategoryButtons();
-createProgressionOptions();
-setupFilterRows();
-displayExercises();
+        searchPageState.categories.add(category);
+        planSearchState.categories.add(category);
+    });
 
-setupPlanDefaultInputs();
-setupPlanController();
-setupPlanPdf();
-setupAppController();
+    createPlanFilterRows();
+
+    createMuscleButtons();
+    createEquipmentButtons();
+    setupEquipmentAllButton();
+    setupTypeButtons();
+    setupCategoryButtons();
+    createProgressionOptions();
+    setupFilterRows();
+
+    setupPlanDefaultInputs();
+    setupPlanController();
+    setupPlanPdf();
+    setupAppController();
+
+    displayExercises();
+}
+
+initializeApp();
