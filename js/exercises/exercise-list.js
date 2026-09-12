@@ -39,6 +39,7 @@ let updatePlanFilterSummaries = () => {};
 let displayExerciseDetails = () => {};
 
 let addExerciseToCurrentPlan = () => {};
+let saveCurrentPlanFilters = () => {};
 
 function configureExerciseList(dependencies) {
     getExercises = dependencies.getExercises;
@@ -51,56 +52,41 @@ function configureExerciseList(dependencies) {
 
     getSelectedTypes = dependencies.getSelectedTypes;
 
-    getCurrentDetailContext =
-        dependencies.getCurrentDetailContext;
+    getCurrentDetailContext = dependencies.getCurrentDetailContext;
 
-    setCurrentDetailContext =
-        dependencies.setCurrentDetailContext;
+    setCurrentDetailContext = dependencies.setCurrentDetailContext;
 
     getSearchTerms = dependencies.getSearchTerms;
-    getProgressionName =
-        dependencies.getProgressionName;
-    getProgressionDisplay =
-        dependencies.getProgressionDisplay;
+    getProgressionName = dependencies.getProgressionName;
+    getProgressionDisplay = dependencies.getProgressionDisplay;
 
-    findValidTermCombination =
-        dependencies.findValidTermCombination;
+    findValidTermCombination = dependencies.findValidTermCombination;
 
-    getExerciseSearchRanking =
-        dependencies.getExerciseSearchRanking;
+    getExerciseSearchRanking = dependencies.getExerciseSearchRanking;
 
-    compareExercisesBySearch =
-        dependencies.compareExercisesBySearch;
+    compareExercisesBySearch = dependencies.compareExercisesBySearch;
 
-    highlightSearchMatches =
-        dependencies.highlightSearchMatches;
+    highlightSearchMatches = dependencies.highlightSearchMatches;
 
-    exerciseMatchesCategoryFilter =
-        dependencies.exerciseMatchesCategoryFilter;
+    exerciseMatchesCategoryFilter = dependencies.exerciseMatchesCategoryFilter;
 
-    exerciseMatchesEquipmentFilter =
-        dependencies.exerciseMatchesEquipmentFilter;
+    exerciseMatchesEquipmentFilter = dependencies.exerciseMatchesEquipmentFilter;
 
-    exerciseMatchesMuscle =
-        dependencies.exerciseMatchesMuscle;
+    exerciseMatchesMuscle = dependencies.exerciseMatchesMuscle;
 
-    exerciseMatchesProgression =
-        dependencies.exerciseMatchesProgression;
+    exerciseMatchesProgression = dependencies.exerciseMatchesProgression;
 
-    removeAddButton =
-        dependencies.removeAddButton;
+    removeAddButton = dependencies.removeAddButton;
 
-    updateFilterSummaries =
-        dependencies.updateFilterSummaries;
+    updateFilterSummaries = dependencies.updateFilterSummaries;
 
-    updatePlanFilterSummaries =
-        dependencies.updatePlanFilterSummaries;
+    updatePlanFilterSummaries = dependencies.updatePlanFilterSummaries;
 
-    displayExerciseDetails =
-        dependencies.displayExerciseDetails;
+    displayExerciseDetails = dependencies.displayExerciseDetails;
 
-    addExerciseToCurrentPlan =
-        dependencies.addExerciseToCurrentPlan;
+    addExerciseToCurrentPlan = dependencies.addExerciseToCurrentPlan;
+
+    saveCurrentPlanFilters = dependencies.saveCurrentPlanFilters;
 }
 
 // ------------------------------------------------------------
@@ -127,6 +113,7 @@ function displayExercises() {
 
     if (isPlanContext) {
         updatePlanFilterSummaries();
+        saveCurrentPlanFilters();
     }
 
     const selectedTypes =

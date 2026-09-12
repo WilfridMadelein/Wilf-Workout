@@ -28,6 +28,8 @@ let planSearchState;
 
 let setCurrentDetailContext;
 
+let saveCurrentPlanFilters = () => {};
+
 export function configureAppController(dependencies) {
     ({
         searchInput,
@@ -58,7 +60,9 @@ export function configureAppController(dependencies) {
         searchPageState,
         planSearchState,
 
-        setCurrentDetailContext
+        setCurrentDetailContext,
+
+        saveCurrentPlanFilters,
     } = dependencies);
 }
 
@@ -141,7 +145,9 @@ export function setupAppController() {
     );
 
     tabExercises.addEventListener("click", () => {
-        saveSearchState(planSearchState);
+    if (planEditor.style.display === "block") {
+        saveCurrentPlanFilters();
+    }
 
         pageExercises.style.display = "block";
         pagePlans.style.display = "none";

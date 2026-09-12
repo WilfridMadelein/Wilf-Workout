@@ -78,6 +78,14 @@ export const planDeleteMessage = document.getElementById("plan-delete-message");
 export const cancelPlanDeleteButton = document.getElementById("cancel-plan-delete-button");
 export const confirmPlanDeleteButton = document.getElementById("confirm-plan-delete-button");
 
+export const exportBackupButton = document.getElementById("export-backup-button");
+export const importBackupButton = document.getElementById("import-backup-button");
+export const backupFileInput = document.getElementById("backup-file-input");
+export const backupImportModal = document.getElementById("backup-import-modal");
+export const backupImportMessage = document.getElementById("backup-import-message");
+export const cancelBackupImportButton = document.getElementById("cancel-backup-import-button");
+export const confirmBackupImportButton = document.getElementById("confirm-backup-import-button");
+
 // ------------------------------------------------------------
 // État — Détails
 // ------------------------------------------------------------

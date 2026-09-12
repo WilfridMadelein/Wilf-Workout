@@ -195,6 +195,20 @@
     padding-right: 72px;
 }
 
+.plan-home-actions-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+#export-backup-button,
+#import-backup-button {
+    padding: 10px 16px;
+    cursor: pointer;
+}
+
 /* =========================================================
    TÉLÉCHARGEMENT PDF
 ========================================================= */
@@ -289,6 +303,10 @@
     border-color: #a66;
     background: #7d3535;
     color: #fff;
+}
+
+.plan-backup-dialog {
+    width: min(100%, 520px);
 }
 
 /* =========================================================

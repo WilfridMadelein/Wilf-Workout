@@ -43,8 +43,9 @@ let planTempoInputs;
 let planExerciseBrowserContainer;
 let exerciseBrowser;
 
-let getPlanSearchState;
-let loadSearchState;
+let loadPlanFilters = () => {};
+let saveCurrentPlanFilters = () => {};
+
 let displayExercises;
 let renderPlanExercises;
 
@@ -56,6 +57,8 @@ let syncPlanAutoExcludedProgressions = () => {};
 let savePlanNow = async () => {};
 let deletePlanFromStorage = async () => {};
 let schedulePlanSave = () => {};
+let requestPersistentStorage = async () => false;
+
 
 export function configurePlanController(dependencies) {
     ({
@@ -97,8 +100,8 @@ export function configurePlanController(dependencies) {
         planExerciseBrowserContainer,
         exerciseBrowser,
 
-        getPlanSearchState,
-        loadSearchState,
+        loadPlanFilters,
+        saveCurrentPlanFilters, 
         displayExercises,
         renderPlanExercises,
 
@@ -109,6 +112,7 @@ export function configurePlanController(dependencies) {
         savePlanNow,
         deletePlanFromStorage,
         schedulePlanSave,
+        requestPersistentStorage,
 
     } = dependencies);
 }
@@ -507,6 +511,12 @@ function renderPlanMetadataEditor() {
 // ------------------------------------------------------------
 
 function openPlan(plan) {
+    const previousPlan = getCurrentPlan();
+
+    if (previousPlan && previousPlan !== plan) {
+        saveCurrentPlanFilters();
+    }
+
     syncPlanAutoExcludedProgressions(plan);
     setCurrentPlan(plan);
 
@@ -532,10 +542,7 @@ function openPlan(plan) {
 
     exerciseBrowser.style.display = "block";
 
-    loadSearchState(
-        getPlanSearchState()
-    );
-
+    loadPlanFilters(plan);
     displayExercises();
 }
 
@@ -804,6 +811,10 @@ document.addEventListener("keydown", event => {
                 console.error("Impossible de sauvegarder le nouveau plan :", error);
             }
 
+            requestPersistentStorage().catch(error => {
+                console.warn("Impossible de demander le stockage persistant :", error);
+            });
+
             renderPlansList();
             openPlan(plan);
         }
@@ -850,6 +861,7 @@ document.addEventListener("keydown", event => {
         "click",
         () => {
             finishPlanNameEditing();
+            saveCurrentPlanFilters();
 
             planEditor.style.display = "none";
             planHome.style.display = "block";

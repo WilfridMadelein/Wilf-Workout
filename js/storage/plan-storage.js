@@ -8,7 +8,7 @@ import {
 // STOCKAGE DES PLANS
 // ============================================================
 
-const PLAN_SCHEMA_VERSION = 1;
+const PLAN_SCHEMA_VERSION = 2;
 const saveTimers = new Map();
 
 // ------------------------------------------------------------
@@ -29,11 +29,13 @@ function serializeFilterState(state = {}) {
         muscleFamilies: setToArray(state.muscleFamilies),
         equipment: setToArray(state.equipment),
         categories: setToArray(state.categories),
+        autoExcludeProgressions: state.autoExcludeProgressions !== false,
 
         submuscles: state.submuscles instanceof Map
-            ? [...state.submuscles].map(
-                ([family, values]) => [family, setToArray(values)]
-            )
+            ? [...state.submuscles].map(([family, values]) => [
+                family,
+                setToArray(values)
+            ])
             : []
     };
 }
@@ -47,11 +49,13 @@ function deserializeFilterState(state = {}) {
         muscleFamilies: new Set(state.muscleFamilies ?? []),
         equipment: new Set(state.equipment ?? []),
         categories: new Set(state.categories ?? []),
+        autoExcludeProgressions: state.autoExcludeProgressions !== false,
 
         submuscles: new Map(
-            (state.submuscles ?? []).map(
-                ([family, values]) => [family, new Set(values ?? [])]
-            )
+            (state.submuscles ?? []).map(([family, values]) => [
+                family,
+                new Set(values ?? [])
+            ])
         )
     };
 }
@@ -169,6 +173,11 @@ function migratePlanRecord(record) {
         version = 1;
     }
 
+    if (version < 2) {
+    plan.filtersInitialized = false;
+    version = 2;
+    }
+
     plan.schemaVersion = version;
     return plan;
 }
@@ -188,7 +197,7 @@ function serializePlan(plan) {
         id: plan.id,
         name: plan.name ?? "Plan",
         createdAt,
-        updatedAt: Date.now(),
+        updatedAt: plan.updatedAt ?? Date.now(),
 
         notes: String(plan.notes ?? "").slice(0, 500),
         equipment: [...(plan.equipment ?? [])],
@@ -208,6 +217,7 @@ function serializePlan(plan) {
             }
         },
 
+        filtersInitialized: plan.filtersInitialized === true,
         filters: serializeFilterState(plan.filters),
 
         autoExcludedProgressions: setToArray(
@@ -243,6 +253,11 @@ function hydratePlan(record, exercises) {
                 ? savedPlan.id
                 : Date.now()),
 
+        updatedAt:
+            savedPlan.updatedAt ??
+            savedPlan.createdAt ??
+            Date.now(),
+
         notes: String(savedPlan.notes ?? "").slice(0, 500),
         equipment: [...(savedPlan.equipment ?? [])],
         includeEquipment: savedPlan.includeEquipment === true,
@@ -261,6 +276,7 @@ function hydratePlan(record, exercises) {
             }
         },
 
+        filtersInitialized: savedPlan.filtersInitialized === true,
         filters: deserializeFilterState(savedPlan.filters),
 
         autoExcludedProgressions: new Set(
@@ -302,13 +318,18 @@ async function loadPlans(exercises) {
     );
 }
 
-async function savePlanNow(plan) {
+async function savePlanNow(plan, { touch = true } = {}) {
     if (!plan?.id) return;
+
+    if (touch || !plan.updatedAt) plan.updatedAt = Date.now();
+
     await putStoredPlan(serializePlan(plan));
 }
 
 function schedulePlanSave(plan, delay = 250) {
     if (!plan?.id) return;
+
+    plan.updatedAt = Date.now();
 
     clearTimeout(saveTimers.get(plan.id));
 
@@ -316,7 +337,7 @@ function schedulePlanSave(plan, delay = 250) {
         saveTimers.delete(plan.id);
 
         try {
-            await savePlanNow(plan);
+            await savePlanNow(plan, { touch: false });
         } catch (error) {
             console.error(`Impossible de sauvegarder le plan ${plan.id}.`, error);
         }

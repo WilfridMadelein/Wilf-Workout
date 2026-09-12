@@ -10,6 +10,16 @@ import {
 } from "./storage/plan-storage.js";
 
 import {
+    requestPersistentStorage
+} from "./storage/indexed-db.js";
+
+import {
+    downloadBackup,
+    readBackupFile,
+    importBackup
+} from "./storage/backup.js";
+
+import {
     exerciseList,
     searchInput,
     exerciseBrowser,
@@ -81,6 +91,14 @@ planNotesCounter,
 
     searchPageState,
     planSearchState,
+
+    exportBackupButton,
+    importBackupButton,
+    backupFileInput,
+    backupImportModal,
+    backupImportMessage,
+    cancelBackupImportButton,
+    confirmBackupImportButton,
 
     currentPlan,
     setCurrentPlan
@@ -202,7 +220,9 @@ import {
 import {
     configurePlanFilters,
     createPlanFilterRows,
-    updatePlanFilterSummaries
+    updatePlanFilterSummaries,
+    loadPlanFilters,
+    saveCurrentPlanFilters,
 } from "./plans/plan-filters.js";
 
 import {
@@ -295,6 +315,16 @@ configurePlanFilters({
     getPlanSearchState: () => planSearchState,
 
     saveSearchState,
+    loadSearchState,
+    schedulePlanSave,
+
+    getAutoExcludeProgressions:
+    () => planAutoExcludeProgressions.checked,
+
+    setAutoExcludeProgressions: value => {
+    planAutoExcludeProgressions.checked = value;
+    },
+
     displayExercises,
     renderPlanExercises,
 
@@ -311,6 +341,10 @@ configurePlanFilters({
 });
 
 createPlanFilterRows();
+planAutoExcludeProgressions.addEventListener(
+    "change",
+    saveCurrentPlanFilters
+);
 
 configureExerciseFilters({
     getSelectedCategories: () => selectedCategories,
@@ -397,6 +431,7 @@ configureExerciseList({
 
     displayExerciseDetails,
     addExerciseToCurrentPlan,
+    saveCurrentPlanFilters,
 });
 
 configureExerciseDetails({
@@ -475,8 +510,8 @@ getSelectedPlanEquipment: () => selectedPlanEquipment,
     planExerciseBrowserContainer,
     exerciseBrowser,
 
-    getPlanSearchState: () => planSearchState,
-    loadSearchState,
+    loadPlanFilters,
+    saveCurrentPlanFilters,
     displayExercises,
     renderPlanExercises,
 
@@ -487,6 +522,7 @@ getSelectedPlanEquipment: () => selectedPlanEquipment,
     savePlanNow,
     deletePlanFromStorage,
     schedulePlanSave,
+    requestPersistentStorage,
 
 });
 
@@ -539,6 +575,7 @@ configureAppController({
     removeAddButton,
     displayExercises,
     rebuildSearchFilterInterface,
+    saveCurrentPlanFilters,
 
     selectedTypes,
     selectedProgressionsInclude,
@@ -549,10 +586,118 @@ configureAppController({
     selectedCategories,
 
     searchPageState,
-    planSearchState,
 
     setCurrentDetailContext
 });
+
+// ============================================================
+// SAUVEGARDE / IMPORT
+// ============================================================
+
+let pendingBackupImport = null;
+
+function closeBackupImportModal() {
+    pendingBackupImport = null;
+    backupImportModal.hidden = true;
+    backupFileInput.value = "";
+}
+
+function setupBackupControls() {
+    exportBackupButton.addEventListener("click", async () => {
+        try {
+            await downloadBackup(plans);
+        } catch (error) {
+            console.error("Impossible de créer la sauvegarde :", error);
+            alert("Impossible de créer la sauvegarde.");
+        }
+    });
+
+    importBackupButton.addEventListener("click", () => {
+        backupFileInput.click();
+    });
+
+    backupFileInput.addEventListener("change", async () => {
+        const file = backupFileInput.files?.[0];
+        if (!file) return;
+
+        try {
+            const backup = await readBackupFile(file);
+            pendingBackupImport = backup;
+
+            const count = backup.plans.length;
+            const exportDate = new Date(backup.exportedAt);
+
+            const dateText = Number.isNaN(exportDate.getTime())
+                ? ""
+                : ` du ${new Intl.DateTimeFormat("fr-CA", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric"
+                }).format(exportDate)}`;
+
+            backupImportMessage.textContent =
+                `Cette sauvegarde${dateText} contient ${count} plan` +
+                `${count !== 1 ? "s" : ""}. Les nouveaux plans seront ajoutés. ` +
+                `Si un plan existe déjà, Wilf conservera la version la plus récemment modifiée.`;
+
+            backupImportModal.hidden = false;
+        } catch (error) {
+            console.error("Sauvegarde invalide :", error);
+            alert(error.message || "Impossible de lire cette sauvegarde.");
+            backupFileInput.value = "";
+        }
+    });
+
+    cancelBackupImportButton.addEventListener(
+        "click",
+        closeBackupImportModal
+    );
+
+    confirmBackupImportButton.addEventListener("click", async () => {
+        if (!pendingBackupImport) return;
+
+        confirmBackupImportButton.disabled = true;
+
+        try {
+            const result = await importBackup(
+                pendingBackupImport,
+                exercises
+            );
+
+            plans.splice(0, plans.length, ...result.plans);
+            renderPlansList();
+
+            closeBackupImportModal();
+
+            alert(
+                `Import terminé.\n` +
+                `${result.added} ajouté${result.added !== 1 ? "s" : ""}, ` +
+                `${result.updated} mis à jour, ` +
+                `${result.kept} conservé${result.kept !== 1 ? "s" : ""}.`
+            );
+        } catch (error) {
+            console.error("Impossible d'importer la sauvegarde :", error);
+            alert(error.message || "Impossible d'importer cette sauvegarde.");
+        } finally {
+            confirmBackupImportButton.disabled = false;
+        }
+    });
+
+    backupImportModal.addEventListener("click", event => {
+        if (event.target === backupImportModal) {
+            closeBackupImportModal();
+        }
+    });
+
+    document.addEventListener("keydown", event => {
+        if (
+            event.key === "Escape" &&
+            !backupImportModal.hidden
+        ) {
+            closeBackupImportModal();
+        }
+    });
+}
 
 // ============================================================
 // INITIALISATION
@@ -583,6 +728,10 @@ async function initializeApp() {
     });
 
     createPlanFilterRows();
+    planAutoExcludeProgressions.addEventListener(
+    "change",
+    saveCurrentPlanFilters
+    );
 
     createMuscleButtons();
     createEquipmentButtons();
@@ -595,6 +744,7 @@ async function initializeApp() {
     setupPlanDefaultInputs();
     setupPlanController();
     setupPlanPdf();
+    setupBackupControls();
     setupAppController();
 
     displayExercises();

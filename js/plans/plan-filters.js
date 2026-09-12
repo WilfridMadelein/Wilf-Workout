@@ -19,6 +19,10 @@ let getPlanSearchState = () => ({});
 
 let saveSearchState = () => {};
 let displayExercises = () => {};
+let loadSearchState = () => {};
+let schedulePlanSave = () => {};
+let getAutoExcludeProgressions = () => true;
+let setAutoExcludeProgressions = () => {};
 let renderPlanExercises = () => {};
 
 let updateEquipmentAllButton = () => {};
@@ -45,6 +49,10 @@ function configurePlanFilters(dependencies) {
     exerciseMatchesCategories = dependencies.exerciseMatchesCategories;
     getPlanSearchState = dependencies.getPlanSearchState;
     saveSearchState = dependencies.saveSearchState;
+    loadSearchState = dependencies.loadSearchState;
+    schedulePlanSave = dependencies.schedulePlanSave;
+    getAutoExcludeProgressions = dependencies.getAutoExcludeProgressions;
+    setAutoExcludeProgressions = dependencies.setAutoExcludeProgressions;
     displayExercises = dependencies.displayExercises;
     renderPlanExercises = dependencies.renderPlanExercises;
     updateEquipmentAllButton = dependencies.updateEquipmentAllButton;
@@ -55,6 +63,125 @@ function configurePlanFilters(dependencies) {
     updateEquipmentRelevance = dependencies.updateEquipmentRelevance;
     getAutoAddEquipmentToPlan = dependencies.getAutoAddEquipmentToPlan;
     addEquipmentToCurrentPlan = dependencies.addEquipmentToCurrentPlan;
+}
+
+// ------------------------------------------------------------
+// État des filtres par plan
+// ------------------------------------------------------------
+
+function cloneSubmuscles(source = new Map()) {
+    const result = new Map();
+
+    source.forEach((values, family) => {
+        result.set(family, new Set(values));
+    });
+
+    return result;
+}
+
+function clonePlanFilterState(state = {}) {
+    return {
+        search: state.search ?? "",
+        types: new Set(state.types ?? []),
+        progressionsInclude: new Set(state.progressionsInclude ?? []),
+        progressionsExclude: new Set(state.progressionsExclude ?? []),
+        muscleFamilies: new Set(state.muscleFamilies ?? []),
+        submuscles: cloneSubmuscles(state.submuscles),
+        equipment: new Set(state.equipment ?? []),
+        categories: new Set(state.categories ?? []),
+        autoExcludeProgressions: state.autoExcludeProgressions !== false
+    };
+}
+
+function createDefaultPlanFilterState() {
+    return {
+        search: "",
+        types: new Set(),
+        progressionsInclude: new Set(),
+        progressionsExclude: new Set(),
+        muscleFamilies: new Set(),
+        submuscles: new Map(),
+        equipment: new Set(getEquipmentOptions()),
+        categories: new Set(getCategoryOptions()),
+        autoExcludeProgressions: true
+    };
+}
+
+function copyPlanFilterState(target, source) {
+    const copy = clonePlanFilterState(source);
+
+    target.search = copy.search;
+    target.types = copy.types;
+    target.progressionsInclude = copy.progressionsInclude;
+    target.progressionsExclude = copy.progressionsExclude;
+    target.muscleFamilies = copy.muscleFamilies;
+    target.submuscles = copy.submuscles;
+    target.equipment = copy.equipment;
+    target.categories = copy.categories;
+    target.autoExcludeProgressions = copy.autoExcludeProgressions;
+}
+
+function ensurePlanFilterState(plan) {
+    if (plan.filtersInitialized === true && plan.filters) return false;
+
+    plan.filters = createDefaultPlanFilterState();
+    plan.filtersInitialized = true;
+
+    return true;
+}
+
+function refreshPlanFilterInterface() {
+    updatePlanCategoryButtons();
+    updatePlanEquipmentRelevance();
+    updatePlanEquipmentButtons();
+    updatePlanFilterSummaries();
+}
+
+function loadPlanFilters(plan) {
+    const initialized = ensurePlanFilterState(plan);
+    const state = getPlanSearchState();
+
+    copyPlanFilterState(state, plan.filters);
+
+    const selectedPlanCategories = getSelectedPlanCategories();
+    selectedPlanCategories.clear();
+    state.categories.forEach(category => selectedPlanCategories.add(category));
+
+    const selectedPlanEquipment = getSelectedPlanEquipment();
+    selectedPlanEquipment.clear();
+    state.equipment.forEach(equipment => selectedPlanEquipment.add(equipment));
+
+    setAutoExcludeProgressions(
+        state.autoExcludeProgressions !== false
+    );
+
+    loadSearchState(state);
+    refreshPlanFilterInterface();
+
+    if (initialized) schedulePlanSave(plan);
+}
+
+function saveCurrentPlanFilters() {
+    const plan = getCurrentPlan();
+    if (!plan) return;
+
+    const state = getPlanSearchState();
+
+    saveSearchState(state);
+
+    state.categories =
+        new Set(getSelectedPlanCategories());
+
+    state.equipment =
+        new Set(getSelectedPlanEquipment());
+
+    state.autoExcludeProgressions =
+        getAutoExcludeProgressions();
+
+    plan.filters = clonePlanFilterState(state);
+    plan.filtersInitialized = true;
+
+    schedulePlanSave(plan);
 }
 
 // ------------------------------------------------------------
@@ -612,10 +739,7 @@ function syncPlanFiltersToSearch() {
     updateEquipmentAllButton();
     updateFilterSummaries();
 
-    saveSearchState(
-        getPlanSearchState()
-    );
-
+    saveCurrentPlanFilters();
     displayExercises();
 
     if (getCurrentPlan()) {
@@ -819,5 +943,8 @@ export {
     updatePlanFilterSummaries,
     exerciseMatchesPlanFilters,
     exerciseMatchesPlanEquipment,
-    updatePlanProgressionFilters
+    updatePlanProgressionFilters,
+    loadPlanFilters,
+    saveCurrentPlanFilters,
+    refreshPlanFilterInterface,
 };
