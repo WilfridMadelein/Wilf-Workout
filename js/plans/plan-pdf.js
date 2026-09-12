@@ -7,6 +7,7 @@ let planPdfModal;
 let planPdfSelectionList;
 let cancelPlanPdfButton;
 let confirmPlanPdfButton;
+let planPdfSelectAll;
 
 let getPlanSetCount = () => 0;
 let getPlanPrimaryMuscles = () => [];
@@ -23,6 +24,7 @@ function configurePlanPdf(dependencies) {
         planPdfSelectionList,
         cancelPlanPdfButton,
         confirmPlanPdfButton,
+        planPdfSelectAll,
         getPlanSetCount,
         getPlanPrimaryMuscles
     } = dependencies);
@@ -36,6 +38,16 @@ function setupPlanPdf() {
     downloadPlansButton.addEventListener("click", openPlanPdfModal);
     cancelPlanPdfButton.addEventListener("click", closePlanPdfModal);
     confirmPlanPdfButton.addEventListener("click", downloadSelectedPlans);
+
+    planPdfSelectAll.addEventListener("change", () => {
+    planPdfSelectionList
+        .querySelectorAll('input[type="checkbox"]')
+        .forEach(checkbox => {
+            checkbox.checked = planPdfSelectAll.checked;
+        });
+
+    updatePlanPdfControls();
+    });
 
     planPdfModal.addEventListener("click", event => {
         if (event.target === planPdfModal) closePlanPdfModal();
@@ -68,8 +80,14 @@ function renderPlanPdfSelection() {
 
         planPdfSelectionList.appendChild(empty);
         confirmPlanPdfButton.disabled = true;
+
+        planPdfSelectAll.checked = false;
+        planPdfSelectAll.indeterminate = false;
+        planPdfSelectAll.disabled = true;
         return;
     }
+
+    planPdfSelectAll.disabled = false;
 
     plans.forEach(plan => {
         const row = document.createElement("div");
@@ -122,21 +140,31 @@ function movePlanPdfRow(row, direction) {
 }
 
 function updatePlanPdfControls() {
-    const rows = [...planPdfSelectionList.children].filter(
-        row => row.dataset.planId
+    const rows = [...planPdfSelectionList.children]
+        .filter(row => row.dataset.planId);
+
+    const checkboxes = rows.map(row =>
+        row.querySelector('input[type="checkbox"]')
     );
 
     rows.forEach((row, index) => {
         row.querySelector('[data-direction="up"]').disabled = index === 0;
-
         row.querySelector('[data-direction="down"]').disabled =
             index === rows.length - 1;
     });
 
-    confirmPlanPdfButton.disabled =
-        !planPdfSelectionList.querySelector(
-            'input[type="checkbox"]:checked'
-        );
+    const checkedCount =
+        checkboxes.filter(checkbox => checkbox.checked).length;
+
+    planPdfSelectAll.checked =
+        checkboxes.length > 0 &&
+        checkedCount === checkboxes.length;
+
+    planPdfSelectAll.indeterminate =
+        checkedCount > 0 &&
+        checkedCount < checkboxes.length;
+
+    confirmPlanPdfButton.disabled = checkedCount === 0;
 }
 
 function getSelectedPlansInOrder() {

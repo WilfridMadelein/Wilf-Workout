@@ -117,8 +117,14 @@
 
 .plan-card-equipment {
     width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     margin-top: 4px;
     font-size: 14px;
+    overflow-wrap: anywhere;
+}
+.plan-card-equipment strong {
+    font-weight: 700;
 }
 
 .plan-card-footer {
@@ -312,6 +318,20 @@
 
 .plan-backup-dialog {
     width: min(100%, 520px);
+}
+
+.plan-pdf-select-all {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 14px 0 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.plan-pdf-select-all input {
+    margin: 0;
+    cursor: pointer;
 }
 
 /* =========================================================

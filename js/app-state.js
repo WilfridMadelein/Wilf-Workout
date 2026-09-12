@@ -52,6 +52,7 @@ export const newPlanButton = document.getElementById("new-plan-button");
 export const downloadPlansButton = document.getElementById("download-plans-button");
 export const planPdfModal = document.getElementById("plan-pdf-modal");
 export const planPdfSelectionList = document.getElementById("plan-pdf-selection-list");
+export const planPdfSelectAll = document.getElementById("plan-pdf-select-all");
 export const cancelPlanPdfButton = document.getElementById("cancel-plan-pdf-button");
 export const confirmPlanPdfButton = document.getElementById("confirm-plan-pdf-button");
 

@@ -64,6 +64,7 @@ planNotesCounter,
     planPdfSelectionList,
     cancelPlanPdfButton,
     confirmPlanPdfButton,
+    planPdfSelectAll,
 
     plans,
     editPlanNameButton,
@@ -464,6 +465,7 @@ configurePlanPdf({
     downloadPlansButton,
     planPdfModal,
     planPdfSelectionList,
+    planPdfSelectAll,
     cancelPlanPdfButton,
     confirmPlanPdfButton,
 

@@ -502,7 +502,7 @@ function renderPlanMetadataEditor() {
     planAutoAddEquipment.checked = plan.includeEquipment;
     planNotesInput.value = plan.notes.slice(0, 500);
     resizePlanNotesTextarea(planNotesInput);
-    updatePlanNotesCounter(planNotesInput, planNotesCounter);
+    updateNotesCounter(planNotesInput, planNotesCounter);
     renderPlanEquipmentEditor();
 }
 
@@ -570,26 +570,34 @@ export function renderPlansList() {
         title.classList.add("plan-card-title");
         title.textContent = plan.name;
 
-        const exercises = document.createElement("span");
-        exercises.classList.add("plan-card-info");
-        exercises.textContent = `${exerciseCount} exercice${exerciseCount !== 1 ? "s" : ""}`;
-
-        const sets = document.createElement("span");
-        sets.classList.add("plan-card-info");
-        sets.textContent = `${setCount} set${setCount !== 1 ? "s" : ""}`;
+        const summary = document.createElement("span");
+        summary.classList.add("plan-card-info");
+        summary.textContent =
+            `${exerciseCount} exercice${exerciseCount !== 1 ? "s" : ""} | ` +
+            `${setCount} set${setCount !== 1 ? "s" : ""}`;
 
         const muscleList = document.createElement("span");
         muscleList.classList.add("plan-card-muscles");
         muscleList.textContent = muscles.length ? muscles.join(", ") : "Aucun muscle principal";
 
-        card.append(title, exercises, sets, muscleList);
+        card.append(title, summary, muscleList);
 
         if (plan.includeEquipment) {
-            const equipment = document.createElement("span");
-            equipment.classList.add("plan-card-equipment");
-            equipment.textContent = `Équipements : ${plan.equipment.length ? plan.equipment.join(", ") : "Aucun"}`;
-            card.appendChild(equipment);
-        }
+    const equipment = document.createElement("div");
+    equipment.classList.add("plan-card-equipment");
+
+    const equipmentLabel = document.createElement("strong");
+    equipmentLabel.textContent = "Équipements : ";
+
+    const equipmentText = document.createElement("span");
+    equipmentText.textContent =
+        plan.equipment.length
+            ? plan.equipment.join(", ")
+            : "Aucun";
+
+    equipment.append(equipmentLabel, equipmentText);
+    card.appendChild(equipment);
+    }
 
         const footer = document.createElement("div");
         footer.classList.add("plan-card-footer");
@@ -768,7 +776,7 @@ planNotesInput.addEventListener("input", () => {
     }
 
     resizePlanNotesTextarea(planNotesInput);
-    updatePlanNotesCounter(planNotesInput, planNotesCounter);
+    updateNotesCounter(planNotesInput, planNotesCounter);
 });
 
 planAutoAddEquipment.addEventListener("change", () => {
