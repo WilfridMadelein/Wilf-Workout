@@ -80,14 +80,16 @@
 
 .settings-theme-switch {
     position: relative;
-    display: grid;
+    display: inline-grid;
     grid-template-columns: 1fr 1fr;
-    width: 130px;
-    padding: 2px;
+    align-items: center;
 
-    border: 1px solid #aaa;
+    width: 74px;
+    padding: 1px;
+
+    border: 1px solid #555;
     border-radius: 999px;
-    background: #eee;
+    background: transparent;
 
     color: inherit;
     font: inherit;
@@ -97,14 +99,14 @@
 .settings-theme-switch::before {
     content: "";
     position: absolute;
-    top: 2px;
-    left: 2px;
+    top: 1px;
+    left: 1px;
 
-    width: calc(50% - 2px);
-    height: calc(100% - 4px);
+    width: calc(50% - 1px);
+    height: calc(100% - 2px);
 
     border-radius: 999px;
-    background: #fff;
+    background: #111;
     box-shadow: 0 0 0 1px #aaa;
 
     transition: transform 0.18s ease;
@@ -117,13 +119,22 @@
 .settings-theme-switch span {
     position: relative;
     z-index: 1;
-    padding: 4px 7px;
-    text-align: center;
-    font-size: 13px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 0;
+    padding: 4px 0;
+
+    font-size: 16px;
+    line-height: 1;
+    color: #666;
 }
 
 .settings-theme-switch[aria-checked="false"] span:first-child,
 .settings-theme-switch[aria-checked="true"] span:last-child {
+    color: #fff;
     font-weight: 700;
 }
 
@@ -267,4 +278,94 @@ html[data-theme="dark"] .plan-card-muscles,
 html[data-theme="dark"] .settings-help,
 html[data-theme="dark"] .plan-notes-counter {
     color: #aaa;
+}
+
+html[data-theme="dark"] .settings-theme-switch {
+    border-color: #555;
+    background: transparent;
+}
+
+html[data-theme="dark"] .settings-theme-switch::before {
+    background: #ededed;
+    box-shadow: 0 0 0 1px #ededed;
+}
+
+html[data-theme="dark"] .settings-theme-switch span {
+    color: #bdbdbd;
+}
+
+html[data-theme="dark"] .settings-theme-switch[aria-checked="false"] span:first-child,
+html[data-theme="dark"] .settings-theme-switch[aria-checked="true"] span:last-child {
+    color: #181818;
+}
+
+/* bouton + */
+
+html[data-theme="dark"] .add-filter-button {
+    background: #242424;
+    border-color: #555;
+    color: #ededed;
+}
+
+html[data-theme="dark"] .add-filter-button:hover {
+    background: #303030;
+}
+
+/* intérieur sets /exercices*/
+
+html[data-theme="dark"] .plan-set-block,
+html[data-theme="dark"] .plan-exercise-card,
+html[data-theme="dark"] .plan-superset-order,
+html[data-theme="dark"] .combination-menu {
+    background: #242424;
+    border-color: #444;
+}
+
+html[data-theme="dark"] .plan-set-single {
+    background: #242424;
+    border-color: #444;
+}
+
+html[data-theme="dark"] .plan-set-colored-1 {
+    background: rgba(170, 120, 200, 0.18);
+    border-color: #58456a;
+}
+
+html[data-theme="dark"] .plan-set-colored-2 {
+    background: rgba(100, 190, 140, 0.18);
+    border-color: #41654f;
+}
+
+html[data-theme="dark"] .plan-set-colored-3 {
+    background: rgba(230, 170, 80, 0.18);
+    border-color: #7a5d30;
+}
+
+html[data-theme="dark"] .plan-exercise-muscles,
+html[data-theme="dark"] .plan-rest-labels,
+html[data-theme="dark"] .plan-order-button,
+html[data-theme="dark"] .plan-progression-button,
+html[data-theme="dark"] .plan-number-arrow {
+    color: #bdbdbd;
+}
+
+html[data-theme="dark"] .plan-order-button:hover:not(:disabled),
+html[data-theme="dark"] .plan-progression-button:hover:not(:disabled),
+html[data-theme="dark"] .plan-number-arrow:hover {
+    color: #ededed;
+}
+
+html[data-theme="dark"] .plan-number-input,
+html[data-theme="dark"] .plan-weight-unit,
+html[data-theme="dark"] .plan-value-unit,
+html[data-theme="dark"] .plan-combination-button,
+html[data-theme="dark"] .plan-delete-button,
+html[data-theme="dark"] .plan-set-title,
+html[data-theme="dark"] .plan-exercise-name,
+html[data-theme="dark"] .plan-progression-name {
+    color: #ededed;
+}
+
+html[data-theme="dark"] .combination-menu-label {
+    color: #ededed;
 }
