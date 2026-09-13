@@ -1,11 +1,14 @@
 let searchInput;
 let pageExercises;
 let pagePlans;
+let pageSettings;
+
 let exerciseBrowser;
 let planExerciseBrowserContainer;
 
 let tabExercises;
 let tabPlans;
+let tabSettings;
 
 let planHome;
 let renderPlansList;
@@ -35,11 +38,14 @@ export function configureAppController(dependencies) {
         searchInput,
         pageExercises,
         pagePlans,
+        pageSettings,
+
         exerciseBrowser,
         planExerciseBrowserContainer,
 
         tabExercises,
         tabPlans,
+        tabSettings,
 
         planHome,
         renderPlansList,
@@ -147,6 +153,8 @@ export function setupAppController() {
     tabExercises.addEventListener("click", () => {
     if (planEditor.style.display === "block") {
         saveCurrentPlanFilters();
+    pageSettings.style.display = "none";
+    tabSettings.classList.remove("active");
     }
 
         pageExercises.style.display = "block";
@@ -171,7 +179,11 @@ export function setupAppController() {
     });
 
 tabPlans.addEventListener("click", () => {
-    saveSearchState(searchPageState);
+    if (pageExercises.style.display === "block") {
+        saveSearchState(searchPageState);
+    }
+    pageSettings.style.display = "none";
+    tabSettings.classList.remove("active");
 
     pageExercises.style.display = "none";
     pagePlans.style.display = "block";
@@ -183,6 +195,29 @@ tabPlans.addEventListener("click", () => {
 
     tabExercises.classList.remove("active");
     tabPlans.classList.add("active");
+
+    setCurrentDetailContext("search");
+});
+
+tabSettings.addEventListener("click", () => {
+    if (
+        pagePlans.style.display === "block" &&
+        planEditor.style.display === "block"
+    ) {
+        saveCurrentPlanFilters();
+    }
+
+    if (pageExercises.style.display === "block") {
+        saveSearchState(searchPageState);
+    }
+
+    pageExercises.style.display = "none";
+    pagePlans.style.display = "none";
+    pageSettings.style.display = "block";
+
+    tabExercises.classList.remove("active");
+    tabPlans.classList.remove("active");
+    tabSettings.classList.add("active");
 
     setCurrentDetailContext("search");
 });

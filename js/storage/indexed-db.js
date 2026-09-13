@@ -5,6 +5,7 @@
 const DB_NAME = "wilf-workout";
 const DB_VERSION = 1;
 const PLAN_STORE = "plans";
+const SETTINGS_STORE = "settings";
 
 let databasePromise = null;
 
@@ -34,6 +35,9 @@ function openDatabase() {
 
             if (!database.objectStoreNames.contains(PLAN_STORE)) {
                 database.createObjectStore(PLAN_STORE, { keyPath: "id" });
+            }
+            if (!database.objectStoreNames.contains(SETTINGS_STORE)) {
+                database.createObjectStore(SETTINGS_STORE, { keyPath: "id" });
             }
         };
 
@@ -84,6 +88,24 @@ async function deleteStoredPlan(id) {
     await completed;
 }
 
+async function getStoredSetting(id) {
+    const database = await openDatabase();
+    const transaction = database.transaction(SETTINGS_STORE, "readonly");
+
+    return requestToPromise(
+        transaction.objectStore(SETTINGS_STORE).get(id)
+    );
+}
+
+async function putStoredSetting(setting) {
+    const database = await openDatabase();
+    const transaction = database.transaction(SETTINGS_STORE, "readwrite");
+    const completed = transactionToPromise(transaction);
+
+    transaction.objectStore(SETTINGS_STORE).put(setting);
+    await completed;
+}
+
 async function requestPersistentStorage() {
     if (!navigator.storage?.persist) return false;
 
@@ -101,5 +123,7 @@ export {
     getStoredPlans,
     putStoredPlan,
     deleteStoredPlan,
-    requestPersistentStorage
+    requestPersistentStorage,
+    getStoredSetting,
+    putStoredSetting,
 };

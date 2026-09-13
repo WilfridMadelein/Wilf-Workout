@@ -3,6 +3,13 @@
 // ============================================================
 
 import {
+    createDefaultAppSettings,
+    loadAppSettings,
+    saveAppSettingsNow,
+    scheduleAppSettingsSave
+} from "./storage/settings-storage.js";
+
+import {
     loadPlans,
     savePlanNow,
     schedulePlanSave,
@@ -105,7 +112,20 @@ planNotesCounter,
     confirmBackupImportButton,
 
     currentPlan,
-    setCurrentPlan
+    setCurrentPlan,
+
+tabSettings,
+pageSettings,
+
+settingsThemeSwitch,
+settingsPlanSetsInput,
+settingsPlanRepsInput,
+settingsPlanTimeInput,
+settingsPlanRestInput,
+settingsPlanWeightInput,
+settingsPlanTempoInputs,
+settingsWeightUnitSwitch,
+settingsWeightUnitButtons,
 } from "./app-state.js";
 
 import {
@@ -114,6 +134,13 @@ import {
     loadSearchState,
     setupAppController
 } from "./app-controller.js";
+
+import {
+    configureSettingsController,
+    setupSettingsController,
+    refreshSettingsInterface,
+    applyAppTheme
+} from "./settings/settings-controller.js";
 
 import {
     normalizeSearchText,
@@ -253,10 +280,26 @@ import {
     updateFilterSummaries
 } from "./ui/filter-ui.js";
 
+let appSettings = createDefaultAppSettings();
 
 // ============================================================
 // CONFIGURATION DES MODULES
 // ============================================================
+
+configureSettingsController({
+    getAppSettings: () => appSettings,
+    scheduleAppSettingsSave,
+
+    themeSwitch: settingsThemeSwitch,
+    setsInput: settingsPlanSetsInput,
+    repsInput: settingsPlanRepsInput,
+    timeInput: settingsPlanTimeInput,
+    restInput: settingsPlanRestInput,
+    weightInput: settingsPlanWeightInput,
+    tempoInputs: settingsPlanTempoInputs,
+    weightUnitSwitch: settingsWeightUnitSwitch,
+    weightUnitButtons: settingsWeightUnitButtons
+});
 
 configurePlanCombinations({
     getCurrentPlan: () => currentPlan,
@@ -477,6 +520,8 @@ configurePlanPdf({
 });
 
 configurePlanController({
+    getDefaultPlanSettings:
+    () => appSettings.planDefaults,
     getCurrentPlan: () => currentPlan,
     setCurrentPlan,
 
@@ -569,11 +614,13 @@ configureAppController({
     searchInput,
     pageExercises,
     pagePlans,
+    pageSettings,
     exerciseBrowser,
     planExerciseBrowserContainer,
 
     tabExercises,
     tabPlans,
+    tabSettings,
 
     planHome,
     renderPlansList,
@@ -612,6 +659,11 @@ function closeBackupImportModal() {
 function setupBackupControls() {
     exportBackupButton.addEventListener("click", async () => {
         try {
+            await saveAppSettingsNow(
+                appSettings,
+                { touch: false }
+            );
+
             await downloadBackup(plans);
         } catch (error) {
             console.error("Impossible de créer la sauvegarde :", error);
@@ -673,6 +725,8 @@ function setupBackupControls() {
 
             plans.splice(0, plans.length, ...result.plans);
             renderPlansList();
+            appSettings = await loadAppSettings();
+            refreshSettingsInterface();
 
             closeBackupImportModal();
 
@@ -712,6 +766,19 @@ function setupBackupControls() {
 
 async function initializeApp() {
     try {
+    appSettings = await loadAppSettings();
+    } catch (error) {
+    console.error(
+        "Impossible de charger les paramètres :",
+        error
+    );
+
+    appSettings = createDefaultAppSettings();
+    }
+
+    applyAppTheme(appSettings.theme);
+
+    try {
         const storedPlans = await loadPlans(exercises);
         plans.splice(0, plans.length, ...storedPlans);
     } catch (error) {
@@ -748,6 +815,7 @@ async function initializeApp() {
     createProgressionOptions();
     setupFilterRows();
 
+    setupSettingsController();
     setupPlanDefaultInputs();
     setupPlanController();
     setupPlanPdf();

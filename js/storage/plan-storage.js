@@ -8,7 +8,7 @@ import {
 // STOCKAGE DES PLANS
 // ============================================================
 
-const PLAN_SCHEMA_VERSION = 2.1;
+const PLAN_SCHEMA_VERSION = 1;
 const saveTimers = new Map();
 
 // ------------------------------------------------------------
@@ -153,7 +153,7 @@ function hydratePlanExercise(savedExercise, exercisesById, exercisesByName) {
 
 function migratePlanRecord(record) {
     const plan = structuredClone(record);
-    let version = Number(plan.schemaVersion) || 0;
+    const version = Number(plan.schemaVersion) || 0;
 
     if (version > PLAN_SCHEMA_VERSION) {
         throw new Error(
@@ -161,37 +161,25 @@ function migratePlanRecord(record) {
         );
     }
 
-    if (version < 1) {
-        if (typeof plan.notes !== "string") plan.notes = "";
-        if (!Array.isArray(plan.equipment)) plan.equipment = [];
-        if (typeof plan.includeEquipment !== "boolean") plan.includeEquipment = false;
-        if (!Array.isArray(plan.autoExcludedProgressions)) {
-            plan.autoExcludedProgressions = [];
-        }
+    plan.notes = typeof plan.notes === "string" ? plan.notes : "";
+    plan.equipment = Array.isArray(plan.equipment) ? plan.equipment : [];
+    plan.includeEquipment = plan.includeEquipment === true;
 
-        plan.filters ??= {};
-        version = 1;
-    }
-
-    if (version < 2) {
-    plan.filtersInitialized = false;
-    version = 2;
-    }
-    if (version < 2.1) {
     plan.defaults ??= {};
-
-    if (plan.defaults.weight == null) {
-        plan.defaults.weight = 0;
-    }
+    plan.defaults.weight ??= 0;
 
     if (!["kg", "lbs"].includes(plan.defaults.weightUnit)) {
         plan.defaults.weightUnit = "lbs";
     }
 
-    version = 2.1;
-}
+    plan.filters ??= {};
+    plan.filtersInitialized = plan.filtersInitialized === true;
 
-    plan.schemaVersion = version;
+    if (!Array.isArray(plan.autoExcludedProgressions)) {
+        plan.autoExcludedProgressions = [];
+    }
+
+    plan.schemaVersion = PLAN_SCHEMA_VERSION;
     return plan;
 }
 

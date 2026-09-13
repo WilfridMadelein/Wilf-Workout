@@ -27,6 +27,46 @@ export const detailsContent = document.getElementById("details-content");
 export const tabExercises = document.getElementById("tab-exercises");
 export const tabPlans = document.getElementById("tab-plans");
 export const pagePlans = document.getElementById("page-plans");
+export const tabSettings = document.getElementById("tab-settings");
+export const pageSettings = document.getElementById("page-settings");
+
+// ------------------------------------------------------------
+// DOM — Paramètres globaux
+// ------------------------------------------------------------
+
+export const settingsThemeSwitch =
+    document.getElementById("settings-theme-switch");
+
+export const settingsPlanSetsInput =
+    document.getElementById("settings-plan-sets");
+
+export const settingsPlanRepsInput =
+    document.getElementById("settings-plan-reps");
+
+export const settingsPlanTimeInput =
+    document.getElementById("settings-plan-time");
+
+export const settingsPlanRestInput =
+    document.getElementById("settings-plan-rest");
+
+export const settingsPlanWeightInput =
+    document.getElementById("settings-plan-weight");
+
+export const settingsPlanTempoInputs = [
+    document.getElementById("settings-plan-tempo-1"),
+    document.getElementById("settings-plan-tempo-2"),
+    document.getElementById("settings-plan-tempo-3"),
+    document.getElementById("settings-plan-tempo-4")
+];
+
+export const settingsWeightUnitSwitch =
+    document.getElementById("settings-weight-unit-switch");
+
+export const settingsWeightUnitButtons = [
+    ...document.querySelectorAll(
+        "[data-settings-weight-unit]"
+    )
+];
 
 // ------------------------------------------------------------
 // DOM — Paramètres du plan

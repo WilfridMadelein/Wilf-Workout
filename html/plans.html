@@ -12,22 +12,8 @@
             Télécharger mes plans
         </button>
 
-        <button id="export-backup-button">
-            Sauvegarder mes données
-        </button>
-
-        <button id="import-backup-button">
-            Importer une sauvegarde
-        </button>
     </div>
 </div>
-
-<input
-    id="backup-file-input"
-    type="file"
-    accept=".wilf,.json,application/json"
-    hidden
->
 
     <div
     id="plans-list"
@@ -96,28 +82,6 @@
                 type="button"
             >
                 Je supprime
-            </button>
-        </div>
-    </div>
-</div>
-
-<div
-    id="backup-import-modal"
-    class="plan-pdf-modal"
-    hidden
->
-    <div class="plan-pdf-dialog plan-backup-dialog">
-        <h3>Importer une sauvegarde</h3>
-
-        <p id="backup-import-message"></p>
-
-        <div class="plan-pdf-actions">
-            <button id="cancel-backup-import-button" type="button">
-                Retour en arrière
-            </button>
-
-            <button id="confirm-backup-import-button" type="button">
-                Importer
             </button>
         </div>
     </div>

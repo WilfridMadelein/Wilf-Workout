@@ -2,7 +2,8 @@ async function loadHTML() {
 
     const pages = {
         "page-exercises": "html/exercises.html",
-        "page-plans": "html/plans.html"
+        "page-plans": "html/plans.html",
+        "page-settings": "html/settings.html"
     };
 
     try {

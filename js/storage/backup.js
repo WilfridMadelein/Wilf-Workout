@@ -1,4 +1,9 @@
-import { getStoredPlans } from "./indexed-db.js";
+import {
+    getStoredPlans,
+    getStoredSetting,
+    putStoredSetting
+} from "./indexed-db.js";
+
 import {
     hydratePlan,
     loadPlans,
@@ -46,6 +51,18 @@ function validateBackup(backup) {
         }
     });
 
+    if (
+    backup.settings != null &&
+    (
+        typeof backup.settings !== "object" ||
+        backup.settings.id !== "app"
+    )
+    ) {
+    throw new Error(
+        "La sauvegarde contient des paramètres invalides."
+    );
+    }
+
     return backup;
 }
 
@@ -54,14 +71,19 @@ async function downloadBackup(plans) {
         plans.map(plan => savePlanNow(plan, { touch: false }))
     );
 
-    const records = await getStoredPlans();
+const [records, settings] =
+    await Promise.all([
+        getStoredPlans(),
+        getStoredSetting("app")
+    ]);
 
-    const backup = {
-        format: BACKUP_FORMAT,
-        backupVersion: BACKUP_VERSION,
-        exportedAt: new Date().toISOString(),
-        plans: records
-    };
+const backup = {
+    format: BACKUP_FORMAT,
+    backupVersion: BACKUP_VERSION,
+    exportedAt: new Date().toISOString(),
+    plans: records,
+    settings: settings ?? null
+};
 
     const blob = new Blob(
         [JSON.stringify(backup, null, 2)],
@@ -138,11 +160,28 @@ async function importBackup(backup, exercises) {
         await savePlanNow(plan, { touch: false });
     }
 
+    let settingsUpdated = false;
+
+    if (backup.settings) {
+    const localSettings =
+        await getStoredSetting("app");
+
+    if (
+        !localSettings ||
+        getRecordTimestamp(backup.settings) >
+        getRecordTimestamp(localSettings)
+    ) {
+        await putStoredSetting(backup.settings);
+        settingsUpdated = true;
+    }
+    }
+
     return {
         plans: await loadPlans(exercises),
         added,
         updated,
-        kept
+        kept,
+        settingsUpdated,
     };
 }
 

@@ -61,6 +61,8 @@ let deletePlanFromStorage = async () => {};
 let schedulePlanSave = () => {};
 let requestPersistentStorage = async () => false;
 
+let getDefaultPlanSettings = () => null;
+
 
 export function configurePlanController(dependencies) {
     ({
@@ -117,6 +119,8 @@ export function configurePlanController(dependencies) {
         deletePlanFromStorage,
         schedulePlanSave,
         requestPersistentStorage,
+
+        getDefaultPlanSettings,
 
     } = dependencies);
 }
@@ -871,7 +875,9 @@ document.addEventListener("keydown", event => {
                 createdAt: Date.now(),
 
                 name: `Plan ${plans.length + 1}`,
-                defaults: {},
+                defaults: structuredClone(
+                    getDefaultPlanSettings() ?? {}
+                ),
                 exercises: [],
                 notes: "",
                 equipment: [],

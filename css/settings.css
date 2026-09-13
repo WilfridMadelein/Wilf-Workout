@@ -1,0 +1,270 @@
+/* =========================================================
+   PAGE PARAMÈTRES
+========================================================= */
+
+#page-settings {
+    display: none;
+    padding: 20px;
+}
+
+.settings-page {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.settings-section {
+    margin-top: 18px;
+    padding: 18px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.settings-section > h3 {
+    margin-top: 0;
+}
+
+.settings-help {
+    margin-top: -4px;
+    color: #666;
+    font-size: 14px;
+}
+
+.settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.settings-default-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    align-items: start;
+}
+
+.settings-default-column {
+    min-width: 0;
+}
+
+.settings-volume-box {
+    padding: 12px 14px;
+    border: 1px solid #ddd;
+    border-radius: 7px;
+    background: #fafafa;
+}
+
+.settings-weight-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.settings-weight-row > span {
+    margin-right: auto;
+}
+
+.settings-weight-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: nowrap;
+}
+
+/* =========================================================
+   SWITCH THÈME
+========================================================= */
+
+.settings-theme-switch {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 130px;
+    padding: 2px;
+
+    border: 1px solid #aaa;
+    border-radius: 999px;
+    background: #eee;
+
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.settings-theme-switch::before {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+
+    width: calc(50% - 2px);
+    height: calc(100% - 4px);
+
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 0 0 1px #aaa;
+
+    transition: transform 0.18s ease;
+}
+
+.settings-theme-switch[aria-checked="true"]::before {
+    transform: translateX(100%);
+}
+
+.settings-theme-switch span {
+    position: relative;
+    z-index: 1;
+    padding: 4px 7px;
+    text-align: center;
+    font-size: 13px;
+}
+
+.settings-theme-switch[aria-checked="false"] span:first-child,
+.settings-theme-switch[aria-checked="true"] span:last-child {
+    font-weight: 700;
+}
+
+/* =========================================================
+   SWITCH UNITÉ
+========================================================= */
+
+.settings-weight-unit-switch {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px;
+
+    border: 1px solid #555;
+    border-radius: 999px;
+
+    cursor: pointer;
+}
+
+.settings-weight-unit-switch button {
+    min-width: 31px;
+    padding: 3px 6px;
+
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+
+    color: inherit;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.settings-weight-unit-switch button + button {
+    margin-left: -4px;
+}
+
+.settings-weight-unit-switch button.active {
+    position: relative;
+    z-index: 1;
+
+    background: #111;
+    color: #fff;
+    box-shadow: 0 0 0 1px #aaa;
+    font-weight: 700;
+}
+
+/* =========================================================
+   DONNÉES
+========================================================= */
+
+.settings-data-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.settings-data-actions button {
+    padding: 10px 16px;
+    cursor: pointer;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 700px) {
+    .settings-default-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================================================
+   MODE SOMBRE
+========================================================= */
+
+html[data-theme="dark"] {
+    color-scheme: dark;
+    background: #181818;
+}
+
+html[data-theme="dark"] body {
+    background: #181818;
+    color: #ededed;
+}
+
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select {
+    background: #242424;
+    color: #ededed;
+    border-color: #555;
+}
+
+html[data-theme="dark"] .main-tab {
+    background: #242424;
+    color: #ededed;
+    border-color: #555;
+}
+
+html[data-theme="dark"] .main-tab:hover {
+    background: #303030;
+}
+
+html[data-theme="dark"] .main-tab.active {
+    background: #ededed;
+    color: #181818;
+    border-color: #ededed;
+}
+
+html[data-theme="dark"] .settings-section,
+html[data-theme="dark"] .plan-card,
+html[data-theme="dark"] .plan-card-notes,
+html[data-theme="dark"] .plan-settings-column,
+html[data-theme="dark"] .plan-volume-settings,
+html[data-theme="dark"] .plan-filter-options,
+html[data-theme="dark"] .plan-equipment-options,
+html[data-theme="dark"] .exercise-item,
+html[data-theme="dark"] .filter-options {
+    background: #242424;
+    border-color: #444;
+}
+
+html[data-theme="dark"] .settings-volume-box {
+    background: #202020;
+    border-color: #444;
+}
+
+html[data-theme="dark"] .plan-card:hover,
+html[data-theme="dark"] .filter-button {
+    background: #2b2b2b;
+    border-color: #555;
+}
+
+html[data-theme="dark"] .filter-button.active {
+    background: #ededed;
+    color: #181818;
+    border-color: #ededed;
+}
+
+html[data-theme="dark"] .plan-card-muscles,
+html[data-theme="dark"] .settings-help,
+html[data-theme="dark"] .plan-notes-counter {
+    color: #aaa;
+}
