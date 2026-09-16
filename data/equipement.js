@@ -15,5 +15,6 @@ const equipmentOptions = [
     "Barre traction",
     "Dip bar",
     "Anneaux/TRX",
-    "Parallettes"
+    "Parallettes",
+    "Swiss ball",
 ];
