@@ -34,12 +34,12 @@ function normalizePlanDefaults(defaults = {}) {
 
 function createDefaultAppSettings() {
     return {
-    id: APP_SETTINGS_ID,
-    schemaVersion: SETTINGS_SCHEMA_VERSION,
-    updatedAt: Date.now(),
-    theme: "light",
-    bodyModel: "male",
-    planDefaults: normalizePlanDefaults()
+        id: APP_SETTINGS_ID,
+        schemaVersion: SETTINGS_SCHEMA_VERSION,
+        updatedAt: Date.now(),
+        theme: "light",
+        bodyModel: "male",
+        planDefaults: normalizePlanDefaults()
     };
 }
 

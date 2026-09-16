@@ -8,7 +8,7 @@ import {
 // STOCKAGE DES PLANS
 // ============================================================
 
-const PLAN_SCHEMA_VERSION = 1;
+const PLAN_SCHEMA_VERSION = 2;
 const saveTimers = new Map();
 
 // ------------------------------------------------------------

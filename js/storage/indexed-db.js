@@ -3,7 +3,6 @@
 // ============================================================
 
 const DB_NAME = "wilf-workout";
-const DB_VERSION = 1;
 const PLAN_STORE = "plans";
 const SETTINGS_STORE = "settings";
 
@@ -24,11 +23,11 @@ function transactionToPromise(transaction) {
     });
 }
 
-function openDatabase() {
-    if (databasePromise) return databasePromise;
-
-    databasePromise = new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
+function openDatabaseRequest(version = null) {
+    return new Promise((resolve, reject) => {
+        const request = version == null
+            ? indexedDB.open(DB_NAME)
+            : indexedDB.open(DB_NAME, version);
 
         request.onupgradeneeded = () => {
             const database = request.result;
@@ -36,26 +35,49 @@ function openDatabase() {
             if (!database.objectStoreNames.contains(PLAN_STORE)) {
                 database.createObjectStore(PLAN_STORE, { keyPath: "id" });
             }
+
             if (!database.objectStoreNames.contains(SETTINGS_STORE)) {
                 database.createObjectStore(SETTINGS_STORE, { keyPath: "id" });
             }
         };
 
-        request.onsuccess = () => {
-            const database = request.result;
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
 
-            database.onversionchange = () => {
-                database.close();
-                databasePromise = null;
-            };
-
-            resolve(database);
+        request.onblocked = () => {
+            console.warn(
+                "Mise à jour IndexedDB bloquée. Ferme les autres onglets Wilf Workout."
+            );
         };
+    });
+}
 
-        request.onerror = () => {
+function openDatabase() {
+    if (databasePromise) return databasePromise;
+
+    databasePromise = (async () => {
+        let database = await openDatabaseRequest();
+
+        const missingStore =
+            !database.objectStoreNames.contains(PLAN_STORE) ||
+            !database.objectStoreNames.contains(SETTINGS_STORE);
+
+        if (missingStore) {
+            const nextVersion = database.version + 1;
+
+            database.close();
+            database = await openDatabaseRequest(nextVersion);
+        }
+
+        database.onversionchange = () => {
+            database.close();
             databasePromise = null;
-            reject(request.error);
         };
+
+        return database;
+    })().catch(error => {
+        databasePromise = null;
+        throw error;
     });
 
     return databasePromise;
