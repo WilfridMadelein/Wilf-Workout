@@ -1,4 +1,8 @@
-// MuscleMapJS-main/src/data/male-front-paths.ts
+var __defProp = Object.defineProperty;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
+
+// vendor/musclemap-src/src/data/male-front-paths.ts
 var maleFrontPaths = [
   {
     slug: "chest",
@@ -336,7 +340,7 @@ var maleFrontPaths = [
   }
 ];
 
-// MuscleMapJS-main/src/data/male-back-paths.ts
+// vendor/musclemap-src/src/data/male-back-paths.ts
 var maleBackPaths = [
   {
     slug: "neck",
@@ -536,7 +540,7 @@ var maleBackPaths = [
   }
 ];
 
-// MuscleMapJS-main/src/data/female-front-paths.ts
+// vendor/musclemap-src/src/data/female-front-paths.ts
 var femaleFrontPaths = [
   {
     slug: "neck",
@@ -877,7 +881,7 @@ var femaleFrontPaths = [
   }
 ];
 
-// MuscleMapJS-main/src/data/female-back-paths.ts
+// vendor/musclemap-src/src/data/female-back-paths.ts
 var femaleBackPaths = [
   {
     slug: "hair",
@@ -1058,7 +1062,7 @@ var femaleBackPaths = [
   }
 ];
 
-// MuscleMapJS-main/src/core/body-path-data.ts
+// vendor/musclemap-src/src/core/body-path-data.ts
 var VIEW_BOXES = {
   "male-front": { originX: 0, originY: 95, width: 727, height: 1280 },
   "male-back": { originX: 718, originY: 95, width: 727, height: 1280 },
@@ -1084,9 +1088,10 @@ function getViewBox(gender, side) {
   return VIEW_BOXES[`${gender}-${side}`] ?? VIEW_BOXES["male-front"];
 }
 
-// MuscleMapJS-main/src/core/muscles.ts
+// vendor/musclemap-src/src/core/muscles.ts
 var BASE_MUSCLES = [
   "abs",
+  "adductors",
   "biceps",
   "calves",
   "chest",
@@ -1097,6 +1102,7 @@ var BASE_MUSCLES = [
   "hamstring",
   "hands",
   "head",
+  "hip-flexors",
   "knees",
   "lower-back",
   "obliques",
@@ -1111,9 +1117,7 @@ var BASE_MUSCLES = [
 ];
 var SUB_GROUP_MUSCLES = [
   "ankles",
-  "adductors",
   "neck",
-  "hip-flexors",
   "upper-chest",
   "lower-chest",
   "inner-quad",
@@ -1128,13 +1132,12 @@ var SUB_GROUP_MUSCLES = [
 var ALL_MUSCLES = [...BASE_MUSCLES, ...SUB_GROUP_MUSCLES];
 var SUB_GROUP_MAP = {
   "chest": ["upper-chest", "lower-chest"],
-  "quadriceps": ["inner-quad", "outer-quad", "hip-flexors"],
+  "quadriceps": ["inner-quad", "outer-quad"],
   "abs": ["upper-abs", "lower-abs"],
   "deltoids": ["front-deltoid", "rear-deltoid"],
   "trapezius": ["upper-trapezius", "lower-trapezius"],
   "obliques": ["serratus"],
   "feet": ["ankles"],
-  "hamstring": ["adductors"],
   "head": ["neck"]
 };
 var PARENT_MAP = {};
@@ -1156,7 +1159,7 @@ function isSubGroup(muscle) {
 function isCosmeticPart(muscle) {
   return muscle === "head";
 }
-var ALWAYS_VISIBLE = /* @__PURE__ */ new Set(["ankles", "adductors", "neck"]);
+var ALWAYS_VISIBLE = /* @__PURE__ */ new Set(["ankles", "neck"]);
 function isAlwaysVisibleSubGroup(muscle) {
   return ALWAYS_VISIBLE.has(muscle);
 }
@@ -1203,13 +1206,19 @@ var MUSCLE_DISPLAY_NAMES = {
   "lower-trapezius": "Lower Trapezius"
 };
 
-// MuscleMapJS-main/src/core/body-renderer.ts
+// vendor/musclemap-src/src/core/body-renderer.ts
 var BodyRenderer = class {
   constructor(gender, side, highlights, style, selectedMuscles, hideSubGroups = true) {
+    __publicField(this, "gender");
+    __publicField(this, "side");
+    __publicField(this, "highlights");
+    __publicField(this, "style");
+    __publicField(this, "selectedMuscles");
+    __publicField(this, "hideSubGroups");
     // Cached transform values (in CSS pixel space, before DPR)
-    this._scale = 1;
-    this._offsetX = 0;
-    this._offsetY = 0;
+    __publicField(this, "_scale", 1);
+    __publicField(this, "_offsetX", 0);
+    __publicField(this, "_offsetY", 0);
     this.gender = gender;
     this.side = side;
     this.highlights = highlights;
@@ -1450,7 +1459,7 @@ var BodyRenderer = class {
   }
 };
 
-// MuscleMapJS-main/src/utils/color.ts
+// vendor/musclemap-src/src/utils/color.ts
 var _parseCtx = null;
 function getParseCtx() {
   if (!_parseCtx) {
@@ -1488,7 +1497,7 @@ var MM_DEFAULT_FILL = "rgb(199,199,199)";
 var MM_LIGHTER_FILL = "rgb(224,224,224)";
 var MM_MEDIUM_FILL = "rgb(179,179,179)";
 
-// MuscleMapJS-main/src/styles/body-view-style.ts
+// vendor/musclemap-src/src/styles/body-view-style.ts
 var STYLE_DEFAULT = {
   defaultFillColor: MM_DEFAULT_FILL,
   strokeColor: "transparent",
@@ -1549,7 +1558,7 @@ function resolveStyle(style) {
   return style;
 }
 
-// MuscleMapJS-main/src/heatmap/color-interpolation.ts
+// vendor/musclemap-src/src/heatmap/color-interpolation.ts
 function applyInterpolation(interp, t) {
   const c = Math.max(0, Math.min(1, t));
   switch (interp.type) {
@@ -1572,9 +1581,11 @@ function applyInterpolation(interp, t) {
   }
 }
 
-// MuscleMapJS-main/src/heatmap/color-scale.ts
+// vendor/musclemap-src/src/heatmap/color-scale.ts
 var HeatmapColorScale = class {
   constructor(colors, interpolation = { type: "linear" }) {
+    __publicField(this, "colors");
+    __publicField(this, "interpolation");
     this.colors = colors;
     this.interpolation = interpolation;
   }
@@ -1619,48 +1630,58 @@ function resolveColorScale(scale, interpolation) {
   return new HeatmapColorScale(scale, interpolation);
 }
 
-// MuscleMapJS-main/src/widget/muscle-map-widget.ts
+// vendor/musclemap-src/src/widget/muscle-map-widget.ts
 var MuscleMapWidget = class {
   // ─── Constructor ─────────────────────────────────────────────────────────
   constructor(container, options = {}) {
-    this.dpr = 1;
-    this.highlights = /* @__PURE__ */ new Map();
-    this.selectedMuscles = /* @__PURE__ */ new Set();
-    this.hoveredMuscle = null;
-    this.eventHandlers = /* @__PURE__ */ new Map();
-    this.resizeObserver = null;
-    this.destroyed = false;
+    // ─── State ───────────────────────────────────────────────────────────────
+    __publicField(this, "container");
+    __publicField(this, "canvas");
+    __publicField(this, "ctx");
+    __publicField(this, "dpr", 1);
+    __publicField(this, "gender");
+    __publicField(this, "side");
+    __publicField(this, "style");
+    __publicField(this, "interactive");
+    __publicField(this, "multiSelect");
+    __publicField(this, "hideSubGroups");
+    __publicField(this, "highlights", /* @__PURE__ */ new Map());
+    __publicField(this, "selectedMuscles", /* @__PURE__ */ new Set());
+    __publicField(this, "hoveredMuscle", null);
+    __publicField(this, "eventHandlers", /* @__PURE__ */ new Map());
+    __publicField(this, "resizeObserver", null);
+    __publicField(this, "destroyed", false);
     // Animation state
-    this._animated = false;
-    this._animDuration = 300;
+    __publicField(this, "_animated", false);
+    __publicField(this, "_animDuration", 300);
     // ms
-    this._prevHighlights = /* @__PURE__ */ new Map();
-    this._animProgress = 1;
-    this._animRAF = 0;
-    this._animStartTime = 0;
+    __publicField(this, "_prevHighlights", /* @__PURE__ */ new Map());
+    __publicField(this, "_animProgress", 1);
+    __publicField(this, "_animRAF", 0);
+    __publicField(this, "_animStartTime", 0);
     // Pulse state
-    this._pulseEnabled = false;
-    this._pulseSpeed = 1.5;
-    this._pulseMin = 0.6;
-    this._pulseMax = 1;
-    this._pulseRAF = 0;
+    __publicField(this, "_pulseEnabled", false);
+    __publicField(this, "_pulseSpeed", 1.5);
+    __publicField(this, "_pulseMin", 0.6);
+    __publicField(this, "_pulseMax", 1);
+    __publicField(this, "_pulseRAF", 0);
     // Gestures
-    this._longPressTimer = 0;
-    this._longPressDuration = 500;
-    this._isDragging = false;
-    this._lastDragMuscle = null;
+    __publicField(this, "_longPressTimer", 0);
+    __publicField(this, "_longPressDuration", 500);
+    __publicField(this, "_isDragging", false);
+    __publicField(this, "_lastDragMuscle", null);
     // Tooltip
-    this._tooltipEl = null;
-    this._tooltipEnabled = false;
-    this._tooltipRenderer = null;
+    __publicField(this, "_tooltipEl", null);
+    __publicField(this, "_tooltipEnabled", false);
+    __publicField(this, "_tooltipRenderer", null);
     // Selection history
-    this._historyEnabled = false;
-    this._undoStack = [];
-    this._redoStack = [];
-    this._historyMax = 50;
+    __publicField(this, "_historyEnabled", false);
+    __publicField(this, "_undoStack", []);
+    __publicField(this, "_redoStack", []);
+    __publicField(this, "_historyMax", 50);
     // ─── Internal: Event Handling ────────────────────────────────────────────
     /** Unified pointer down: starts long press timer + prepares drag. */
-    this.handlePointerDown = (e) => {
+    __publicField(this, "handlePointerDown", (e) => {
       const { x, y } = this.canvasCoords(e);
       this._isDragging = false;
       this._lastDragMuscle = null;
@@ -1671,9 +1692,9 @@ var MuscleMapWidget = class {
           this.emit("muscleLongPress", hit.muscle, hit.side);
         }
       }, this._longPressDuration);
-    };
+    });
     /** Pointer move: hover detection + drag-to-select. */
-    this.handlePointerMove = (e) => {
+    __publicField(this, "handlePointerMove", (e) => {
       const { x, y } = this.canvasCoords(e);
       if (e.buttons > 0) {
         clearTimeout(this._longPressTimer);
@@ -1701,9 +1722,9 @@ var MuscleMapWidget = class {
         this.hideTooltip();
         this.emit("muscleLeave");
       }
-    };
+    });
     /** Pointer up: fire click if not a drag, clean up. */
-    this.handlePointerUp = (e) => {
+    __publicField(this, "handlePointerUp", (e) => {
       clearTimeout(this._longPressTimer);
       if (this._isDragging) {
         this._isDragging = false;
@@ -1728,8 +1749,8 @@ var MuscleMapWidget = class {
         this.emit("muscleClick", hit.muscle, hit.side);
         if (this._pulseEnabled && !this._pulseRAF) this.startPulseLoop();
       }
-    };
-    this.handlePointerLeave = () => {
+    });
+    __publicField(this, "handlePointerLeave", () => {
       clearTimeout(this._longPressTimer);
       if (this._isDragging) {
         this._isDragging = false;
@@ -1742,7 +1763,7 @@ var MuscleMapWidget = class {
         this.hideTooltip();
         this.emit("muscleLeave");
       }
-    };
+    });
     this.container = container;
     this.gender = options.gender ?? "male";
     this.side = options.side ?? "front";
@@ -2269,9 +2290,19 @@ var GRADIENT_DIR_MAP = {
   rightToLeft: [1, 0.5, 0, 0.5]
 };
 
-// MuscleMapJS-main/src/widget/heatmap-legend.ts
+// vendor/musclemap-src/src/widget/heatmap-legend.ts
 var HeatmapLegend = class {
   constructor(container, options) {
+    __publicField(this, "container");
+    __publicField(this, "canvas");
+    __publicField(this, "ctx");
+    __publicField(this, "labelMinEl");
+    __publicField(this, "labelMaxEl");
+    __publicField(this, "scale");
+    __publicField(this, "interpolation");
+    __publicField(this, "orientation");
+    __publicField(this, "barThickness");
+    __publicField(this, "steps");
     this.container = container;
     this.orientation = options.orientation ?? "horizontal";
     this.barThickness = options.barThickness ?? 16;
@@ -2375,7 +2406,7 @@ var HeatmapLegend = class {
   }
 };
 
-// MuscleMapJS-main/src/i18n/locales.ts
+// vendor/musclemap-src/src/i18n/locales.ts
 var LOCALES = {
   en: {
     "abs": "Abs",

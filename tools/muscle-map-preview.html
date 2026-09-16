@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>MuscleMap — Calibration</title>
+
+    <style>
+        body {
+            margin: 20px;
+            font-family: sans-serif;
+        }
+
+        .toolbar,
+        #muscle-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+
+        .maps {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 700px;
+        }
+
+        .map {
+            height: 520px;
+        }
+
+        button {
+            padding: 6px 10px;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        code {
+            font-size: 16px;
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>MuscleMap — Calibration</h1>
+
+<div class="toolbar">
+    <button data-gender="male">Homme</button>
+    <button data-gender="female">Femme</button>
+    <button id="clear-button">Effacer</button>
+</div>
+
+<p>
+    Région :
+    <code id="selected-muscle">—</code>
+</p>
+
+<div id="muscle-buttons"></div>
+
+<div class="maps">
+    <div>
+        <h2>Devant</h2>
+        <div id="front-map" class="map"></div>
+    </div>
+
+    <div>
+        <h2>Dos</h2>
+        <div id="back-map" class="map"></div>
+    </div>
+</div>
+
+<script type="module">
+import {
+    ALL_MUSCLES,
+    MuscleMapWidget
+} from "../js/vendor/musclemap/musclemap.js";
+
+const unavailable = new Set([
+    "rear-deltoid",
+    "rotator-cuff",
+    "rhomboids",
+    "upper-trapezius",
+    "lower-trapezius"
+]);
+
+const selected =
+    document.getElementById(
+        "selected-muscle"
+    );
+
+const maps = [
+    new MuscleMapWidget(
+        document.getElementById("front-map"),
+        {
+            gender: "male",
+            side: "front",
+            style: "minimal",
+            showSubGroups: true
+        }
+    ),
+
+    new MuscleMapWidget(
+        document.getElementById("back-map"),
+        {
+            gender: "male",
+            side: "back",
+            style: "minimal",
+            showSubGroups: true
+        }
+    )
+];
+
+function showMuscle(muscle) {
+    selected.textContent = muscle;
+
+    maps.forEach(map => {
+        map.clearHighlights();
+        map.highlight(
+            muscle,
+            "#d32f2f"
+        );
+    });
+}
+
+maps.forEach(map => {
+    map.on(
+        "muscleClick",
+        muscle => showMuscle(muscle)
+    );
+});
+
+ALL_MUSCLES.forEach(muscle => {
+    const button =
+        document.createElement("button");
+
+    button.textContent = muscle;
+
+    if (unavailable.has(muscle)) {
+        button.disabled = true;
+        button.title =
+            "Aucun tracé dans la version actuelle";
+    } else {
+        button.addEventListener(
+            "click",
+            () => showMuscle(muscle)
+        );
+    }
+
+    document
+        .getElementById("muscle-buttons")
+        .appendChild(button);
+});
+
+document
+    .querySelectorAll("[data-gender]")
+    .forEach(button => {
+        button.addEventListener(
+            "click",
+            () => {
+                const gender =
+                    button.dataset.gender;
+
+                maps.forEach(map =>
+                    map.setGender(gender)
+                );
+            }
+        );
+    });
+
+document
+    .getElementById("clear-button")
+    .addEventListener(
+        "click",
+        () => {
+            selected.textContent = "—";
+            maps.forEach(map =>
+                map.clearHighlights()
+            );
+        }
+    );
+</script>
+
+</body>
+</html>
