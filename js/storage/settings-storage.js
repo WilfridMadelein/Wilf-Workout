@@ -34,11 +34,12 @@ function normalizePlanDefaults(defaults = {}) {
 
 function createDefaultAppSettings() {
     return {
-        id: APP_SETTINGS_ID,
-        schemaVersion: SETTINGS_SCHEMA_VERSION,
-        updatedAt: Date.now(),
-        theme: "light",
-        planDefaults: normalizePlanDefaults()
+    id: APP_SETTINGS_ID,
+    schemaVersion: SETTINGS_SCHEMA_VERSION,
+    updatedAt: Date.now(),
+    theme: "light",
+    bodyModel: "male",
+    planDefaults: normalizePlanDefaults()
     };
 }
 
@@ -48,6 +49,7 @@ function normalizeAppSettings(settings = {}) {
         schemaVersion: SETTINGS_SCHEMA_VERSION,
         updatedAt: Number(settings.updatedAt) || Date.now(),
         theme: settings.theme === "dark" ? "dark" : "light",
+        bodyModel: settings.bodyModel === "female" ? "female" : "male",
         planDefaults: normalizePlanDefaults(settings.planDefaults)
     };
 }

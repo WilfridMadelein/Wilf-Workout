@@ -1,0 +1,7 @@
+# Conserver des fins de ligne LF dans le dépôt
+*.js text eol=lf
+*.md text eol=lf
+LICENSE text eol=lf
+LICENSES.md text eol=lf
+
+

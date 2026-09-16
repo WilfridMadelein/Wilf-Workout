@@ -1,3 +1,7 @@
+import {
+    renderExerciseMuscleMap
+} from "./exercise-muscle-map.js";
+
 // ============================================================
 // DÉTAILS DES EXERCICES
 // ============================================================
@@ -166,6 +170,11 @@ function displayExerciseDetails(
             ${getProgressionDisplay(exercise) || "—"}
         </p>
 
+<div
+    class="exercise-muscle-map"
+    data-exercise-muscle-map
+></div>
+
         <p>
             <strong>Muscles principaux :</strong><br>
             ${exercise.muscles_principaux
@@ -200,6 +209,13 @@ function displayExerciseDetails(
             .map(line => `<p>${line}</p>`)
             .join("")}
     `;
+
+renderExerciseMuscleMap(
+    infoElement.querySelector(
+        "[data-exercise-muscle-map]"
+    ),
+    exercise
+);    
 
     updateProgressionNavigation(
         exercise,

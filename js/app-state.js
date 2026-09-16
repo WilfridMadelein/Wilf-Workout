@@ -37,6 +37,12 @@ export const pageSettings = document.getElementById("page-settings");
 export const settingsThemeSwitch =
     document.getElementById("settings-theme-switch");
 
+export const settingsBodyModelSwitch =
+    document.getElementById("settings-body-model-switch");
+
+export const settingsBodyModelButtons = [
+    ...document.querySelectorAll("[data-body-model]")];
+
 export const settingsPlanSetsInput =
     document.getElementById("settings-plan-sets");
 

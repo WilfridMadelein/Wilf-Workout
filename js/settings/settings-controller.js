@@ -7,6 +7,9 @@ let getAppSettings = () => null;
 let scheduleAppSettingsSave = () => {};
 
 let themeSwitch;
+let bodyModelSwitch;
+let bodyModelButtons;
+let onBodyModelChange = () => {};
 let setsInput;
 let repsInput;
 let timeInput;
@@ -26,6 +29,9 @@ function configureSettingsController(dependencies) {
         scheduleAppSettingsSave,
 
         themeSwitch,
+        bodyModelSwitch,
+        bodyModelButtons,
+        onBodyModelChange,
         setsInput,
         repsInput,
         timeInput,
@@ -55,6 +61,14 @@ function updateThemeSwitch(theme) {
     );
 }
 
+function updateBodyModelSwitch(model) {
+    bodyModelButtons.forEach(button => {
+        const active = button.dataset.bodyModel === model;
+        button.classList.toggle("active",active);
+        button.setAttribute("aria-pressed",String(active));
+    });
+}
+
 function updateWeightUnitSwitch(unit) {
     weightUnitButtons.forEach(button => {
         const active =
@@ -76,6 +90,7 @@ function refreshSettingsInterface() {
 
     applyAppTheme(settings.theme);
     updateThemeSwitch(settings.theme);
+    updateBodyModelSwitch(settings.bodyModel);
 
     setsInput.value = defaults.sets;
     repsInput.value = defaults.reps;
@@ -235,6 +250,53 @@ function setupSettingsController() {
         updateThemeSwitch(settings.theme);
         scheduleAppSettingsSave(settings);
     });
+
+    bodyModelSwitch.addEventListener(
+    "click",
+    event => {
+        const settings =
+            getAppSettings();
+
+        if (!settings) return;
+
+        const button =
+            event.target.closest(
+                "[data-body-model]"
+            );
+
+        const rect =
+            bodyModelSwitch
+                .getBoundingClientRect();
+
+        const model =
+            button?.dataset.bodyModel ??
+            (
+                event.clientX <
+                rect.left + rect.width / 2
+                    ? "male"
+                    : "female"
+            );
+
+        if (
+            !["male", "female"]
+                .includes(model)
+        ) {
+            return;
+        }
+
+        if (
+            settings.bodyModel === model
+        ) {
+            return;
+        }
+
+        settings.bodyModel = model;
+
+        updateBodyModelSwitch(model);
+        scheduleAppSettingsSave(settings);
+        onBodyModelChange();
+    }
+    );
 
     weightUnitSwitch.addEventListener("click", () => {
         const settings = getAppSettings();

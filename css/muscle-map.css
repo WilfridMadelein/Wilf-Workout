@@ -1,0 +1,32 @@
+/* =========================================================
+   CARTE MUSCULAIRE DES EXERCICES
+========================================================= */
+
+.exercise-muscle-map {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 10px;
+    margin: 14px 0 18px;
+}
+
+.exercise-muscle-map-view {
+    min-width: 0;
+    text-align: center;
+}
+
+.exercise-muscle-map-label {
+    display: block;
+    margin-bottom: 4px;
+    color: #777;
+    font-size: 12px;
+}
+
+.exercise-muscle-map-canvas {
+    width: 100%;
+    height: clamp(210px, 30vw, 310px);
+}
+
+html[data-theme="dark"] .exercise-muscle-map-label {
+    color: #aaa;
+}

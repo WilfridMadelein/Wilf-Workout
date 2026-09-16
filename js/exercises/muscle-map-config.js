@@ -26,27 +26,13 @@ const FAMILY_MAP = {
 };
 
 const SUBMUSCLE_MAP = {
-    "pectoraux|pectoral claviculaire": ["upper-chest"],
-
-    "epaules|deltoide anterieur": ["front-deltoid"],
-    "epaules|deltoide posterieur": ["rear-deltoid"],
-    "epaules|deltoide moyen": ["deltoids"],
-
     "abdominaux|obliques": ["obliques"],
 
-    "dos|grand dorsal": ["upper-back"],
-    "dos|infra-epineux": ["rotator-cuff"],
-    "dos|erecteur du rachis": ["lower-back"],
+    "dos|lombaires": ["lower-back"],
+    "dos|erecteur": ["lower-back"],
 
-    "trapezes|superieur": ["upper-trapezius"],
-    "trapezes|moyen": ["trapezius"],
-    "trapezes|inferieur": ["lower-trapezius"],
-
-    "quadriceps|vaste interne": ["inner-quad"],
-    "quadriceps|vaste externe": ["outer-quad"],
-    "quadriceps|droit femoral": ["quadriceps"],
-    "quadriceps|adducteur": ["adductors"],
-    "quadriceps|hip flexors": ["hip-flexors"]
+    "quadriceps|hip flexors": ["hip-flexors"],
+    "quadriceps|aducteur": ["adductors"]
 };
 
 // ============================================================

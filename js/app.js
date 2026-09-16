@@ -118,6 +118,8 @@ tabSettings,
 pageSettings,
 
 settingsThemeSwitch,
+settingsBodyModelSwitch,
+settingsBodyModelButtons,
 settingsPlanSetsInput,
 settingsPlanRepsInput,
 settingsPlanTimeInput,
@@ -219,6 +221,11 @@ import {
 } from "./exercises/exercise-details.js";
 
 import {
+    configureExerciseMuscleMap,
+    refreshExerciseMuscleMapModel
+} from "./exercises/exercise-muscle-map.js";
+
+import {
     configurePlanRender,
     createPlanNumberInput,
     renderPlanExercises,
@@ -286,11 +293,18 @@ let appSettings = createDefaultAppSettings();
 // CONFIGURATION DES MODULES
 // ============================================================
 
+configureExerciseMuscleMap({
+    getAppSettings: () => appSettings
+});
+
 configureSettingsController({
     getAppSettings: () => appSettings,
     scheduleAppSettingsSave,
 
     themeSwitch: settingsThemeSwitch,
+    bodyModelSwitch: settingsBodyModelSwitch,
+    bodyModelButtons: settingsBodyModelButtons,
+    onBodyModelChange: refreshExerciseMuscleMapModel,
     setsInput: settingsPlanSetsInput,
     repsInput: settingsPlanRepsInput,
     timeInput: settingsPlanTimeInput,
