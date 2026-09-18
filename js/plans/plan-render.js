@@ -152,6 +152,30 @@ function createVerticalArrowButtons({
 // RENDU DES EXERCICES DU PLAN
 // ============================================================
 
+function createExerciseControlRow(label, control, className) {
+    const row = document.createElement("div");
+    const title = document.createElement("span");
+
+    row.classList.add(
+        "plan-exercise-control-row",
+        className
+    );
+
+    title.classList.add(
+        "plan-exercise-control-label"
+    );
+
+    title.textContent = `${label} :`;
+
+    control.classList.add(
+        "plan-exercise-control-values"
+    );
+
+    row.append(title, control);
+
+    return row;
+}
+
 function renderPlanExercises() {
     const list = getPlanExerciseList();
     const plan = getCurrentPlan();
@@ -195,13 +219,12 @@ function renderPlanExercises() {
     });
 
 
-    const workout =
-        document.createElement("div");
+const workout =
+    document.createElement("div");
 
-    workout.classList.add(
-        "plan-workout-content",
-        "responsive-columns"
-    );
+workout.classList.add(
+    "plan-workout-content"
+);
 
     let supersetColorIndex = 0;
 
@@ -305,12 +328,6 @@ if (isSuperset) {
 setExercises.classList.add(
     "plan-set-exercises"
 );
-
-if (isSuperset) {
-    setExercises.classList.add(
-        "responsive-columns"
-    );
-}
 
 setBlock.appendChild(setExercises);
 
@@ -641,7 +658,7 @@ shell.appendChild(exerciseRail);
                             max: 9999.9,
                             step: 2.5,
                             decimals: 1,
-                            minChars: 3,
+                            minChars: 1,
                             snapStep: true
                         }
                     )
@@ -681,10 +698,12 @@ shell.appendChild(exerciseRail);
 
                 weight.appendChild(weightUnit);
 
+                const weightRow =
+                    createExerciseControlRow(
+                        "Poids", weight,"plan-exercise-weight-row");
+
                 line2.append(
-                    muscles,
-                    weight
-                );
+                    muscles, weightRow);
 
 
                 // =================================================
@@ -714,7 +733,7 @@ shell.appendChild(exerciseRail);
                             min: 1,
                             max: 999,
                             step: 1,
-                            minChars: 3
+                            minChars: 1
                         }
                     );
 
@@ -763,7 +782,7 @@ shell.appendChild(exerciseRail);
                                 planExercise.valueUnit ===
                                 "sec",
 
-                            minChars: 3
+                            minChars: 1
                         }
                     )
                 );
@@ -886,7 +905,7 @@ shell.appendChild(exerciseRail);
                             max: 999,
                             step: 15,
                             snapStep: true,
-                            minChars: 3
+                            minChars: 1
                         }
                     )
                 );
@@ -917,27 +936,47 @@ shell.appendChild(exerciseRail);
                     restText
                 );
 
-                rest.appendChild(restLabels);
+rest.appendChild(restLabels);
 
+const volumeGroup =
+    document.createElement("div");
 
-                const volumeGroup =
-                    document.createElement("div");
+volumeGroup.classList.add(
+    "plan-line3-volume"
+);
 
-                volumeGroup.classList.add(
-                    "plan-line3-volume"
-                );
+volumeGroup.append(
+    setsControl,
+    multiplier,
+    volume
+);
 
-                volumeGroup.append(
-                    setsControl,
-                    multiplier,
-                    volume
-                );
+const volumeRow =
+    createExerciseControlRow(
+        "Volume",
+        volumeGroup,
+        "plan-exercise-volume-row"
+    );
 
-                line3.append(
-                    volumeGroup,
-                    tempo,
-                    rest
-                );
+const tempoRow =
+    createExerciseControlRow(
+        "Tempo",
+        tempo,
+        "plan-exercise-tempo-row"
+    );
+
+const restRow =
+    createExerciseControlRow(
+        "Repos",
+        rest,
+        "plan-exercise-rest-row"
+    );
+
+line3.append(
+    volumeRow,
+    tempoRow,
+    restRow
+);
 
 
                 // =================================================

@@ -814,8 +814,15 @@
 
 .plan-workout-content {
     width: 100%;
-    --column-gap: 18px;
     margin-top: 20px;
+
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    align-items: start;
+
+    container-name: plan-workout;
+    container-type: inline-size;
 }
 
 
@@ -843,8 +850,8 @@
 }
 
 .plan-set-superset .plan-set-exercises {
-    --column-min: 360px;
-    --column-gap: 8px;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
 }
 
 .plan-set-single {
@@ -887,6 +894,20 @@
     background: rgba(230, 170, 80, 0.13);
 }
 
+@media (max-width: 620px) {
+    .plan-workout-content {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .plan-set-superset {
+        grid-column: auto;
+    }
+
+    .plan-set-superset .plan-set-exercises {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
 
 /* =========================================================
    CARTE D'EXERCICE
@@ -895,8 +916,10 @@
 .plan-exercise-shell {
     display: flex;
     align-items: stretch;
-
     margin-top: 6px;
+
+    container-name: plan-exercise-card;
+    container-type: inline-size;
 }
 
 .plan-exercise-card {
@@ -1374,7 +1397,6 @@
 ========================================================= */
 
 @media (max-width: 600px) {
-
     .plan-filters-box,
     .plan-default-settings {
         padding: 12px;
@@ -1382,66 +1404,6 @@
 
     .plan-set-block {
         padding: 6px;
-    }
-
-    .plan-exercise-card {
-        padding: 8px 9px;
-    }
-
-    .plan-superset-order {
-        width: 22px;
-        flex-basis: 22px;
-    }
-
-    /* Nom de l'exercice puis progression sur une autre ligne */
-
-    .plan-exercise-line-1 {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        gap: 5px;
-        align-items: start;
-    }
-
-    .plan-exercise-identity {
-        width: 100%;
-    }
-
-    .plan-progression-cell {
-        width: 100%;
-        margin-left: 0;
-        justify-content: flex-end;
-    }
-
-    /* Volume/repos sur une ligne, tempo en dessous */
-
-    .plan-exercise-line-3 {
-        min-height: 0;
-
-        grid-template-columns:
-            minmax(0, 1fr)
-            max-content;
-
-        grid-template-areas:
-            "volume rest"
-            "tempo tempo";
-
-        column-gap: 8px;
-        row-gap: 7px;
-    }
-
-    .plan-line3-volume {
-        grid-area: volume;
-        justify-self: start;
-    }
-
-    .plan-exercise-line-3 .plan-tempo-container {
-        grid-area: tempo;
-        justify-self: start;
-    }
-
-    .plan-exercise-line-3 .plan-rest-control {
-        grid-area: rest;
-        justify-self: end;
     }
 }
 
@@ -1453,7 +1415,7 @@
     display: grid;
 
     grid-template-columns:
-        clamp(110px, 40%, 220px)
+        clamp(170px, 34%, 230px)
         minmax(0, 1fr);
 
     grid-template-areas:
@@ -1465,20 +1427,37 @@
         "map rest"
         "footer footer";
 
-    column-gap: 12px;
-    row-gap: 5px;
-
-    container-name: plan-exercise-card;
-    container-type: inline-size;
+    column-gap: 14px;
+    row-gap: 6px;
 }
 
 .plan-exercise-line-1 {
     grid-area: header;
+
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1fr)
+        max-content;
+
+    align-items: start;
+    column-gap: 10px;
+}
+
+.plan-exercise-line-1
+.plan-progression-cell {
+    width: auto;
+    margin-left: 0;
+
+    justify-self: end;
+    justify-content: flex-end;
 }
 
 .plan-exercise-muscle-map {
     grid-area: map;
     align-self: start;
+
+    width: 100%;
+    max-width: 230px;
 }
 
 .plan-exercise-line-2,
@@ -1491,35 +1470,20 @@
     align-self: center;
 }
 
-.plan-line3-volume {
+.plan-exercise-volume-row {
     grid-area: volume;
-
-    align-self: center;
-    justify-self: start;
 }
 
-.plan-weight-control {
+.plan-exercise-weight-row {
     grid-area: weight;
-
-    margin-left: 0;
-    align-self: center;
-    justify-self: start;
 }
 
-.plan-exercise-line-3
-.plan-tempo-container {
+.plan-exercise-tempo-row {
     grid-area: tempo;
-
-    align-self: center;
-    justify-self: start;
 }
 
-.plan-exercise-line-3
-.plan-rest-control {
+.plan-exercise-rest-row {
     grid-area: rest;
-
-    align-self: center;
-    justify-self: start;
 }
 
 .plan-exercise-line-4 {
@@ -1527,6 +1491,82 @@
     margin-top: 6px;
 }
 
+.plan-exercise-control-row {
+    min-width: 0;
+
+    display: grid;
+    grid-template-columns: 62px minmax(0, 1fr);
+    align-items: center;
+
+    column-gap: 7px;
+}
+
+.plan-exercise-control-label {
+    white-space: nowrap;
+}
+
+.plan-exercise-control-values {
+    min-width: 0;
+    justify-self: start;
+}
+
+.plan-exercise-control-row
+.plan-number-input {
+    text-align: center;
+}
+
+.plan-exercise-control-row
+.plan-number-control {
+    align-items: center;
+}
+
+.plan-exercise-control-row
+.plan-line3-volume,
+.plan-exercise-control-row
+.plan-weight-control,
+.plan-exercise-control-row
+.plan-tempo-container,
+.plan-exercise-control-row
+.plan-rest-control {
+    grid-area: auto;
+    margin-left: 0;
+    align-self: center;
+    justify-self: start;
+}
+
+.plan-exercise-control-row
+.plan-line3-volume {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.plan-exercise-control-row
+.plan-weight-control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.plan-exercise-control-row
+.plan-tempo-container {
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+.plan-exercise-control-row
+.plan-rest-control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.plan-exercise-control-row
+.plan-tempo-separator {
+    margin: 0 4px;
+    line-height: 1;
+}
 
 /* =========================================================
    BARRE LATÉRALE DE L'EXERCICE
@@ -1582,28 +1622,27 @@
     min-width: 130px;
 }
 
-
 /* =========================================================
    NOM / PROGRESSION — CARTE ÉTROITE
 ========================================================= */
 
-@container plan-exercise-card (max-width: 430px) {
+@container plan-workout (max-width: 950px) {
     .plan-exercise-line-1 {
-        flex-wrap: wrap;
-        row-gap: 3px;
+        grid-template-columns: minmax(0, 1fr);
+        row-gap: 4px;
     }
 
-    .plan-exercise-identity {
-        width: 100%;
-        flex: 1 0 100%;
-    }
-
+    .plan-exercise-line-1
     .plan-progression-cell {
-        width: 100%;
-        flex: 1 0 100%;
-
+        width: auto;
         margin-left: 0;
-        justify-content: flex-end;
+
+        justify-self: start;
+        justify-content: flex-start;
+    }
+
+    .plan-progression-name {
+        text-align: left;
     }
 
     .plan-progression-buttons {
@@ -1611,6 +1650,35 @@
     }
 }
 
+/* =========================================================
+   CARTE D'EXERCICE — UNE COLONNE
+========================================================= */
+
+@container plan-workout (max-width: 900px) {
+    .plan-exercise-card {
+        grid-template-columns: minmax(0, 1fr);
+
+        grid-template-areas:
+            "header"
+            "map"
+            "info"
+            "volume"
+            "weight"
+            "tempo"
+            "rest"
+            "footer";
+
+        column-gap: 0;
+        row-gap: 7px;
+    }
+
+    .plan-exercise-muscle-map {
+        width: clamp(170px, 48%, 210px);
+        max-width: 100%;
+        justify-self: start;
+        margin: 4px 0 8px;
+    }
+}
 
 /* =========================================================
    MOBILE
@@ -1619,12 +1687,6 @@
 @media (max-width: 600px) {
     .plan-exercise-card {
         padding: 8px;
-
-        grid-template-columns:
-            clamp(105px, 40%, 150px)
-            minmax(0, 1fr);
-
-        column-gap: 8px;
     }
 
     .plan-exercise-rail {
