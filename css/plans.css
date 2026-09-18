@@ -810,6 +810,9 @@
     width: 100%;
     overflow-x: auto;
     padding-bottom: 8px;
+
+    container-name: plan-layout;
+    container-type: inline-size;    
 }
 
 .plan-workout-content {
@@ -894,7 +897,7 @@
     background: rgba(230, 170, 80, 0.13);
 }
 
-@media (max-width: 620px) {
+@container plan-layout (max-width: 810px) {
     .plan-workout-content {
         grid-template-columns: minmax(0, 1fr);
     }
@@ -1415,8 +1418,8 @@
     display: grid;
 
     grid-template-columns:
-        clamp(170px, 34%, 230px)
-        minmax(0, 1fr);
+        clamp(155px, 34%, 230px)
+        minmax(150, 1fr);
 
     grid-template-areas:
         "header header"
@@ -1427,8 +1430,10 @@
         "map rest"
         "footer footer";
 
-    column-gap: 14px;
+    column-gap: 10px;
     row-gap: 6px;
+
+    container-type: inline-size;
 }
 
 .plan-exercise-line-1 {
@@ -1492,13 +1497,14 @@
 }
 
 .plan-exercise-control-row {
-    min-width: 0;
+    width: min(240px, 97%);
+    min-width: min(170px, 100%);
 
     display: grid;
     grid-template-columns: 62px minmax(0, 1fr);
     align-items: center;
 
-    column-gap: 34px;
+    column-gap: clamp(24px, 17cqi, 64px);
 }
 
 .plan-exercise-control-label {
@@ -1507,7 +1513,8 @@
 
 .plan-exercise-control-values {
     min-width: 0;
-    justify-self: start;
+    width: 100%;
+    justify-self: stretch;
 }
 
 .plan-exercise-control-row
@@ -1520,71 +1527,136 @@
     align-items: center;
 }
 
+
+/* Volume */
+
 .plan-exercise-control-row
-.plan-line3-volume,
-.plan-exercise-control-row
-.plan-weight-control,
-.plan-exercise-control-row
-.plan-tempo-container,
-.plan-exercise-control-row
-.plan-rest-control {
+.plan-line3-volume {
     grid-area: auto;
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 6px;
+
+    margin-left: 0;
+    align-self: center;
+    justify-self: stretch;
+}
+
+.plan-exercise-volume-row
+.plan-volume-control {
+    flex: 1 1 auto;
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+
+    gap: 0;
+}
+
+.plan-exercise-volume-row
+.plan-value-unit {
+    flex: 0 0 auto;
+
+    margin-left: auto;
+    padding-left: 7px;
+
+    transform: none;
+}
+
+
+/* Poids */
+
+.plan-exercise-control-row
+.plan-weight-control {
+    grid-area: auto;
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 0;
+
+    margin-left: 0;
+    align-self: center;
+    justify-self: stretch;
+}
+
+.plan-exercise-control-row
+.plan-weight-control .plan-number-control {
+    width: auto;
+    flex: 0 0 auto;
+}
+
+.plan-exercise-weight-row
+.plan-weight-unit {
+    flex: 0 0 auto;
+
+    margin-left: auto;
+    padding-left: 7px;
+
+    transform: none;
+}
+
+
+/* Tempo */
+
+.plan-exercise-control-row
+.plan-tempo-container {
+    grid-area: auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+
+    gap: 0;
+
     margin-left: 0;
     align-self: center;
     justify-self: start;
 }
 
 .plan-exercise-control-row
-.plan-line3-volume {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.plan-exercise-control-row
-.plan-weight-control {
-    display: flex;
-    align-items: center;
-    gap: 13px;
-}
-
-.plan-exercise-control-row
-.plan-tempo-container {
-    display: flex;
-    align-items: center;
-    gap: 0;
-}
-
-.plan-exercise-control-row
-.plan-rest-control {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-}
-
-.plan-exercise-control-row
-.plan-weight-control .plan-number-control,
-.plan-exercise-control-row
-.plan-rest-control .plan-number-control {
-    width: 7.5ch;
-}
-
-.plan-exercise-control-row
 .plan-tempo-separator {
-    margin: 0 2px;
+    margin: 0 1px;
+
     line-height: 1;
 }
 
-.plan-exercise-volume-row .plan-value-unit {
-    transform: translateX(15px);
+
+/* Repos */
+
+.plan-exercise-control-row
+.plan-rest-control {
+    grid-area: auto;
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 0;
+
+    margin-left: 0;
+    align-self: center;
+    justify-self: stretch;
 }
 
-.plan-exercise-weight-row .plan-weight-unit {
-    transform: translateX(11px);
+.plan-exercise-control-row
+.plan-rest-control .plan-number-control {
+    width: auto;
+    flex: 0 0 auto;
 }
 
-.plan-exercise-rest-row .plan-rest-labels {
-    transform: translateX(11px);
+.plan-exercise-rest-row
+.plan-rest-labels {
+    flex: 0 0 auto;
+
+    margin-left: auto;
+    padding-left: 7px;
+
+    transform: none;
 }
 
 /* =========================================================
@@ -1645,7 +1717,7 @@
    NOM / PROGRESSION — CARTE ÉTROITE
 ========================================================= */
 
-@container plan-workout (max-width: 950px) {
+@container plan-workout (max-width: 500px) {
     .plan-exercise-line-1 {
         grid-template-columns: minmax(0, 1fr);
         row-gap: 4px;
@@ -1670,10 +1742,25 @@
 }
 
 /* =========================================================
+   CARTE D'EXERCICE — MODE HORIZONTAL
+========================================================= */
+
+@container plan-workout (min-width: 391px) {
+    .plan-exercise-control-row {
+        width: min(190px, 100%);
+        min-width: 0;
+
+        column-gap: clamp(8px, 2cqi, 14px);
+    }
+}
+
+
+
+/* =========================================================
    CARTE D'EXERCICE — UNE COLONNE
 ========================================================= */
 
-@container plan-workout (max-width: 900px) {
+@container plan-workout (max-width: 390px) {
     .plan-exercise-card {
         grid-template-columns: minmax(0, 1fr);
 
@@ -1692,7 +1779,7 @@
     }
 
     .plan-exercise-muscle-map {
-        width: clamp(220px, 48%, 260px);
+        width: clamp(220px, 44%, 260px);
         max-width: 100%;
         justify-self: start;
         margin: 4px 0 8px;
