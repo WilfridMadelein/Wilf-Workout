@@ -199,7 +199,8 @@
 }
 
 .settings-body-model-switch button {
-    padding: 4px 9px;
+    min-width: 31px;
+    padding: 4px 6px;
     border: 0;
     border-radius: 999px;
     background: transparent;
@@ -247,6 +248,12 @@ html[data-theme="dark"]
 ========================================================= */
 
 @media (max-width: 700px) {
+    #page-settings {
+        padding: 0;
+    }
+    .settings-section {
+        padding: 12px;
+    }
     .settings-default-grid {
         grid-template-columns: 1fr;
     }

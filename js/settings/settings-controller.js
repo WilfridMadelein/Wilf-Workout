@@ -251,52 +251,19 @@ function setupSettingsController() {
         scheduleAppSettingsSave(settings);
     });
 
-    bodyModelSwitch.addEventListener(
-    "click",
-    event => {
-        const settings =
-            getAppSettings();
+bodyModelSwitch.addEventListener("click", () => {
+    const settings = getAppSettings();
+    if (!settings) return;
 
-        if (!settings) return;
+    settings.bodyModel =
+        settings.bodyModel === "male"
+            ? "female"
+            : "male";
 
-        const button =
-            event.target.closest(
-                "[data-body-model]"
-            );
-
-        const rect =
-            bodyModelSwitch
-                .getBoundingClientRect();
-
-        const model =
-            button?.dataset.bodyModel ??
-            (
-                event.clientX <
-                rect.left + rect.width / 2
-                    ? "male"
-                    : "female"
-            );
-
-        if (
-            !["male", "female"]
-                .includes(model)
-        ) {
-            return;
-        }
-
-        if (
-            settings.bodyModel === model
-        ) {
-            return;
-        }
-
-        settings.bodyModel = model;
-
-        updateBodyModelSwitch(model);
-        scheduleAppSettingsSave(settings);
-        onBodyModelChange();
-    }
-    );
+    updateBodyModelSwitch(settings.bodyModel);
+    scheduleAppSettingsSave(settings);
+    onBodyModelChange();
+});
 
     weightUnitSwitch.addEventListener("click", () => {
         const settings = getAppSettings();

@@ -150,33 +150,35 @@ export function setupAppController() {
         displayExercises
     );
 
-    tabExercises.addEventListener("click", () => {
-    if (planEditor.style.display === "block") {
+tabExercises.addEventListener("click", () => {
+    if (
+        pagePlans.style.display === "block" &&
+        planEditor.style.display === "block"
+    ) {
         saveCurrentPlanFilters();
-    pageSettings.style.display = "none";
-    tabSettings.classList.remove("active");
     }
 
-        pageExercises.style.display = "block";
-        pagePlans.style.display = "none";
+    pageExercises.style.display = "block";
+    pagePlans.style.display = "none";
+    pageSettings.style.display = "none";
 
-        pageExercises
-            .querySelector("#exercise-browser-container")
-            .appendChild(exerciseBrowser);
+    pageExercises
+        .querySelector("#exercise-browser-container")
+        .appendChild(exerciseBrowser);
 
-        exerciseBrowser.style.display = "block";
+    exerciseBrowser.style.display = "block";
 
-        loadSearchState(searchPageState);
+    loadSearchState(searchPageState);
 
-        tabExercises.classList.add("active");
-        tabPlans.classList.remove("active");
+    tabExercises.classList.add("active");
+    tabPlans.classList.remove("active");
+    tabSettings.classList.remove("active");
 
-        setCurrentDetailContext("search");
+    setCurrentDetailContext("search");
 
-        removeAddButton();
-
-        displayExercises();
-    });
+    removeAddButton();
+    displayExercises();
+});
 
 tabPlans.addEventListener("click", () => {
     if (pageExercises.style.display === "block") {

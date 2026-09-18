@@ -56,5 +56,16 @@ header {
     .exercise-main-row {
         grid-template-columns: 1fr;
     }
-
 }
+
+@media (max-width: 600px) {
+    body {
+        padding: 8px;
+    }
+
+    main {
+        width: 100%;
+        max-width: 100%;
+    }
+}
+

@@ -1368,3 +1368,79 @@
     font-size: 13px;
     line-height: 1.4;
 }
+
+/* =========================================================
+   EXERCICES DU PLAN — MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    .plan-filters-box,
+    .plan-default-settings {
+        padding: 12px;
+    }
+
+    .plan-set-block {
+        padding: 6px;
+    }
+
+    .plan-exercise-card {
+        padding: 8px 9px;
+    }
+
+    .plan-superset-order {
+        width: 22px;
+        flex-basis: 22px;
+    }
+
+    /* Nom de l'exercice puis progression sur une autre ligne */
+
+    .plan-exercise-line-1 {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 5px;
+        align-items: start;
+    }
+
+    .plan-exercise-identity {
+        width: 100%;
+    }
+
+    .plan-progression-cell {
+        width: 100%;
+        margin-left: 0;
+        justify-content: flex-end;
+    }
+
+    /* Volume/repos sur une ligne, tempo en dessous */
+
+    .plan-exercise-line-3 {
+        min-height: 0;
+
+        grid-template-columns:
+            minmax(0, 1fr)
+            max-content;
+
+        grid-template-areas:
+            "volume rest"
+            "tempo tempo";
+
+        column-gap: 8px;
+        row-gap: 7px;
+    }
+
+    .plan-line3-volume {
+        grid-area: volume;
+        justify-self: start;
+    }
+
+    .plan-exercise-line-3 .plan-tempo-container {
+        grid-area: tempo;
+        justify-self: start;
+    }
+
+    .plan-exercise-line-3 .plan-rest-control {
+        grid-area: rest;
+        justify-self: end;
+    }
+}
