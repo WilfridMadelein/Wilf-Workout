@@ -1444,3 +1444,191 @@
         justify-self: end;
     }
 }
+
+/* =========================================================
+   CARTE D'EXERCICE — DISPOSITION AVEC CARTE MUSCULAIRE
+========================================================= */
+
+.plan-exercise-card {
+    display: grid;
+
+    grid-template-columns:
+        clamp(110px, 40%, 220px)
+        minmax(0, 1fr);
+
+    grid-template-areas:
+        "header header"
+        "map info"
+        "map volume"
+        "map weight"
+        "map tempo"
+        "map rest"
+        "footer footer";
+
+    column-gap: 12px;
+    row-gap: 5px;
+
+    container-name: plan-exercise-card;
+    container-type: inline-size;
+}
+
+.plan-exercise-line-1 {
+    grid-area: header;
+}
+
+.plan-exercise-muscle-map {
+    grid-area: map;
+    align-self: start;
+}
+
+.plan-exercise-line-2,
+.plan-exercise-line-3 {
+    display: contents;
+}
+
+.plan-exercise-muscles {
+    grid-area: info;
+    align-self: center;
+}
+
+.plan-line3-volume {
+    grid-area: volume;
+
+    align-self: center;
+    justify-self: start;
+}
+
+.plan-weight-control {
+    grid-area: weight;
+
+    margin-left: 0;
+    align-self: center;
+    justify-self: start;
+}
+
+.plan-exercise-line-3
+.plan-tempo-container {
+    grid-area: tempo;
+
+    align-self: center;
+    justify-self: start;
+}
+
+.plan-exercise-line-3
+.plan-rest-control {
+    grid-area: rest;
+
+    align-self: center;
+    justify-self: start;
+}
+
+.plan-exercise-line-4 {
+    grid-area: footer;
+    margin-top: 6px;
+}
+
+
+/* =========================================================
+   BARRE LATÉRALE DE L'EXERCICE
+========================================================= */
+
+.plan-exercise-rail {
+    position: relative;
+
+    width: 30px;
+    flex: 0 0 30px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    border: 1px solid #d8d8d8;
+    border-right: none;
+    border-radius: 6px 0 0 6px;
+
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.plan-exercise-rail
+.plan-combination-button {
+    width: 100%;
+    padding: 6px 0 3px;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    text-decoration: none;
+}
+
+.plan-exercise-order {
+    flex: 1;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.plan-exercise-rail
++ .plan-exercise-card {
+    border-radius: 0 6px 6px 0;
+}
+
+.plan-exercise-rail
+.combination-menu {
+    top: 26px;
+    left: 100%;
+
+    min-width: 130px;
+}
+
+
+/* =========================================================
+   NOM / PROGRESSION — CARTE ÉTROITE
+========================================================= */
+
+@container plan-exercise-card (max-width: 430px) {
+    .plan-exercise-line-1 {
+        flex-wrap: wrap;
+        row-gap: 3px;
+    }
+
+    .plan-exercise-identity {
+        width: 100%;
+        flex: 1 0 100%;
+    }
+
+    .plan-progression-cell {
+        width: 100%;
+        flex: 1 0 100%;
+
+        margin-left: 0;
+        justify-content: flex-end;
+    }
+
+    .plan-progression-buttons {
+        order: -1;
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+    .plan-exercise-card {
+        padding: 8px;
+
+        grid-template-columns:
+            clamp(105px, 40%, 150px)
+            minmax(0, 1fr);
+
+        column-gap: 8px;
+    }
+
+    .plan-exercise-rail {
+        width: 26px;
+        flex-basis: 26px;
+    }
+}

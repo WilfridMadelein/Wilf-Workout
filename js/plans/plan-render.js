@@ -2,6 +2,11 @@ import {
     setupNumberInput
 } from "../ui/ui.js";
 
+import {
+    renderExerciseMuscleMap,
+    destroyExerciseMuscleMapsIn
+} from "../exercises/exercise-muscle-map.js";
+
 // ============================================================
 // DÉPENDANCES
 // ============================================================
@@ -151,6 +156,7 @@ function renderPlanExercises() {
     const list = getPlanExerciseList();
     const plan = getCurrentPlan();
 
+    destroyExerciseMuscleMapsIn(list);
     list.replaceChildren();
 
     if (!plan || plan.exercises.length === 0) {
@@ -330,43 +336,77 @@ setBlock.appendChild(setExercises);
                 );
 
 
-                // ------------------------------------------------
-                // Ordre dans un superset
-                // ------------------------------------------------
+// ------------------------------------------------
+// Barre latérale : Set + ordre dans le Set
+// ------------------------------------------------
 
-                if (isSuperset) {
-                    const exerciseOrder =
-                        createVerticalArrowButtons({
-                            containerClass:
-                                "plan-superset-order",
+const combinationButton =
+    document.createElement("button");
 
-                            buttonClass:
-                                "plan-order-button",
+combinationButton.type = "button";
+combinationButton.textContent =
+    `S${group}`;
 
-                            upDisabled:
-                                exerciseIndex === 0,
+combinationButton.classList.add(
+    "plan-combination-button"
+);
 
-                            downDisabled:
-                                exerciseIndex ===
-                                groupExercises.length - 1,
+combinationButton.title =
+    "Changer de Set";
 
-                            onUp: () =>
-                                moveExerciseWithinCombination(
-                                    planExercise,
-                                    -1
-                                ),
+combinationButton.addEventListener(
+    "click",
+    () => {
+        openCombinationMenu(
+            planExercise,
+            combinationButton
+        );
+    }
+);
 
-                            onDown: () =>
-                                moveExerciseWithinCombination(
-                                    planExercise,
-                                    1
-                                )
-                        });
+const exerciseOrder =
+    createVerticalArrowButtons({
+        containerClass:
+            "plan-exercise-order",
 
-                    shell.appendChild(
-                        exerciseOrder
-                    );
-                }
+        buttonClass:
+            "plan-order-button",
+
+        upDisabled:
+            !isSuperset ||
+            exerciseIndex === 0,
+
+        downDisabled:
+            !isSuperset ||
+            exerciseIndex ===
+            groupExercises.length - 1,
+
+        onUp: () =>
+            moveExerciseWithinCombination(
+                planExercise,
+                -1
+            ),
+
+        onDown: () =>
+            moveExerciseWithinCombination(
+                planExercise,
+                1
+            )
+    });
+
+const exerciseRail =
+    document.createElement("div");
+
+exerciseRail.classList.add(
+    "plan-exercise-rail"
+);
+
+exerciseRail.append(
+    combinationButton,
+    exerciseOrder
+);
+
+shell.appendChild(exerciseRail);
 
 
                 const card =
@@ -375,6 +415,14 @@ setBlock.appendChild(setExercises);
                 card.classList.add(
                     "plan-exercise-card"
                 );
+
+                const muscleMap =
+                    document.createElement("div");
+
+            muscleMap.classList.add(
+                "exercise-muscle-map",
+                "plan-exercise-muscle-map"
+            );
 
 
                 // =================================================
@@ -558,14 +606,16 @@ setBlock.appendChild(setExercises);
                     "plan-exercise-muscles"
                 );
 
-                const categoryText =
-                    exercise.catégorie?.join(" / ") || "";
+                const typeText =
+                    Array.isArray(exercise.type)
+                        ? exercise.type.join(" - ")
+                        : exercise.type || "";
 
                 const muscleText =
-                    muscleFamilies.join(" / ");
+                muscleFamilies.join(" - ");
 
                 muscles.textContent =
-                    [categoryText, muscleText]
+                    [typeText, muscleText]
                         .filter(Boolean)
                         .join(" | ") || "—";
 
@@ -776,7 +826,7 @@ setBlock.appendChild(setExercises);
 
                             value => {
                                 planExercise.tempo[key] = value ?? 0;
-                                chedulePlanSave(getCurrentPlan());
+                                schedulePlanSave(getCurrentPlan());
                             },
 
                             {
@@ -828,7 +878,7 @@ setBlock.appendChild(setExercises);
 
                         value => {
                             planExercise.rest = value ?? 0;
-                            chedulePlanSave(getCurrentPlan());
+                            schedulePlanSave(getCurrentPlan());
                         },
 
                         {
@@ -892,7 +942,7 @@ setBlock.appendChild(setExercises);
 
                 // =================================================
                 // LIGNE 4
-                // Instructions | Set | poubelle
+                // Instructions | poubelle
                 // =================================================
 
                 const line4 =
@@ -938,36 +988,6 @@ setBlock.appendChild(setExercises);
                     }
                 );
 
-
-                // Changement de Set
-
-                const combinationButton =
-                    document.createElement("button");
-
-                combinationButton.type =
-                    "button";
-
-                combinationButton.textContent =
-                    `S${group}`;
-
-                combinationButton.classList.add(
-                    "plan-combination-button"
-                );
-
-                combinationButton.title =
-                    "Changer de Set";
-
-                combinationButton.addEventListener(
-                    "click",
-                    () => {
-                        openCombinationMenu(
-                            planExercise,
-                            combinationButton
-                        );
-                    }
-                );
-
-
                 // Suppression
 
                 const deleteButton =
@@ -1002,13 +1022,13 @@ setBlock.appendChild(setExercises);
 
                 line4.append(
                     instructionsButton,
-                    combinationButton,
                     deleteButton
                 );
 
 
                 card.append(
                     line1,
+                    muscleMap,
                     line2,
                     line3,
                     line4
@@ -1016,6 +1036,12 @@ setBlock.appendChild(setExercises);
 
                 shell.appendChild(card);
                 setExercises.appendChild(shell);
+
+                renderExerciseMuscleMap(
+                    muscleMap,
+                    exercise,
+                    { compact: true }
+                );
             }
         );
 
@@ -1058,6 +1084,14 @@ function openPlanExerciseInstructions(
 
     popup.classList.add(
         "plan-instructions-popup"
+    );
+
+    const muscleMap =
+    document.createElement("div");
+
+    muscleMap.classList.add(
+        "exercise-muscle-map",
+        "plan-exercise-muscle-map"
     );
 
     const textarea =

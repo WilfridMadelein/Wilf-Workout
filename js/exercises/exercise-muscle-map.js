@@ -14,18 +14,52 @@ const PRIMARY_COLOR = "#d32f2f";
 const SECONDARY_COLOR = "#ef9a9a";
 
 let getAppSettings = () => ({ bodyModel: "male" });
-let activeMaps = [];
+const activeMaps = new Set();
 
 function configureExerciseMuscleMap(dependencies) {
     ({ getAppSettings } = dependencies);
 }
 
-function destroyExerciseMuscleMaps() {
-    activeMaps.forEach(map => map.destroy());
-    activeMaps = [];
+function destroyMapEntry(entry) {
+    entry.map.destroy();
+    activeMaps.delete(entry);
 }
 
-function createMuscleMap(container, side, regions) {
+function destroyExerciseMuscleMapsIn(container) {
+    if (!container) return;
+
+    [...activeMaps].forEach(entry => {
+        if (
+            entry.root === container ||
+            container.contains(entry.root)
+        ) {
+            destroyMapEntry(entry);
+        }
+    });
+}
+
+function destroyMapsForRoot(root) {
+    [...activeMaps].forEach(entry => {
+        if (entry.root === root) {
+            destroyMapEntry(entry);
+        }
+    });
+}
+
+function cleanupDisconnectedMaps() {
+    [...activeMaps].forEach(entry => {
+        if (!entry.root.isConnected) {
+            destroyMapEntry(entry);
+        }
+    });
+}
+
+function createMuscleMap(
+    root,
+    container,
+    side,
+    regions
+) {
     const gender =
         getAppSettings()?.bodyModel === "female"
             ? "female"
@@ -49,23 +83,38 @@ function createMuscleMap(container, side, regions) {
         PRIMARY_COLOR
     );
 
-    activeMaps.push(map);
+    activeMaps.add({ root, map });
 }
 
 function renderExerciseMuscleMap(
     container,
-    exercise
+    exercise,
+    { compact = false } = {}
 ) {
-    destroyExerciseMuscleMaps();
-
     if (!container || !exercise) return;
+
+    if (container.isConnected) {
+        cleanupDisconnectedMaps();
+    }
+
+    destroyMapsForRoot(container);
+
+    container.classList.toggle(
+        "exercise-muscle-map--compact",
+        compact
+    );
+
+    const frontLabel = compact
+        ? ""
+        : `<span class="exercise-muscle-map-label">Devant</span>`;
+
+    const backLabel = compact
+        ? ""
+        : `<span class="exercise-muscle-map-label">Dos</span>`;
 
     container.innerHTML = `
         <div class="exercise-muscle-map-view">
-            <span class="exercise-muscle-map-label">
-                Devant
-            </span>
-
+            ${frontLabel}
             <div
                 class="exercise-muscle-map-canvas"
                 data-muscle-side="front"
@@ -73,10 +122,7 @@ function renderExerciseMuscleMap(
         </div>
 
         <div class="exercise-muscle-map-view">
-            <span class="exercise-muscle-map-label">
-                Dos
-            </span>
-
+            ${backLabel}
             <div
                 class="exercise-muscle-map-canvas"
                 data-muscle-side="back"
@@ -88,6 +134,7 @@ function renderExerciseMuscleMap(
         getExerciseMuscleMap(exercise);
 
     createMuscleMap(
+        container,
         container.querySelector(
             '[data-muscle-side="front"]'
         ),
@@ -96,6 +143,7 @@ function renderExerciseMuscleMap(
     );
 
     createMuscleMap(
+        container,
         container.querySelector(
             '[data-muscle-side="back"]'
         ),
@@ -105,18 +153,21 @@ function renderExerciseMuscleMap(
 }
 
 function refreshExerciseMuscleMapModel() {
+    cleanupDisconnectedMaps();
+
     const gender =
         getAppSettings()?.bodyModel === "female"
             ? "female"
             : "male";
 
-    activeMaps.forEach(map =>
-        map.setGender(gender)
+    activeMaps.forEach(entry =>
+        entry.map.setGender(gender)
     );
 }
 
 export {
     configureExerciseMuscleMap,
     renderExerciseMuscleMap,
+    destroyExerciseMuscleMapsIn,
     refreshExerciseMuscleMapModel
 };

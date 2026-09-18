@@ -369,6 +369,7 @@ html[data-theme="dark"] .add-filter-button:hover {
 html[data-theme="dark"] .plan-set-block,
 html[data-theme="dark"] .plan-exercise-card,
 html[data-theme="dark"] .plan-superset-order,
+html[data-theme="dark"] .plan-exercise-rail,
 html[data-theme="dark"] .combination-menu {
     background: #242424;
     border-color: #444;
