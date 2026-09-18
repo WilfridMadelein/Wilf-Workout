@@ -1498,7 +1498,7 @@
     grid-template-columns: 62px minmax(0, 1fr);
     align-items: center;
 
-    column-gap: 7px;
+    column-gap: 34px;
 }
 
 .plan-exercise-control-label {
@@ -1538,14 +1538,14 @@
 .plan-line3-volume {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 10px;
 }
 
 .plan-exercise-control-row
 .plan-weight-control {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 13px;
 }
 
 .plan-exercise-control-row
@@ -1559,13 +1559,32 @@
 .plan-rest-control {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 9px;
+}
+
+.plan-exercise-control-row
+.plan-weight-control .plan-number-control,
+.plan-exercise-control-row
+.plan-rest-control .plan-number-control {
+    width: 7.5ch;
 }
 
 .plan-exercise-control-row
 .plan-tempo-separator {
-    margin: 0 4px;
+    margin: 0 2px;
     line-height: 1;
+}
+
+.plan-exercise-volume-row .plan-value-unit {
+    transform: translateX(15px);
+}
+
+.plan-exercise-weight-row .plan-weight-unit {
+    transform: translateX(11px);
+}
+
+.plan-exercise-rest-row .plan-rest-labels {
+    transform: translateX(11px);
 }
 
 /* =========================================================
@@ -1669,11 +1688,11 @@
             "footer";
 
         column-gap: 0;
-        row-gap: 7px;
+        row-gap: 5px;
     }
 
     .plan-exercise-muscle-map {
-        width: clamp(170px, 48%, 210px);
+        width: clamp(220px, 48%, 260px);
         max-width: 100%;
         justify-self: start;
         margin: 4px 0 8px;
