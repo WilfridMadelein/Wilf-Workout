@@ -433,13 +433,71 @@ shell.appendChild(exerciseRail);
                     "plan-exercise-card"
                 );
 
-                const muscleMap =
-                    document.createElement("div");
+const muscleMapWrap =
+    document.createElement("div");
 
-            muscleMap.classList.add(
-                "exercise-muscle-map",
-                "plan-exercise-muscle-map"
-            );
+muscleMapWrap.classList.add(
+    "plan-exercise-muscle-map-wrap"
+);
+
+const muscleMap =
+    document.createElement("div");
+
+muscleMap.classList.add(
+    "exercise-muscle-map",
+    "plan-exercise-muscle-map"
+);
+
+const muscleMapToggle =
+    document.createElement("button");
+
+muscleMapToggle.type = "button";
+
+muscleMapToggle.classList.add(
+    "plan-exercise-muscle-map-toggle"
+);
+
+muscleMapWrap.append(
+    muscleMap,
+    muscleMapToggle
+);
+
+function setMuscleMapCollapsed(collapsed) {
+    planExercise.muscleMapCollapsed = collapsed;
+
+    muscleMapWrap.classList.toggle(
+        "is-collapsed",
+        collapsed
+    );
+
+    muscleMapToggle.setAttribute(
+        "aria-expanded",
+        String(!collapsed)
+    );
+
+    muscleMapToggle.setAttribute(
+        "aria-label",
+        collapsed
+            ? "Afficher le modèle musculaire"
+            : "Masquer le modèle musculaire"
+    );
+
+    muscleMapToggle.title =
+        collapsed
+            ? "Afficher le modèle musculaire"
+            : "Masquer le modèle musculaire";
+}
+
+muscleMapToggle.addEventListener(
+    "click",
+    () => {
+        setMuscleMapCollapsed(
+            !muscleMapWrap.classList.contains(
+                "is-collapsed"
+            )
+        );
+    }
+);
 
 
                 // =================================================
@@ -1067,7 +1125,7 @@ line3.append(
 
                 card.append(
                     line1,
-                    muscleMap,
+                    muscleMapWrap,
                     line2,
                     line3,
                     line4
@@ -1080,6 +1138,10 @@ line3.append(
                     muscleMap,
                     exercise,
                     { compact: true }
+                );
+
+                setMuscleMapCollapsed(
+                    planExercise.muscleMapCollapsed === true
                 );
             }
         );
