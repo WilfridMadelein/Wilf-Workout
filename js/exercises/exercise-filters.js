@@ -1124,7 +1124,8 @@ function createProgressionButton(progression, container) {
     button.textContent = progression;
     button.dataset.progression = progression;
 
-    button.addEventListener("click", () => {
+    button.addEventListener("click", event => {
+        event.stopPropagation();
         const include = getSelectedProgressionsInclude();
         const exclude = getSelectedProgressionsExclude();
 

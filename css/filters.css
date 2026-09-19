@@ -109,10 +109,12 @@
     align-items: center;
     gap: 6px;
     padding: 6px 10px;
+
     border: 1px solid #333;
     border-radius: 6px;
     background: #333;
     color: white;
+
     font-size: 13px;
     white-space: nowrap;
     flex-shrink: 0;
@@ -123,53 +125,81 @@
     border: none;
     background: transparent;
     color: white;
-    cursor: pointer;
+
     font-size: 16px;
     line-height: 1;
+    cursor: pointer;
 }
+
 #progression-include-summary .summary-remove,
 #progression-exclude-summary .summary-remove {
     order: -1;
 }
+
 .summary-remove:hover {
     opacity: 0.7;
 }
 
-/* Résumés repliables */
+
+/* Résumé repliable */
+
+.filter-row.has-collapsible-summary {
+    position: relative;
+
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr);
+    grid-template-areas:
+        "title summary"
+        "extra extra";
+
+    align-items: start;
+    column-gap: 6px;
+    row-gap: 0;
+}
+
+.filter-row.has-collapsible-summary .filter-title {
+    grid-area: title;
+}
 
 .filter-summary-collapsible {
-    position: relative;
-    box-sizing: border-box;
+    grid-area: summary;
+    min-width: 0;
 }
 
-.filter-summary-collapsible.has-summary-overflow {
-    padding-right: 30px;
+.filter-summary-collapsible:not(.progression-summary) {
+    display: block !important;
 }
 
-.filter-summary-collapsible.has-summary-overflow.summary-collapsed {
-    max-height: var(--summary-row-height);
-    overflow: hidden;
+.filter-summary-collapsible .summary-button {
+    vertical-align: top;
+    margin: 0 6px 6px 0;
 }
+
+/* Carré réservé uniquement sur la première ligne */
 
 .filter-summary-toggle {
     position: absolute;
-    top: calc(var(--summary-row-height) / 2);
-    right: 0;
+    top: 12px;
+    right: 10px;
 
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     padding: 0;
 
     display: grid;
     place-items: center;
 
-    transform: translateY(-50%);
-
     border: none;
     background: transparent;
     color: inherit;
-
     cursor: pointer;
+}
+
+.filter-summary-collapsible:not(.progression-summary) > .filter-summary-toggle {
+    position: static;
+    float: right;
+
+    margin: 0 0 0 6px;
 }
 
 .filter-summary-toggle[hidden] {
@@ -185,12 +215,66 @@
     border-right: 2px solid currentColor;
     border-bottom: 2px solid currentColor;
 
+    transform: rotate(45deg);
+}
+
+.filter-summary-toggle[aria-expanded="true"]::before {
     transform: rotate(-135deg);
 }
 
-.filter-summary-collapsible.summary-collapsed
-.filter-summary-toggle::before {
-    transform: rotate(45deg);
+.filter-summary-more {
+    height: 28px;
+    margin: 0 6px 6px 0;
+    display: inline-flex;
+    align-items: center;
+    vertical-align: top;
+
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.filter-summary-more[hidden] {
+    display: none;
+}
+
+/* Lignes supplémentaires */
+
+.filter-summary-extra {
+    grid-area: extra;
+
+    display: grid;
+    grid-template-columns: 4ch minmax(0, 1fr);
+
+    margin-top: 0;
+}
+
+.filter-summary-extra[hidden] {
+    display: none;
+}
+
+.filter-summary-guide {
+    position: relative;
+    min-width: 4ch;
+}
+
+.filter-summary-guide::before {
+    content: "";
+    position: absolute;
+
+    top: calc(-1 * var(--summary-guide-rise, 0px));
+    bottom: 0;
+    left: 50%;
+
+    width: 1px;
+    background: #aaa;
+}
+
+.filter-summary-extra-items {
+    min-width: 0;
+
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
 }
 
 /* =========================================================
@@ -231,56 +315,152 @@
     margin-right: 8px;
 }
 
-
 /* =========================================================
    FILTRE DE PROGRESSION
 ========================================================= */
 
 .progression-summary {
+    min-width: 0;
+}
+
+.progression-summary-row > span:first-child {
+    width: 55px;
+    flex-shrink: 0;
+}
+
+.progression-summary-row .add-filter-button {
+    order: -1;
+}
+
+.selected-items:empty {
+    display: none;
+}
+
+
+/* Progression repliée : 1 ligne Include + 1 ligne Exclude */
+
+.filter-row.summary-progression:not(.summary-expanded) {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr);
+    grid-template-areas: "title summary";
+
+    align-items: start;
+    column-gap: 6px;
+}
+
+.filter-row.summary-progression:not(.summary-expanded) .filter-title {
+    grid-area: title;
+}
+
+.filter-row.summary-progression:not(.summary-expanded) .progression-summary {
+    grid-area: summary;
+
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    padding: 4px 0;
+}
+
+.progression-summary.summary-collapsed .progression-summary-row {
+    width: 100%;
+    min-height: 28px;
+
+    display: grid;
+    grid-template-columns: 55px 25px minmax(0, 1fr);
+    align-items: center;
+
+    column-gap: 8px;
+}
+
+.progression-summary.summary-collapsed .progression-summary-row:first-child {
+    padding-right: 34px;
+    box-sizing: border-box;
+}
+
+.progression-summary.summary-collapsed .progression-summary-row > span:first-child {
+    grid-column: 1;
+}
+
+.progression-summary.summary-collapsed .progression-summary-row .add-filter-button {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.progression-summary.summary-collapsed .selected-items {
+    grid-column: 3;
+    grid-row: 1;
+
+    min-width: 0;
+
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 5px;
+
+    overflow: hidden;
+}
+
+
+/* Progression développée : comportement flexible original */
+
+.filter-row.summary-progression.summary-expanded {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.filter-row.summary-progression.summary-expanded .filter-title {
+    width: 140px;
+    flex: 0 0 140px;
+    height: 48px;
+    margin: 0;
+}
+
+.filter-row.summary-progression.summary-expanded .progression-summary {
+    min-width: 0;
+    flex: 1 1 280px;
+
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     justify-content: flex-start;
+
     gap: 4px;
-    padding-top: 4px;
-    padding-bottom: 4px;
+    padding: 4px 34px 4px 0;
 }
 
-.progression-summary-row {
+.filter-row.summary-progression.summary-expanded .progression-summary-row {
+    width: 100%;
+    min-height: 25px;
+
     display: flex;
     align-items: center;
     justify-content: flex-start;
     flex-wrap: wrap;
 
     gap: 6px 8px;
-    min-height: 25px;
-    width: 100%;
 }
-.progression-summary-row > span:first-child {
-    width: 55px;
-    flex-shrink: 0;
-}
-.progression-summary-row .add-filter-button {
-    order: -1;
-}
-.progression-summary-row .selected-items {
+
+.filter-row.summary-progression.summary-expanded .progression-summary-row .selected-items {
     display: contents;
 }
 
-.selected-items {
-    min-width: 0;
+/* Ligne verticale Progression développée */
 
-    display: flex;
-    flex: 1 1 auto;
-    flex-wrap: wrap;
+.filter-row.summary-progression.summary-expanded::before {
+    content: "";
 
-    gap: 5px;
+    position: absolute;
+    top: 54px;
+    bottom: 6px;
+    left: calc(10px + 2ch);
 
-    overflow: visible;
-    white-space: normal;
+    width: 1px;
+    background: #aaa;
 }
 
-.selected-items:empty {
+.filter-row.summary-progression.summary-expanded.summary-guide-hidden::before {
     display: none;
 }
 
@@ -349,4 +529,23 @@
     justify-content: flex-start;
     flex-wrap: wrap;
     gap: 8px;
+}
+
+.progression-summary-more {
+    height: 28px;
+
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.progression-summary-more[hidden] {
+    display: none;
+}
+
+.progression-summary .summary-button[hidden] {
+    display: none;
 }

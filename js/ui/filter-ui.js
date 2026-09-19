@@ -1,4 +1,5 @@
 import {
+    refreshFilterSummaryCollapse,
     updateFilterSummaryCollapse
 } from "./filter-summary-collapse.js";
 
@@ -171,44 +172,51 @@ export function rebuildSearchFilterInterface() {
 }
 
 export function setupFilterRows() {
-    const filterTitles =
-        document.querySelectorAll(".filter-title");
+    const titles = [...document.querySelectorAll(".filter-title")];
 
-    filterTitles.forEach(title => {
-        title.addEventListener("click", () => {
-            const filterName = title.dataset.filter;
+    function getParts(title) {
+        const name = title.dataset.filter;
+        const row = title.closest(".filter-row");
 
-            const options = document.getElementById(
-                `${filterName}-filter-options`
-            );
+        return {
+            options: document.getElementById(`${name}-filter-options`),
+            arrow: title.querySelector(".filter-arrow"),
+            summary: row?.querySelector(".filter-summary")
+        };
+    }
 
-            const arrow =
-                title.querySelector(".filter-arrow");
+    function setOpen(title, open) {
+        const { options, arrow, summary } = getParts(title);
+        if (!options) return;
 
-            if (!options) {
-                return;
-            }
+        options.classList.toggle("open", open);
+        if (arrow) arrow.textContent = open ? "▲" : "▼";
+        if (summary?.classList.contains("filter-summary-collapsible")) refreshFilterSummaryCollapse(summary);
+    }
 
-            const isOpen =
-                options.classList.contains("open");
-
-            document
-                .querySelectorAll(".filter-options.open")
-                .forEach(otherOptions => {
-                    otherOptions.classList.remove("open");
-                });
-
-            document
-                .querySelectorAll(".filter-arrow")
-                .forEach(otherArrow => {
-                    otherArrow.textContent = "▼";
-                });
-
-            if (!isOpen) {
-                options.classList.add("open");
-                arrow.textContent = "▲";
-            }
+    function closeAll(except = null) {
+        titles.forEach(title => {
+            if (title !== except) setOpen(title, false);
         });
+    }
+
+    titles.forEach(title => {
+        title.addEventListener("click", event => {
+            event.stopPropagation();
+
+            const { options } = getParts(title);
+            if (!options) return;
+
+            const open = !options.classList.contains("open");
+
+            closeAll(title);
+            setOpen(title, open);
+        });
+    });
+
+    document.addEventListener("click", event => {
+        if (event.target.closest(".filter-title, .filter-options, .filter-summary, .filter-summary-toggle, .filter-summary-extra")) return;
+        closeAll();
     });
 }
 
@@ -422,12 +430,11 @@ selectedProgressionsExclude.forEach(progression => {
     categorySummary,
     typeSummary,
     muscleSummary,
-    equipmentSummary,
-    progressionIncludeSummary,
-    progressionExcludeSummary
-].forEach(
-    updateFilterSummaryCollapse
-);
+    equipmentSummary
+].forEach(summary => updateFilterSummaryCollapse(summary));
+
+const progressionSummary = progressionIncludeSummary.closest(".progression-summary");
+updateFilterSummaryCollapse(progressionSummary, { mode: "progression" });
 
 }
 

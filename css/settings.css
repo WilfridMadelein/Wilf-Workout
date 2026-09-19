@@ -449,3 +449,12 @@ html[data-theme="dark"] button.filter-button.active.equipment-irrelevant {
     color: #3c1c1c;
     border-color: #ca9292;
 }
+
+/* Survol des filtres */
+
+html[data-theme="dark"] .filter-title:hover,
+html[data-theme="dark"] .plan-filter-title:hover,
+html[data-theme="dark"] .plan-filter-row.has-collapsible-summary .plan-filter-title:hover {
+    background: #303030;
+    color: #ededed;
+}

@@ -734,6 +734,53 @@
     gap: 6px;
 }
 
+.plan-filter-row.has-collapsible-summary {
+    position: relative;
+
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr);
+    grid-template-areas:
+        "title summary"
+        "extra extra"
+        "options options";
+
+    align-items: start;
+    column-gap: 6px;
+    row-gap: 0;
+}
+
+.plan-filter-row.has-collapsible-summary .plan-filter-title {
+    grid-area: title;
+
+    width: 140px;
+    height: 48px;
+    margin: 0;
+
+    border: none;
+    background: transparent;
+    color: inherit;
+
+    font: inherit;
+    font-size: 14px;
+}
+
+.plan-filter-row.has-collapsible-summary .plan-filter-title:hover {
+    background: #f5f5f5;
+}
+
+.plan-filter-row.has-collapsible-summary .plan-filter-summary {
+    grid-area: summary;
+}
+
+.plan-filter-row.has-collapsible-summary
+.plan-filter-summary.filter-summary-collapsible {
+    display: block !important;
+}
+
+.plan-filter-row.has-collapsible-summary .plan-filter-options {
+    grid-area: options;
+}
+
 .plan-filter-options {
     display: none;
 

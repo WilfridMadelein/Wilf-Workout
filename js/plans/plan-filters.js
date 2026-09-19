@@ -1,4 +1,5 @@
 import {
+    refreshFilterSummaryCollapse,
     updateFilterSummaryCollapse
 } from "../ui/filter-summary-collapse.js";
 
@@ -192,6 +193,20 @@ function saveCurrentPlanFilters() {
 // Création des filtres
 // ------------------------------------------------------------
 
+function closePlanFilterRows(except = null) {
+    document.querySelectorAll(".plan-filter-row").forEach(row => {
+        if (row === except) return;
+
+        const options = row.querySelector(".plan-filter-options");
+        const arrow = row.querySelector(".plan-filter-arrow");
+        const summary = row.querySelector(".plan-filter-summary");
+
+        options?.classList.remove("open");
+        if (arrow) arrow.textContent = "▼";
+        if (summary?.classList.contains("filter-summary-collapsible")) refreshFilterSummaryCollapse(summary);
+    });
+}
+
 function createPlanFilterRows() {
     const selectedPlanCategories =
         getSelectedPlanCategories();
@@ -229,12 +244,10 @@ function createPlanFilterRows() {
             "plan-filter-row"
         );
 
-        const title =
-            document.createElement("div");
+        const title = document.createElement("div");
+        title.type = "button";
 
-        title.classList.add(
-            "plan-filter-title"
-        );
+        title.classList.add("plan-filter-title");
 
         title.dataset.filter =
             filterName;
@@ -285,50 +298,17 @@ function createPlanFilterRows() {
 
         container.appendChild(row);
 
-        title.addEventListener(
-            "click",
-            () => {
-                const isOpen =
-                    options.classList.contains(
-                        "open"
-                    );
+title.addEventListener("click", event => {
+    event.stopPropagation();
 
-                const planFiltersBox =
-                    document.querySelector(
-                        ".plan-filters-box"
-                    );
+    const open = !options.classList.contains("open");
 
-                planFiltersBox
-                    .querySelectorAll(
-                        ".plan-filter-options.open"
-                    )
-                    .forEach(
-                        otherOptions =>
-                            otherOptions.classList.remove(
-                                "open"
-                            )
-                    );
+    closePlanFilterRows(row);
+    options.classList.toggle("open", open);
+    arrow.textContent = open ? "▲" : "▼";
 
-                planFiltersBox
-                    .querySelectorAll(
-                        ".plan-filter-arrow"
-                    )
-                    .forEach(
-                        otherArrow =>
-                            otherArrow.textContent =
-                                "▼"
-                    );
-
-                if (!isOpen) {
-                    options.classList.add(
-                        "open"
-                    );
-
-                    arrow.textContent =
-                        "▲";
-                }
-            }
-        );
+    if (summary.classList.contains("filter-summary-collapsible")) refreshFilterSummaryCollapse(summary);
+});
 
         return options;
     }
@@ -549,12 +529,19 @@ if (selectedPlanEquipment.has(equipment)) {
     }
 );
 
+if (!createPlanFilterRows.outsideClickBound) {
+    document.addEventListener("click", event => {
+        if (event.target.closest(".plan-filter-row")) return;
+        closePlanFilterRows();
+    });
+
+    createPlanFilterRows.outsideClickBound = true;
+}
+
 updatePlanCategoryButtons();
 updatePlanEquipmentRelevance();
 updatePlanEquipmentButtons();
 updatePlanFilterSummaries();
-
-    updatePlanFilterSummaries();
 }
 
 function updatePlanCategoryButtons() {
@@ -863,9 +850,7 @@ if (
 [
     categorySummary,
     equipmentSummary
-].forEach(
-    updateFilterSummaryCollapse
-);
+].forEach(updateFilterSummaryCollapse);
 
 }
 
