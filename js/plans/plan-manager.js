@@ -7,10 +7,16 @@ import {
     getProgressionName
  } from "../exercises/exercise-search.js";
 
+ import {
+    getPlanExerciseDetailsLines
+} from "../exercises/exercise-details.js";
+
 import {
     getNextCombinationGroup,
     normalizeCombinationNumbers
 } from "./plan-combinations.js";
+
+
 
 let getCurrentPlan = () => null;
 let renderPlanExercises = () => {};
@@ -102,6 +108,16 @@ function removeProgressionFromExclude(exercise) {
     displayExercises();
 }
 
+function createDefaultInstructions(
+    plan,
+    exercise
+) {
+    if (plan?.autoAddDefaultInstructions === false) { return "";
+    }
+
+    return getPlanExerciseDetailsLines(exercise).join("\n");
+}
+
 // ------------------------------------------------------------
 // Ajouter un exercice au plan
 // ------------------------------------------------------------
@@ -139,6 +155,14 @@ function addExerciseToCurrentPlan(exercise) {
 
         weight: currentPlan.defaults.weight,
         weightUnit: currentPlan.defaults.weightUnit,
+
+        details: { 
+            instructions:
+            createDefaultInstructions(
+            currentPlan,
+            exercise
+            )
+        },
 
         combination: {
             group: getNextCombinationGroup()
@@ -214,7 +238,8 @@ function updatePlanExerciseProgression(
         planExercise.details = {};
     }
 
-    planExercise.details.instructions = null;
+    planExercise.details.instructions = 
+        createDefaultInstructions(currentPlan, newExercise);
 
     // Passage exercice normal → isométrique
     if (!oldIsIso && newIsIso) {

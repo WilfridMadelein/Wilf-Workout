@@ -45,8 +45,13 @@
 .filter-summary {
     min-width: 0;
 }
+
 .filter-summary:not(.progression-summary) {
-    display: contents;
+    display: flex;
+    flex: 1 1 0;
+    flex-wrap: wrap;
+
+    gap: 6px;
 }
 
 .filter-options {
@@ -128,6 +133,64 @@
 }
 .summary-remove:hover {
     opacity: 0.7;
+}
+
+/* Résumés repliables */
+
+.filter-summary-collapsible {
+    position: relative;
+    box-sizing: border-box;
+}
+
+.filter-summary-collapsible.has-summary-overflow {
+    padding-right: 30px;
+}
+
+.filter-summary-collapsible.has-summary-overflow.summary-collapsed {
+    max-height: var(--summary-row-height);
+    overflow: hidden;
+}
+
+.filter-summary-toggle {
+    position: absolute;
+    top: calc(var(--summary-row-height) / 2);
+    right: 0;
+
+    width: 24px;
+    height: 24px;
+    padding: 0;
+
+    display: grid;
+    place-items: center;
+
+    transform: translateY(-50%);
+
+    border: none;
+    background: transparent;
+    color: inherit;
+
+    cursor: pointer;
+}
+
+.filter-summary-toggle[hidden] {
+    display: none;
+}
+
+.filter-summary-toggle::before {
+    content: "";
+
+    width: 7px;
+    height: 7px;
+
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+
+    transform: rotate(-135deg);
+}
+
+.filter-summary-collapsible.summary-collapsed
+.filter-summary-toggle::before {
+    transform: rotate(45deg);
 }
 
 /* =========================================================

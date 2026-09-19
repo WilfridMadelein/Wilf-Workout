@@ -17,6 +17,7 @@ let editPlanNameButton;
 let currentPlanNameInput;
 
 let planAutoAddEquipment;
+let planAutoAddInstructions;
 let planNotesInput;
 let planNotesCounter;
 let planEquipmentEditor;
@@ -80,6 +81,7 @@ export function configurePlanController(dependencies) {
         backToPlansButton,
 
         planAutoAddEquipment,
+        planAutoAddInstructions,
         planNotesInput,
         planNotesCounter,
         planEquipmentEditor,
@@ -463,6 +465,13 @@ function ensurePlanMetadata(plan) {
 
     if (!Array.isArray(plan.equipment)) plan.equipment = [];
     if (typeof plan.includeEquipment !== "boolean") plan.includeEquipment = false;
+
+    if (
+        typeof plan.autoAddDefaultInstructions !==
+        "boolean"
+    ) {
+        plan.autoAddDefaultInstructions = true;
+    }
 }
 
 export function addEquipmentToCurrentPlan(...equipmentNames) {
@@ -558,6 +567,7 @@ function renderPlanMetadataEditor() {
     ensurePlanMetadata(plan);
 
     planAutoAddEquipment.checked = plan.includeEquipment;
+    planAutoAddInstructions.checked = plan.autoAddDefaultInstructions;
     planNotesInput.value = plan.notes.slice(0, 500);
     resizePlanNotesTextarea(planNotesInput);
     updateNotesCounter(planNotesInput, planNotesCounter);
@@ -852,6 +862,21 @@ planAutoAddEquipment.addEventListener("change", () => {
     renderPlanMetadataEditor();
 });
 
+planAutoAddInstructions.addEventListener(
+    "change",
+    () => {
+        const plan = getCurrentPlan();
+        if (!plan) return;
+
+        ensurePlanMetadata(plan);
+
+        plan.autoAddDefaultInstructions =
+            planAutoAddInstructions.checked;
+
+        schedulePlanSave(plan);
+    }
+);
+
 addPlanEquipmentButton.addEventListener("click", () => {
     planEquipmentOptions.hidden = !planEquipmentOptions.hidden;
 });
@@ -881,7 +906,8 @@ document.addEventListener("keydown", event => {
                 exercises: [],
                 notes: "",
                 equipment: [],
-                includeEquipment: false
+                includeEquipment: false,
+                autoAddDefaultInstructions: true
             };
 
             ensurePlanDefaults(plan);

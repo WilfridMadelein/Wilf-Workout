@@ -1,3 +1,7 @@
+import {
+    updateFilterSummaryCollapse
+} from "../ui/filter-summary-collapse.js";
+
 // ============================================================
 // FILTRES DU PLAN
 // ============================================================
@@ -855,6 +859,14 @@ if (
             );
         });
     }
+
+[
+    categorySummary,
+    equipmentSummary
+].forEach(
+    updateFilterSummaryCollapse
+);
+
 }
 
 // ------------------------------------------------------------

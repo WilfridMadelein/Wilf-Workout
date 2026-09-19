@@ -1,3 +1,7 @@
+import {
+    updateFilterSummaryCollapse
+} from "./filter-summary-collapse.js";
+
 let getSelectedCategories;
 let getSelectedTypes;
 let getSelectedEquipment;
@@ -413,5 +417,17 @@ selectedProgressionsExclude.forEach(progression => {
         })
     );
 });
+
+[
+    categorySummary,
+    typeSummary,
+    muscleSummary,
+    equipmentSummary,
+    progressionIncludeSummary,
+    progressionExcludeSummary
+].forEach(
+    updateFilterSummaryCollapse
+);
+
 }
 

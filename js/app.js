@@ -55,6 +55,7 @@ import {
 
     planAutoExcludeProgressions,
     planAutoAddEquipment,
+    planAutoAddInstructions,
 
 planNotesInput,
 planEquipmentEditor,
@@ -550,6 +551,7 @@ configurePlanController({
     backToPlansButton,
 
 planAutoAddEquipment,
+planAutoAddInstructions,
 planNotesInput,
 planNotesCounter,
 planEquipmentEditor,

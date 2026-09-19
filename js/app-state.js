@@ -117,6 +117,7 @@ export const backToPlansButton = document.getElementById("back-to-plans-button")
 export const planAutoExcludeProgressions = document.getElementById("plan-auto-exclude-progressions");
 
 export const planAutoAddEquipment = document.getElementById("plan-auto-add-equipment");
+export const planAutoAddInstructions = document.getElementById("plan-auto-add-instructions");
 export const planNotesCounter = document.getElementById("plan-notes-counter");
 
 export const planNotesInput = document.getElementById("plan-notes-input");

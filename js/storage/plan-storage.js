@@ -164,6 +164,7 @@ function migratePlanRecord(record) {
     plan.notes = typeof plan.notes === "string" ? plan.notes : "";
     plan.equipment = Array.isArray(plan.equipment) ? plan.equipment : [];
     plan.includeEquipment = plan.includeEquipment === true;
+    plan.autoAddDefaultInstructions = plan.autoAddDefaultInstructions !== false;
 
     plan.defaults ??= {};
     plan.defaults.weight ??= 0;
@@ -203,6 +204,7 @@ function serializePlan(plan) {
         notes: String(plan.notes ?? "").slice(0, 500),
         equipment: [...(plan.equipment ?? [])],
         includeEquipment: plan.includeEquipment === true,
+        autoAddDefaultInstructions: plan.autoAddDefaultInstructions !== false,
 
         defaults: {
             sets: plan.defaults?.sets ?? 3,
@@ -267,6 +269,7 @@ function hydratePlan(record, exercises) {
         notes: String(savedPlan.notes ?? "").slice(0, 500),
         equipment: [...(savedPlan.equipment ?? [])],
         includeEquipment: savedPlan.includeEquipment === true,
+        autoAddDefaultInstructions: savedPlan.autoAddDefaultInstructions !== false,
 
         defaults: {
             sets: savedPlan.defaults?.sets ?? 3,
