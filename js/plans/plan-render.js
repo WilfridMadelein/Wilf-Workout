@@ -186,6 +186,46 @@ function createExerciseControlRow(label, control, className) {
     return row;
 }
 
+function getPlanExerciseMetaText(exercise) {
+    const muscleFamilies = [
+        ...new Set(
+            (exercise.muscles_principaux ?? []).map(muscle => muscle[0])
+        )
+    ];
+
+    const typeText = Array.isArray(exercise.type)
+        ? exercise.type.join(" - ")
+        : exercise.type || "";
+
+    const muscleText = muscleFamilies.join(" - ");
+
+    return [typeText, muscleText].filter(Boolean).join(" | ") || "—";
+}
+
+function updatePlanExerciseSplitLine(header, planExercise) {
+    const info = getPlanExerciseSplitInfo(planExercise);
+    let line = header.querySelector(".plan-exercise-split");
+
+    if (!info) {
+        line?.remove();
+        return;
+    }
+
+    if (!line) {
+        line = document.createElement("div");
+        line.classList.add("plan-exercise-split");
+        header.appendChild(line);
+    }
+
+    const label = document.createElement("strong");
+    const order = document.createElement("span");
+
+    label.textContent = info.label;
+    order.textContent = info.order;
+
+    line.replaceChildren(label, order);
+}
+
 function refreshPlanDurationDisplay(plan = getCurrentPlan()) {
     const element =
         document.getElementById("plan-workout-duration");
@@ -567,15 +607,9 @@ muscleMapToggle.addEventListener(
                 exerciseName.textContent =
                     exercise.nom;
 
-                exerciseName.addEventListener(
-                    "click",
-                    () => {
-                        displayExerciseDetails(
-                            exercise,
-                            "plan"
-                        );
-                    }
-                );
+                exerciseName.addEventListener("click", () => {
+                    displayExerciseDetails(planExercise.exercise, "plan");
+                });
 
                 identity.append(
                     number,
@@ -583,89 +617,43 @@ muscleMapToggle.addEventListener(
                 );
 
 
-                // Progression
+// Progression
 
-                const progression =
-                    document.createElement("div");
+const progression = document.createElement("div");
+progression.classList.add("plan-progression-cell");
 
-                progression.classList.add(
-                    "plan-progression-cell"
-                );
+const progressionName = document.createElement("span");
+progressionName.classList.add("plan-progression-name");
+progressionName.textContent = getProgressionName(exercise) || "—";
 
+const progressionButtons = createVerticalArrowButtons({
+    containerClass: "plan-progression-buttons",
+    buttonClass: "plan-progression-button",
 
-                const progressionName =
-                    document.createElement("span");
+    upDisabled: !getPlanProgressionNeighbor(exercise, 1),
+    downDisabled: !getPlanProgressionNeighbor(exercise, -1),
 
-                progressionName.classList.add(
-                    "plan-progression-name"
-                );
+    onUp: () => {
+        const next = getPlanProgressionNeighbor(planExercise.exercise, 1);
+        if (!next) return;
 
-                progressionName.textContent =
-                    getProgressionName(exercise) ||
-                    "—";
+        updatePlanExerciseProgression(planExercise, next);
+        refreshProgressionCard(next);
+        displayExerciseDetails(next, "plan");
+    },
 
+    onDown: () => {
+        const previous = getPlanProgressionNeighbor(planExercise.exercise, -1);
+        if (!previous) return;
 
-                const nextProgression =
-                    getPlanProgressionNeighbor(
-                        exercise,
-                        1
-                    );
+        updatePlanExerciseProgression(planExercise, previous);
+        refreshProgressionCard(previous);
+        displayExerciseDetails(previous, "plan");
+    }
+});
 
-                const previousProgression =
-                    getPlanProgressionNeighbor(
-                        exercise,
-                        -1
-                    );
-
-
-                const progressionButtons =
-                    createVerticalArrowButtons({
-                        containerClass:
-                            "plan-progression-buttons",
-
-                        buttonClass:
-                            "plan-progression-button",
-
-                        upDisabled:
-                            !nextProgression,
-
-                        downDisabled:
-                            !previousProgression,
-
-                        onUp: () => {
-                            if (!nextProgression) return;
-
-                            updatePlanExerciseProgression(
-                                planExercise,
-                                nextProgression
-                            );
-
-                            displayExerciseDetails(
-                                nextProgression,
-                                "plan"
-                            );
-                        },
-
-                        onDown: () => {
-                            if (!previousProgression) return;
-
-                            updatePlanExerciseProgression(
-                                planExercise,
-                                previousProgression
-                            );
-
-                            displayExerciseDetails(
-                                previousProgression,
-                                "plan"
-                            );
-                        }
-                    });
-
-
-                progression.append(
-                    progressionName,
-                    progressionButtons
-                );
+progression.append(progressionName, progressionButtons);
+line1.append(identity, progression);
 
                 line1.append(
                     identity,
@@ -681,36 +669,7 @@ header.classList.add(
 
 header.appendChild(line1);
 
-const splitInfo =
-    getPlanExerciseSplitInfo(planExercise);
-
-if (splitInfo) {
-    const splitLine =
-        document.createElement("div");
-
-    splitLine.classList.add(
-        "plan-exercise-split"
-    );
-
-    const splitLabel =
-        document.createElement("strong");
-
-    splitLabel.textContent =
-        splitInfo.label;
-
-    const splitOrder =
-        document.createElement("span");
-
-    splitOrder.textContent =
-        splitInfo.order;
-
-    splitLine.append(
-        splitLabel,
-        splitOrder
-    );
-
-    header.appendChild(splitLine);
-}
+updatePlanExerciseSplitLine(header, planExercise);
 
                 // =================================================
                 // LIGNE 2
@@ -726,35 +685,10 @@ if (splitInfo) {
                 );
 
 
-                const muscleFamilies = [
-                    ...new Set(
-                        exercise.muscles_principaux.map(
-                            muscle => muscle[0]
-                        )
-                    )
-                ];
+const muscles = document.createElement("span");
 
-
-                const muscles =
-                    document.createElement("span");
-
-                muscles.classList.add(
-                    "plan-exercise-muscles"
-                );
-
-                const typeText =
-                    Array.isArray(exercise.type)
-                        ? exercise.type.join(" - ")
-                        : exercise.type || "";
-
-                const muscleText =
-                muscleFamilies.join(" - ");
-
-                muscles.textContent =
-                    [typeText, muscleText]
-                        .filter(Boolean)
-                        .join(" | ") || "—";
-
+muscles.classList.add("plan-exercise-muscles");
+muscles.textContent = getPlanExerciseMetaText(exercise);
 
                 const weight =
                     document.createElement("div");
@@ -1169,6 +1103,55 @@ if (getAlwaysShowInstructions()) {
                     }
                 );
 
+function refreshProgressionCard(newExercise) {
+    exerciseName.textContent = newExercise.nom;
+    progressionName.textContent = getProgressionName(newExercise) || "—";
+
+    const progressionArrows = progressionButtons.querySelectorAll(
+        ".plan-progression-button"
+    );
+
+    progressionArrows[0].disabled =
+        !getPlanProgressionNeighbor(newExercise, 1);
+
+    progressionArrows[1].disabled =
+        !getPlanProgressionNeighbor(newExercise, -1);
+
+    muscles.textContent = getPlanExerciseMetaText(newExercise);
+
+    deleteButton.setAttribute(
+        "aria-label",
+        `Supprimer ${newExercise.nom} du plan`
+    );
+
+    updatePlanExerciseSplitLine(header, planExercise);
+
+    const volumeInput = volume.querySelector(".plan-number-input");
+
+    if (volumeInput) {
+        volumeInput.value = planExercise.value;
+        volumeInput.dispatchEvent(new Event("input"));
+    }
+
+    valueUnit.value = planExercise.valueUnit;
+
+    const instructionsTextarea = card.querySelector(
+        ".plan-instructions-inline-textarea"
+    );
+
+    if (instructionsTextarea) {
+        instructionsTextarea.value =
+            planExercise.details?.instructions ?? "";
+    }
+
+    renderExerciseMuscleMap(
+        muscleMap,
+        newExercise,
+        { compact: true }
+    );
+
+    refreshPlanDurationDisplay();
+}
 
                 line4.append(instructionsControl, deleteButton);
 

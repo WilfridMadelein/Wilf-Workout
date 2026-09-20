@@ -218,63 +218,37 @@ renderPlanExercises();
 // Changer la progression d'un exercice
 // ------------------------------------------------------------
 
-function updatePlanExerciseProgression(
-    planExercise,
-    newExercise
-) {
+function updatePlanExerciseProgression(planExercise, newExercise) {
     const currentPlan = getCurrentPlan();
+    if (!currentPlan) return;
 
-    if (!currentPlan) {
-        return;
-    }
-
-    const oldExercise =
-        planExercise.exercise;
-
-    const oldIsIso =
-        isIsometricExercise(oldExercise);
-
-    const newIsIso =
-        isIsometricExercise(newExercise);
+    const oldExercise = planExercise.exercise;
+    const oldIsIso = isIsometricExercise(oldExercise);
+    const newIsIso = isIsometricExercise(newExercise);
 
     closePlanInstructionsPopup();
 
-    planExercise.exercise =
-        newExercise;
-        
-    planExercise.splitOrder =
-    normalizeSplitOrder(
-        planExercise.splitOrder ??
-        getDefaultSplitOrder()
+    planExercise.exercise = newExercise;
+    planExercise.splitOrder = normalizeSplitOrder(
+        planExercise.splitOrder ?? getDefaultSplitOrder()
     );
 
-    if (!planExercise.details) {
-        planExercise.details = {};
-    }
-
-    planExercise.details.instructions = 
-        createDefaultInstructions(currentPlan, newExercise);
+    planExercise.details ??= {};
+    planExercise.details.instructions = createDefaultInstructions(currentPlan, newExercise);
 
     // Passage exercice normal → isométrique
     if (!oldIsIso && newIsIso) {
-        planExercise.value =
-            currentPlan.defaults.time;
-
-        planExercise.valueUnit =
-            "sec";
+        planExercise.value = currentPlan.defaults.time;
+        planExercise.valueUnit = "sec";
     }
 
     // Passage isométrique → exercice normal
     if (oldIsIso && !newIsIso) {
-        planExercise.value =
-            currentPlan.defaults.reps;
-
-        planExercise.valueUnit =
-            "rep";
+        planExercise.value = currentPlan.defaults.reps;
+        planExercise.valueUnit = "rep";
     }
 
     schedulePlanSave(currentPlan);
-    renderPlanExercises();
 }
 
 
