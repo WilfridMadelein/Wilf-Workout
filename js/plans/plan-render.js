@@ -26,6 +26,7 @@ let moveExerciseWithinCombination = () => {};
 let moveCombination = () => {};
 let setCombinationSets = () => {};
 let schedulePlanSave = () => {};
+let getAlwaysShowInstructions = () => false;
 
 
 function configurePlanRender(dependencies) {
@@ -44,6 +45,7 @@ function configurePlanRender(dependencies) {
     moveCombination = dependencies.moveCombination;
     setCombinationSets = dependencies.setCombinationSets;
     schedulePlanSave = dependencies.schedulePlanSave;
+    getAlwaysShowInstructions = dependencies.getAlwaysShowInstructions;
 }
 
 // ============================================================
@@ -1055,7 +1057,7 @@ const exerciseArrayIndex = plan.exercises.indexOf(planExercise);
 
 let instructionsControl;
 
-if (plan.alwaysShowInstructions) {
+if (getAlwaysShowInstructions()) {
     line4.classList.add("has-inline-instructions");
     instructionsControl = createInlineInstructionsEditor(planExercise);
 } else {

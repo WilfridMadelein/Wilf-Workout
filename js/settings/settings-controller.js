@@ -25,6 +25,7 @@ let alwaysShowInstructionsCheckbox;
 let advancedToggle;
 let advancedPanel;
 let onAdvancedOpen = () => {};
+let onAlwaysShowInstructionsChange = () => {};
 
 // ============================================================
 // CONFIGURATION
@@ -53,6 +54,7 @@ function configureSettingsController(dependencies) {
         advancedToggle,
         advancedPanel,
         onAdvancedOpen,
+        onAlwaysShowInstructionsChange,
     } = dependencies);
 }
 
@@ -103,7 +105,7 @@ function refreshSettingsInterface() {
 
     autoAddEquipmentCheckbox.checked = defaults.includeEquipment;
     autoAddInstructionsCheckbox.checked = defaults.autoAddDefaultInstructions;
-    alwaysShowInstructionsCheckbox.checked = defaults.alwaysShowInstructions;
+    alwaysShowInstructionsCheckbox.checked = settings.alwaysShowInstructions;
 
     applyAppTheme(settings.theme);
     updateThemeSwitch(settings.theme);
@@ -133,6 +135,8 @@ function refreshSettingsInterface() {
     });
 
     updateWeightUnitSwitch(defaults.weightUnit);
+    alwaysShowInstructionsCheckbox.checked =
+        settings.alwaysShowInstructions === true;
 
     [
         setsInput,
@@ -333,9 +337,11 @@ alwaysShowInstructionsCheckbox.addEventListener("change", () => {
     const settings = getAppSettings();
     if (!settings) return;
 
-    settings.planDefaults.alwaysShowInstructions = alwaysShowInstructionsCheckbox.checked;
+    settings.alwaysShowInstructions = alwaysShowInstructionsCheckbox.checked;
+
     scheduleAppSettingsSave(settings);
-});   
+    onAlwaysShowInstructionsChange();
+});  
 
 advancedToggle.addEventListener("click", () => {
     updateAdvancedPanel(advancedPanel.hidden);

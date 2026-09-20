@@ -1682,6 +1682,14 @@
     align-items: center;
 }
 
+.plan-exercise-weight-row .plan-number-control {
+    transform: translateX(0px);
+}
+
+.plan-exercise-rest-row .plan-number-control {
+    transform: translateX(10px);
+}
+
 
 /* Volume */
 
@@ -1741,8 +1749,8 @@
 
 .plan-exercise-control-row
 .plan-weight-control .plan-number-control {
-    width: auto;
-    flex: 0 0 auto;
+    width: 58px;
+    flex: 0 0 58px;
 }
 
 .plan-exercise-weight-row
@@ -1800,8 +1808,8 @@
 
 .plan-exercise-control-row
 .plan-rest-control .plan-number-control {
-    width: auto;
-    flex: 0 0 auto;
+    width: 42px;
+    flex: 0 0 42px;
 }
 
 .plan-exercise-rest-row

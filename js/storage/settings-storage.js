@@ -49,8 +49,7 @@ function normalizePlanDefaults(defaults = {}) {
         },
 
         includeEquipment: defaults.includeEquipment === true,
-        autoAddDefaultInstructions: defaults.autoAddDefaultInstructions !== false,
-        alwaysShowInstructions: defaults.alwaysShowInstructions === true
+        autoAddDefaultInstructions: defaults.autoAddDefaultInstructions !== false
     };
 }
 
@@ -61,6 +60,7 @@ function createDefaultAppSettings() {
         updatedAt: Date.now(),
         theme: "light",
         bodyModel: "male",
+        alwaysShowInstructions: false,
         planDefaults: normalizePlanDefaults()
     };
 }
@@ -72,6 +72,8 @@ function normalizeAppSettings(settings = {}) {
         updatedAt: Number(settings.updatedAt) || Date.now(),
         theme: settings.theme === "dark" ? "dark" : "light",
         bodyModel: settings.bodyModel === "female" ? "female" : "male",
+        alwaysShowInstructions:
+            settings.alwaysShowInstructions === true,
         planDefaults: normalizePlanDefaults(settings.planDefaults)
     };
 }

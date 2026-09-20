@@ -468,7 +468,6 @@ function ensurePlanMetadata(plan) {
     if (!Array.isArray(plan.equipment)) plan.equipment = [];
     if (typeof plan.includeEquipment !== "boolean") plan.includeEquipment = false;
     if (typeof plan.autoAddDefaultInstructions !== "boolean") plan.autoAddDefaultInstructions = true;
-    if (typeof plan.alwaysShowInstructions !== "boolean") plan.alwaysShowInstructions = false;
 
 
 }
@@ -960,8 +959,7 @@ const plan = {
 
     includeEquipment: defaults.includeEquipment === true,
     autoAddDefaultInstructions: defaults.autoAddDefaultInstructions !== false,
-    alwaysShowInstructions: defaults.alwaysShowInstructions === true
-};
+    };
             ensurePlanDefaults(plan);
 
             plans.push(plan);

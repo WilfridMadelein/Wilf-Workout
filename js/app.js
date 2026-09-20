@@ -321,6 +321,7 @@ configureSettingsController({
     bodyModelSwitch: settingsBodyModelSwitch,
     bodyModelButtons: settingsBodyModelButtons,
     onBodyModelChange: refreshExerciseMuscleMapModel,
+    onAlwaysShowInstructionsChange: renderPlanExercises,
     setsInput: settingsPlanSetsInput,
     repsInput: settingsPlanRepsInput,
     timeInput: settingsPlanTimeInput,
@@ -375,6 +376,8 @@ configurePlanManager({
 configurePlanRender({
     getCurrentPlan: () => currentPlan,
     getPlanExerciseList: () => planExerciseList,
+    getAlwaysShowInstructions: () =>
+        appSettings?.alwaysShowInstructions === true,
 
     normalizeCombinationNumbers,
     displayExerciseDetails,

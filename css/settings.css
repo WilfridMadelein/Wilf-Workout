@@ -54,17 +54,25 @@
     display: none;
 }
 
-.settings-default-heading {
+.settings-advanced-heading {
     margin-bottom: 16px;
 }
 
-.settings-default-heading h2 {
+.settings-advanced-heading h2 {
     margin: 0;
     font-size: 26px;
 }
 
-.settings-default-heading .settings-help {
+.settings-advanced-heading .settings-help {
     margin: 4px 0 0;
+}
+
+.settings-other-heading {
+    margin-top: 28px;
+}
+
+.settings-other-block {
+    margin-top: 0;
 }
 
 .settings-advanced-panel .settings-default-block {
