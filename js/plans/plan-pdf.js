@@ -2,6 +2,10 @@ import { getProgressionName } from "../exercises/exercise-search.js";
 import { getPlanExerciseDetailsLines } from "../exercises/exercise-details.js";
 import { getPlanExerciseSplitInfo } from "../exercises/exercise-split.js";
 import { formatPlanDuration } from "./plan-timing.js";
+import {
+    renderExerciseMuscleMap,
+    destroyExerciseMuscleMapsIn
+} from "../exercises/exercise-muscle-map.js";
 
 let plans = [];
 let downloadPlansButton;
@@ -13,6 +17,185 @@ let planPdfSelectAll;
 
 let getPlanSetCount = () => 0;
 let getPlanPrimaryMuscles = () => [];
+
+// ============================================================
+// CARTE MUSCULAIRE — PDF
+// ============================================================
+
+const PDF_MUSCLE_MAP_SIZE = 27;
+const PDF_MUSCLE_MAP_GAP = 2.5;
+
+let pdfMuscleMapImages = new WeakMap();
+
+function waitForNextPaint() {
+    return new Promise(resolve =>
+        requestAnimationFrame(() =>
+            requestAnimationFrame(resolve)
+        )
+    );
+}
+
+async function createPdfMuscleMapImage(exercise) {
+    if (!exercise) return null;
+
+    const host = document.createElement("div");
+    const map = document.createElement("div");
+
+    Object.assign(host.style, {
+        position: "fixed",
+        left: "-10000px",
+        top: "0",
+        width: "240px",
+        height: "240px",
+        opacity: "0",
+        pointerEvents: "none"
+    });
+
+    map.classList.add(
+        "exercise-muscle-map",
+        "plan-exercise-muscle-map"
+    );
+
+    map.style.width = "240px";
+    map.style.height = "240px";
+    map.style.margin = "0";
+
+    host.appendChild(map);
+    document.body.appendChild(host);
+
+    try {
+        renderExerciseMuscleMap(
+            map,
+            exercise,
+            { compact: true }
+        );
+
+        await waitForNextPaint();
+
+        const canvases = [
+            ...map.querySelectorAll(
+                ".exercise-muscle-map-canvas canvas"
+            )
+        ];
+
+        if (!canvases.length) return null;
+
+        const mapRect = map.getBoundingClientRect();
+        const scale = 2;
+        const output = document.createElement("canvas");
+
+        output.width = Math.max(
+            1,
+            Math.round(mapRect.width * scale)
+        );
+
+        output.height = Math.max(
+            1,
+            Math.round(mapRect.height * scale)
+        );
+
+        const context = output.getContext("2d");
+
+        context.clearRect(
+            0,
+            0,
+            output.width,
+            output.height
+        );
+
+        canvases.forEach(canvas => {
+            const rect = canvas.getBoundingClientRect();
+
+            const x =
+                (rect.left - mapRect.left) *
+                scale;
+
+            const y =
+                (rect.top - mapRect.top) *
+                scale;
+
+            const width =
+                rect.width * scale;
+
+            const height =
+                rect.height * scale;
+
+            context.drawImage(
+                canvas,
+                0,
+                0,
+                canvas.width,
+                canvas.height,
+                x,
+                y,
+                width,
+                height
+            );
+        });
+
+        return output.toDataURL("image/png");
+    } finally {
+        destroyExerciseMuscleMapsIn(host);
+        host.remove();
+    }
+}
+
+async function preparePdfMuscleMapImages(
+    selectedPlans
+) {
+    const cache = new Map();
+
+    pdfMuscleMapImages =
+        new WeakMap();
+
+    for (const plan of selectedPlans) {
+        for (
+            const planExercise
+            of plan.exercises ?? []
+        ) {
+            const exercise =
+                planExercise.exercise;
+
+            if (!exercise) continue;
+
+            const key =
+                exercise.ID ??
+                exercise.nom;
+
+            let image =
+                cache.get(key);
+
+            if (image === undefined) {
+                try {
+                    image =
+                        await createPdfMuscleMapImage(
+                            exercise
+                        );
+                } catch (error) {
+                    console.warn(
+                        "Carte musculaire PDF non générée :",
+                        exercise.nom,
+                        error
+                    );
+
+                    image = null;
+                }
+
+                cache.set(
+                    key,
+                    image
+                );
+            }
+
+            if (image) {
+                pdfMuscleMapImages.set(
+                    planExercise,
+                    image
+                );
+            }
+        }
+    }
+}
 
 // ============================================================
 // CONFIGURATION
@@ -224,21 +407,42 @@ function getPlanGroups(plan) {
 // PDF
 // ============================================================
 
-function downloadSelectedPlans() {
-    const selectedPlans = getSelectedPlansInOrder();
+async function downloadSelectedPlans() {
+    const selectedPlans =
+        getSelectedPlansInOrder();
+
     if (selectedPlans.length === 0) return;
 
-    generatePlansPdf(selectedPlans);
-    closePlanPdfModal();
+    confirmPlanPdfButton.disabled = true;
+
+    try {
+        await generatePlansPdf(
+            selectedPlans
+        );
+
+        closePlanPdfModal();
+    } finally {
+        updatePlanPdfControls();
+    }
 }
 
-function generatePlansPdf(selectedPlans) {
-    const JsPdf = window.jspdf?.jsPDF;
+async function generatePlansPdf(
+    selectedPlans
+) {
+    const JsPdf =
+        window.jspdf?.jsPDF;
 
     if (!JsPdf) {
-        alert("Le générateur PDF n'est pas disponible.");
+        alert(
+            "Le générateur PDF n'est pas disponible."
+        );
+
         return;
     }
+
+    await preparePdfMuscleMapImages(
+        selectedPlans
+    );
 
     const doc = new JsPdf({
         orientation: "portrait",
@@ -246,20 +450,38 @@ function generatePlansPdf(selectedPlans) {
         format: "a4"
     });
 
-    const date = new Intl.DateTimeFormat("fr-CA", {
-        year: "numeric",
-        month: "long",
-        day: "numeric"
-    }).format(new Date());
+    const date =
+        new Intl.DateTimeFormat(
+            "fr-CA",
+            {
+                year: "numeric",
+                month: "long",
+                day: "numeric"
+            }
+        ).format(new Date());
 
-    selectedPlans.forEach((plan, index) => {
-        if (index > 0) doc.addPage();
-        drawPlan(doc, plan, date);
-    });
+    selectedPlans.forEach(
+        (plan, index) => {
+            if (index > 0) {
+                doc.addPage();
+            }
 
-    const fileDate = new Intl.DateTimeFormat("en-CA").format(new Date());
+            drawPlan(
+                doc,
+                plan,
+                date
+            );
+        }
+    );
 
-    doc.save(`wilf-workout-plans-${fileDate}.pdf`);
+    const fileDate =
+        new Intl.DateTimeFormat(
+            "en-CA"
+        ).format(new Date());
+
+    doc.save(
+        `wilf-workout-plans-${fileDate}.pdf`
+    );
 }
 
 // ============================================================
@@ -781,212 +1003,522 @@ function wrapInstructionText(doc, text, width) {
     });
 }
 
-function getExerciseCardLayout(doc, planExercise, index, width) {
-    const exercise = planExercise.exercise ?? {};
-    const innerWidth = width - 8;
-    const progression = getProgressionName(exercise) || "";
+function getExerciseCardLayout(
+    doc,
+    planExercise,
+    index,
+    width
+) {
+    const exercise =
+        planExercise.exercise ?? {};
+
+    const innerWidth =
+        width - 8;
+
+    const progression =
+        getProgressionName(exercise) || "";
+
     const headerGap = 4;
-    const titleWidth = progression ? innerWidth * 0.62 : innerWidth;
-    const progressionWidth = progression
-        ? innerWidth - titleWidth - headerGap
-        : 0;
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
+    const titleWidth =
+        progression
+            ? innerWidth * 0.62
+            : innerWidth;
 
-    const titleLines = doc.splitTextToSize(
-        `${index + 1} - ${exercise.nom ?? "Exercice"}`,
-        titleWidth
+    const progressionWidth =
+        progression
+            ? innerWidth -
+              titleWidth -
+              headerGap
+            : 0;
+
+    const mapSize =
+        Math.min(
+            PDF_MUSCLE_MAP_SIZE,
+            innerWidth * 0.38
+        );
+
+    const infoWidth =
+        Math.max(
+            20,
+            innerWidth -
+            mapSize -
+            PDF_MUSCLE_MAP_GAP
+        );
+
+    doc.setFont(
+        "helvetica",
+        "bold"
     );
 
-    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+
+    const titleLines =
+        doc.splitTextToSize(
+            `${index + 1} - ${exercise.nom ?? "Exercice"}`,
+            titleWidth
+        );
+
+    doc.setFont(
+        "helvetica",
+        "normal"
+    );
+
     doc.setFontSize(8.5);
 
-    const progressionLines = progression
-        ? doc.splitTextToSize(progression, progressionWidth)
-        : [];
+    const progressionLines =
+        progression
+            ? doc.splitTextToSize(
+                progression,
+                progressionWidth
+            )
+            : [];
 
     const muscles = [
         ...new Set(
-            (exercise.muscles_principaux ?? [])
-                .map(muscle => muscle[0])
+            (
+                exercise
+                    .muscles_principaux ??
+                []
+            )
+                .map(
+                    muscle =>
+                        muscle[0]
+                )
                 .filter(Boolean)
         )
     ].join(" / ") || "-";
 
-    const unit = planExercise.valueUnit === "sec" ? "sec" : "Rep";
-    const weight = Number(planExercise.weight) || 0;
-    const showWeight = weight !== 0 || isExclusivelyGym(exercise);
+    const unit =
+        planExercise.valueUnit === "sec"
+            ? "sec"
+            : "Rep";
 
-const bodyRows = [];
+    const weight =
+        Number(
+            planExercise.weight
+        ) || 0;
 
-const splitInfo =
-    getPlanExerciseSplitInfo(planExercise);
+    const showWeight =
+        weight !== 0 ||
+        isExclusivelyGym(
+            exercise
+        );
 
-if (splitInfo) {
-    bodyRows.push({
-        type: "split",
-        label: splitInfo.label,
-        value: splitInfo.order
-    });
-}
+    const splitInfo =
+        getPlanExerciseSplitInfo(
+            planExercise
+        );
 
-bodyRows.push({
-    type: "text",
-    lines: doc.splitTextToSize(muscles, innerWidth)
-});
+    const infoRows = [];
 
-    if (showWeight) {
-        bodyRows.push({
-            type: "mixed",
-            label: "Poids : ",
-            value: `${formatNumber(planExercise.weight)} ${planExercise.weightUnit ?? "lbs"}`
+    if (splitInfo) {
+        infoRows.push({
+            type: "split",
+            label: splitInfo.label,
+            value: splitInfo.order
         });
     }
 
-    bodyRows.push(
+    infoRows.push({
+        type: "text",
+
+        lines:
+            doc.splitTextToSize(
+                muscles,
+                infoWidth
+            )
+    });
+
+    if (showWeight) {
+        infoRows.push({
+            type: "mixed",
+            label: "Poids : ",
+
+            value:
+                `${formatNumber(planExercise.weight)} ` +
+                `${planExercise.weightUnit ?? "lbs"}`
+        });
+    }
+
+    infoRows.push(
         {
             type: "mixed",
             label: "Série de ",
-            value: `${planExercise.sets ?? 1} X ${formatNumber(planExercise.value)} ${unit}`
+
+            value:
+                `${planExercise.sets ?? 1} X ` +
+                `${formatNumber(planExercise.value)} ` +
+                `${unit}`
         },
         {
             type: "mixed",
             label: "Tempo : ",
-            value: formatTempo(planExercise.tempo)
+
+            value:
+                formatTempo(
+                    planExercise.tempo
+                )
         },
         {
-            type: "text",
-            lines: [`Repos : ${formatNumber(planExercise.rest)} sec`]
+            type: "mixed",
+            label: "Repos : ",
+
+            value:
+                `${formatNumber(planExercise.rest)} sec`
         }
     );
 
-    const instructions = getPdfInstructions(planExercise);
+    const instructions =
+        getPdfInstructions(
+            planExercise
+        );
+
     let instructionLines = [];
 
     if (instructions) {
-        doc.setFont("helvetica", "normal");
+        doc.setFont(
+            "helvetica",
+            "normal"
+        );
+
         doc.setFontSize(8);
-        instructionLines = wrapInstructionText(doc, instructions, innerWidth - 5);
+
+        instructionLines =
+            wrapInstructionText(
+                doc,
+                instructions,
+                innerWidth - 5
+            );
     }
 
-    const headerLineCount = Math.max(
-        titleLines.length,
-        progressionLines.length,
-        1
-    );
+    const headerLineCount =
+        Math.max(
+            titleLines.length,
+            progressionLines.length,
+            1
+        );
 
-    const bodyHeight = bodyRows.reduce(
-        (height, row) =>
-            height + (row.lines?.length ?? 1) * PDF_BODY_LINE_HEIGHT,
-        0
-    );
+    const infoHeight =
+        infoRows.reduce(
+            (total, row) => {
+                if (
+                    row.type ===
+                    "text"
+                ) {
+                    return (
+                        total +
+                        row.lines.length *
+                        PDF_BODY_LINE_HEIGHT
+                    );
+                }
 
-    const instructionHeight = instructionLines.length
-        ? instructionLines.length * PDF_INSTRUCTION_LINE_HEIGHT + 3.6
-        : 0;
+                return (
+                    total +
+                    PDF_BODY_LINE_HEIGHT
+                );
+            },
+            0
+        );
+
+    const bodyHeight =
+        Math.max(
+            mapSize,
+            infoHeight
+        );
+
+    const instructionHeight =
+        instructionLines.length
+            ? instructionLines.length *
+              PDF_INSTRUCTION_LINE_HEIGHT +
+              3.6
+            : 0;
 
     const contentHeight =
         5 +
-        headerLineCount * PDF_HEADER_LINE_HEIGHT +
+        headerLineCount *
+        PDF_HEADER_LINE_HEIGHT +
         1.5 +
         bodyHeight +
-        (instructionHeight ? 1.5 + instructionHeight : 0) +
+        (
+            instructionHeight
+                ? 1.5 +
+                  instructionHeight
+                : 0
+        ) +
         3;
 
     return {
         titleLines,
         progressionLines,
         headerLineCount,
-        bodyRows,
+        mapSize,
+
+        muscleMapImage:
+            pdfMuscleMapImages.get(
+                planExercise
+            ) ?? null,
+
+        infoRows,
         instructionLines,
         instructionHeight,
-        height: Math.max(PDF_CARD_MIN_HEIGHT, contentHeight)
+
+        height:
+            Math.max(
+                PDF_CARD_MIN_HEIGHT,
+                contentHeight
+            )
     };
 }
 
-function drawExerciseCard(doc, layout, x, y, width) {
+function drawExerciseCard(
+    doc,
+    layout,
+    x,
+    y,
+    width
+) {
     const padding = 4;
     const left = x + padding;
-    const right = x + width - padding;
-    let textY = y + 5;
+    const right =
+        x + width - padding;
 
-    doc.setFillColor(255, 255, 255);
-    doc.setDrawColor(185, 185, 185);
-    doc.roundedRect(x, y, width, layout.height, 2, 2, "FD");
+    let textY =
+        y + 5;
 
-    doc.setTextColor(20);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-
-    layout.titleLines.forEach((line, index) => {
-        doc.text(line, left, textY + index * PDF_HEADER_LINE_HEIGHT);
-    });
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8.5);
-
-    layout.progressionLines.forEach((line, index) => {
-        doc.text(
-            line,
-            right,
-            textY + index * PDF_HEADER_LINE_HEIGHT,
-            { align: "right" }
-        );
-    });
-
-    textY += layout.headerLineCount * PDF_HEADER_LINE_HEIGHT + 1.5;
-
-    layout.bodyRows.forEach(row => {
-
-if (row.type === "split") {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.5);
-    doc.text(row.label, left, textY);
-
-    const labelWidth =
-        doc.getTextWidth(row.label);
-
-    doc.setFont("helvetica", "normal");
-    doc.text(
-        ` ${row.value}`,
-        left + labelWidth,
-        textY
+    doc.setFillColor(
+        255,
+        255,
+        255
     );
 
-    textY += PDF_BODY_LINE_HEIGHT;
-    return;
-}
+    doc.setDrawColor(
+        185,
+        185,
+        185
+    );
 
-        if (row.type === "mixed") {
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(8.5);
-            doc.text(row.label, left, textY);
+    doc.roundedRect(
+        x,
+        y,
+        width,
+        layout.height,
+        2,
+        2,
+        "FD"
+    );
 
-            const labelWidth = doc.getTextWidth(row.label);
+    // --------------------------------------------------------
+    // NOM / PROGRESSION
+    // --------------------------------------------------------
 
-            doc.setFont("helvetica", "bold");
-            doc.text(row.value, left + labelWidth, textY);
+    doc.setTextColor(20);
 
-            textY += PDF_BODY_LINE_HEIGHT;
-            return;
+    doc.setFont(
+        "helvetica",
+        "bold"
+    );
+
+    doc.setFontSize(10);
+
+    layout.titleLines.forEach(
+        (line, index) => {
+            doc.text(
+                line,
+                left,
+                textY +
+                index *
+                PDF_HEADER_LINE_HEIGHT
+            );
         }
+    );
 
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(8.5);
+    doc.setFont(
+        "helvetica",
+        "normal"
+    );
 
-        row.lines.forEach(line => {
-            doc.text(line, left, textY);
-            textY += PDF_BODY_LINE_HEIGHT;
-        });
-    });
+    doc.setFontSize(8.5);
 
-    if (!layout.instructionLines.length) return;
+    layout.progressionLines.forEach(
+        (line, index) => {
+            doc.text(
+                line,
+                right,
+                textY +
+                index *
+                PDF_HEADER_LINE_HEIGHT,
+                { align: "right" }
+            );
+        }
+    );
 
-    const boxWidth = width - padding * 2;
-    const boxY = y + layout.height - 3 - layout.instructionHeight;
+    textY +=
+        layout.headerLineCount *
+        PDF_HEADER_LINE_HEIGHT +
+        1.5;
 
-    doc.setDrawColor(145, 145, 145);
+    // --------------------------------------------------------
+    // IMAGE À GAUCHE / INFORMATIONS À DROITE
+    // --------------------------------------------------------
+
+    const bodyTop =
+        textY - 2.7;
+
+    const infoX =
+        left +
+        layout.mapSize +
+        PDF_MUSCLE_MAP_GAP;
+
+    if (layout.muscleMapImage) {
+        doc.addImage(
+            layout.muscleMapImage,
+            "PNG",
+            left,
+            bodyTop,
+            layout.mapSize,
+            layout.mapSize
+        );
+    }
+
+    layout.infoRows.forEach(
+        row => {
+            // Split / Alterne
+
+            if (
+                row.type ===
+                "split"
+            ) {
+                doc.setFont(
+                    "helvetica",
+                    "bold"
+                );
+
+                doc.setFontSize(8.5);
+
+                doc.text(
+                    row.label,
+                    infoX,
+                    textY
+                );
+
+                const labelWidth =
+                    doc.getTextWidth(
+                        row.label
+                    );
+
+                doc.setFont(
+                    "helvetica",
+                    "normal"
+                );
+
+                doc.text(
+                    ` ${row.value}`,
+                    infoX +
+                    labelWidth,
+                    textY
+                );
+
+                textY +=
+                    PDF_BODY_LINE_HEIGHT;
+
+                return;
+            }
+
+            // Poids / Série / Tempo / Repos
+
+            if (
+                row.type ===
+                "mixed"
+            ) {
+                doc.setFont(
+                    "helvetica",
+                    "normal"
+                );
+
+                doc.setFontSize(8.5);
+
+                doc.text(
+                    row.label,
+                    infoX,
+                    textY
+                );
+
+                const labelWidth =
+                    doc.getTextWidth(
+                        row.label
+                    );
+
+                doc.setFont(
+                    "helvetica",
+                    "bold"
+                );
+
+                doc.text(
+                    row.value,
+                    infoX +
+                    labelWidth,
+                    textY
+                );
+
+                textY +=
+                    PDF_BODY_LINE_HEIGHT;
+
+                return;
+            }
+
+            // Muscles
+
+            doc.setFont(
+                "helvetica",
+                "normal"
+            );
+
+            doc.setFontSize(8.5);
+
+            row.lines.forEach(
+                line => {
+                    doc.text(
+                        line,
+                        infoX,
+                        textY
+                    );
+
+                    textY +=
+                        PDF_BODY_LINE_HEIGHT;
+                }
+            );
+        }
+    );
+
+    // --------------------------------------------------------
+    // INSTRUCTIONS
+    // --------------------------------------------------------
+
+    if (
+        !layout
+            .instructionLines
+            .length
+    ) {
+        return;
+    }
+
+    const boxWidth =
+        width -
+        padding * 2;
+
+    const boxY =
+        y +
+        layout.height -
+        3 -
+        layout.instructionHeight;
+
+    doc.setDrawColor(
+        145,
+        145,
+        145
+    );
+
     doc.roundedRect(
         left,
         boxY,
@@ -996,19 +1528,29 @@ if (row.type === "split") {
         1
     );
 
-    doc.setFont("helvetica", "normal");
+    doc.setFont(
+        "helvetica",
+        "normal"
+    );
+
     doc.setFontSize(8);
+
     doc.setTextColor(30);
 
-    layout.instructionLines.forEach((line, index) => {
-        if (!line) return;
+    layout.instructionLines.forEach(
+        (line, index) => {
+            if (!line) return;
 
-        doc.text(
-            line,
-            left + 2.5,
-            boxY + 3.3 + index * PDF_INSTRUCTION_LINE_HEIGHT
-        );
-    });
+            doc.text(
+                line,
+                left + 2.5,
+                boxY +
+                3.3 +
+                index *
+                PDF_INSTRUCTION_LINE_HEIGHT
+            );
+        }
+    );
 }
 
 // ============================================================
