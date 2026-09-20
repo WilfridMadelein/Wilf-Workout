@@ -1051,39 +1051,27 @@ line3.append(
                 );
 
 
-                const instructionsButton =
-                    document.createElement("button");
+const exerciseArrayIndex = plan.exercises.indexOf(planExercise);
 
-                instructionsButton.type =
-                    "button";
+let instructionsControl;
 
-                instructionsButton.textContent =
-                    "Instructions";
+if (plan.alwaysShowInstructions) {
+    line4.classList.add("has-inline-instructions");
+    instructionsControl = createInlineInstructionsEditor(planExercise);
+} else {
+    const instructionsButton = document.createElement("button");
 
-                instructionsButton.classList.add(
-                    "plan-instructions-button"
-                );
+    instructionsButton.type = "button";
+    instructionsButton.textContent = "Instructions";
+    instructionsButton.classList.add("plan-instructions-button");
+    instructionsButton.dataset.planExerciseIndex = exerciseArrayIndex;
 
+    instructionsButton.addEventListener("click", () => {
+        openPlanExerciseInstructions(planExercise, exerciseArrayIndex);
+    });
 
-                const exerciseArrayIndex =
-                    plan.exercises.indexOf(
-                        planExercise
-                    );
-
-                instructionsButton.dataset
-                    .planExerciseIndex =
-                    exerciseArrayIndex;
-
-
-                instructionsButton.addEventListener(
-                    "click",
-                    () => {
-                        openPlanExerciseInstructions(
-                            planExercise,
-                            exerciseArrayIndex
-                        );
-                    }
-                );
+    instructionsControl = instructionsButton;
+}
 
                 // Suppression
 
@@ -1117,10 +1105,7 @@ line3.append(
                 );
 
 
-                line4.append(
-                    instructionsButton,
-                    deleteButton
-                );
+                line4.append(instructionsControl, deleteButton);
 
 
                 card.append(
@@ -1156,6 +1141,39 @@ line3.append(
 // INSTRUCTIONS
 // ============================================================
 
+function ensurePlanExerciseInstructions(planExercise) {
+    planExercise.details ??= {};
+
+    if (planExercise.details.instructions == null) {
+        planExercise.details.instructions =
+            getPlanExerciseDetailsLines(planExercise.exercise).join("\n");
+    }
+
+    return planExercise.details.instructions;
+}
+
+function createInlineInstructionsEditor(planExercise) {
+    const field = document.createElement("label");
+    field.classList.add("plan-instructions-inline");
+
+    const title = document.createElement("span");
+    title.classList.add("plan-instructions-inline-title");
+    title.textContent = "Instructions";
+
+    const textarea = document.createElement("textarea");
+    textarea.classList.add("plan-instructions-inline-textarea");
+    textarea.maxLength = 200;
+    textarea.value = ensurePlanExerciseInstructions(planExercise);
+
+    textarea.addEventListener("input", () => {
+        planExercise.details.instructions = textarea.value.slice(0, 200);
+        schedulePlanSave(getCurrentPlan());
+    });
+
+    field.append(title, textarea);
+    return field;
+}
+
 function openPlanExerciseInstructions(
     planExercise,
     index
@@ -1166,19 +1184,7 @@ function openPlanExerciseInstructions(
 
     closePlanInstructionsPopup();
 
-    if (!planExercise.details) {
-        planExercise.details = {};
-    }
-
-    const exercise = planExercise.exercise;
-
-    if (planExercise.details.instructions == null) {
-        const parts =
-            getPlanExerciseDetailsLines(exercise);
-
-        planExercise.details.instructions =
-            parts.join("\n");
-    }
+    const instructions = ensurePlanExerciseInstructions(planExercise);
 
     const popup =
         document.createElement("div");
@@ -1203,8 +1209,7 @@ function openPlanExerciseInstructions(
     );
 
     textarea.maxLength = 200;
-    textarea.value =
-        planExercise.details.instructions;
+    textarea.value = instructions;
 
     popup.appendChild(textarea);
 

@@ -32,6 +32,7 @@ let confirmPlanDeleteButton;
 
 let getEquipmentOptions = () => [];
 let getSelectedPlanEquipment = () => new Set();
+let getCategoryOptions = () => [];
 
 let pendingPlanDeletion = null;
 
@@ -96,6 +97,7 @@ export function configurePlanController(dependencies) {
 
         getEquipmentOptions,
         getSelectedPlanEquipment,
+        getCategoryOptions,
 
         planSetsInput,
         planRepsInput,
@@ -465,13 +467,10 @@ function ensurePlanMetadata(plan) {
 
     if (!Array.isArray(plan.equipment)) plan.equipment = [];
     if (typeof plan.includeEquipment !== "boolean") plan.includeEquipment = false;
+    if (typeof plan.autoAddDefaultInstructions !== "boolean") plan.autoAddDefaultInstructions = true;
+    if (typeof plan.alwaysShowInstructions !== "boolean") plan.alwaysShowInstructions = false;
 
-    if (
-        typeof plan.autoAddDefaultInstructions !==
-        "boolean"
-    ) {
-        plan.autoAddDefaultInstructions = true;
-    }
+
 }
 
 export function addEquipmentToCurrentPlan(...equipmentNames) {
@@ -829,6 +828,49 @@ function finishPlanNameEditing() {
     });
 }
 
+function createNewPlanFilterState(defaults = {}) {
+    const categoryOptions = getCategoryOptions();
+    const equipmentOptions = getEquipmentOptions();
+
+    const categories = Array.isArray(defaults.filters?.categories)
+        ? defaults.filters.categories.filter(category => categoryOptions.includes(category))
+        : categoryOptions;
+
+    const equipment = Array.isArray(defaults.filters?.equipment)
+        ? defaults.filters.equipment.filter(item => equipmentOptions.includes(item))
+        : equipmentOptions;
+
+    return {
+        search: "",
+        types: new Set(),
+        progressionsInclude: new Set(),
+        progressionsExclude: new Set(),
+        muscleFamilies: new Set(),
+        submuscles: new Map(),
+        categories: new Set(categories),
+        equipment: new Set(equipment),
+        autoExcludeProgressions: defaults.filters?.autoExcludeProgressions !== false
+    };
+}
+
+function createNewPlanDefaults(defaults = {}) {
+    return {
+        sets: defaults.sets ?? 3,
+        reps: defaults.reps ?? 10,
+        time: defaults.time ?? 30,
+        rest: defaults.rest ?? 60,
+        weight: defaults.weight ?? 0,
+        weightUnit: defaults.weightUnit ?? "lbs",
+
+        tempo: {
+            first: defaults.tempo?.first ?? 3,
+            second: defaults.tempo?.second ?? 0,
+            third: defaults.tempo?.third ?? 1,
+            fourth: defaults.tempo?.fourth ?? 0
+        }
+    };
+}
+
 export function setupPlanController() {
 
 planNotesInput.addEventListener("input", () => {
@@ -895,21 +937,31 @@ document.addEventListener("keydown", event => {
     newPlanButton.addEventListener(
         "click",
         async () => {
-            const plan = {
-                id: crypto.randomUUID?.() ?? Date.now(),
-                createdAt: Date.now(),
+const defaults = getDefaultPlanSettings() ?? {};
+const filters = createNewPlanFilterState(defaults);
 
-                name: `Plan ${plans.length + 1}`,
-                defaults: structuredClone(
-                    getDefaultPlanSettings() ?? {}
-                ),
-                exercises: [],
-                notes: "",
-                equipment: [],
-                includeEquipment: false,
-                autoAddDefaultInstructions: true
-            };
+const plan = {
+    id: crypto.randomUUID?.() ?? Date.now(),
+    createdAt: Date.now(),
 
+    name: `Plan ${plans.length + 1}`,
+    defaults: createNewPlanDefaults(defaults),
+
+    exercises: [],
+    notes: "",
+
+    filters,
+    filtersInitialized: true,
+
+    equipment:
+        defaults.includeEquipment === true
+            ? [...filters.equipment]
+            : [],
+
+    includeEquipment: defaults.includeEquipment === true,
+    autoAddDefaultInstructions: defaults.autoAddDefaultInstructions !== false,
+    alwaysShowInstructions: defaults.alwaysShowInstructions === true
+};
             ensurePlanDefaults(plan);
 
             plans.push(plan);

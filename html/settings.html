@@ -1,7 +1,9 @@
 <div class="settings-page">
     <h2>Paramètres</h2>
 
-    <!-- APPARENCE -->
+    <!-- =========================================================
+         APPARENCE
+    ========================================================== -->
     <section class="settings-section">
         <h3>Apparence</h3>
 
@@ -20,45 +22,119 @@
             </button>
         </div>
 
-<div class="settings-row settings-body-model-row">
-    <span>Modèle anatomique</span>
+        <div class="settings-row settings-body-model-row">
+            <span>Modèle anatomique</span>
 
-    <div
-        id="settings-body-model-switch"
-        class="settings-body-model-switch"
-        role="group"
-        aria-label="Modèle anatomique"
-    >
-        <button
-            type="button"
-            data-body-model="male"
-            class="active"
-            aria-pressed="true"
-        >
-            M
-        </button>
+            <div
+                id="settings-body-model-switch"
+                class="settings-body-model-switch"
+                role="group"
+                aria-label="Modèle anatomique"
+            >
+                <button
+                    type="button"
+                    data-body-model="male"
+                    class="active"
+                    aria-pressed="true"
+                >
+                    M
+                </button>
 
-        <button
-            type="button"
-            data-body-model="female"
-            aria-pressed="false"
-        >
-            F
-        </button>
-    </div>
-</div>        
+                <button
+                    type="button"
+                    data-body-model="female"
+                    aria-pressed="false"
+                >
+                    F
+                </button>
+            </div>
+        </div>
     </section>
 
-    <!-- PARAMÈTRES DES NOUVEAUX PLANS -->
+    <!-- =========================================================
+         DONNÉES
+    ========================================================== -->
     <section class="settings-section">
-        <h3>Paramètres des plans par défaut</h3>
+        <h3>Données</h3>
 
-        <p class="settings-help">
-            Ces valeurs sont appliquées aux nouveaux plans seulement.
-        </p>
+        <div class="settings-data-actions">
+            <button id="export-backup-button" type="button">
+                Sauvegarder mes données
+            </button>
 
-        <div class="settings-default-grid">
-            <div class="settings-default-column">
+            <button id="import-backup-button" type="button">
+                Importer une sauvegarde
+            </button>
+        </div>
+
+        <input
+            id="backup-file-input"
+            type="file"
+            accept=".wilf,.json,application/json"
+            hidden
+        >
+    </section>
+
+    <!-- =========================================================
+         ACCÈS AUX PARAMÈTRES AVANCÉS
+    ========================================================== -->
+    <div class="settings-advanced-access">
+        <button
+            id="settings-advanced-toggle"
+            class="settings-advanced-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="settings-advanced-panel"
+        >
+            Accéder aux paramètres avancés
+        </button>
+    </div>
+
+    <!-- =========================================================
+         PARAMÈTRES AVANCÉS
+    ========================================================== -->
+    <div
+        id="settings-advanced-panel"
+        class="settings-advanced-panel"
+        hidden
+    >
+        <!-- PAR DÉFAUT -->
+        <div class="settings-default-heading">
+            <h2>Par défaut</h2>
+
+            <p class="settings-help">
+                Ces réglages sont appliqués aux nouveaux plans seulement.
+            </p>
+        </div>
+
+        <!-- =====================================================
+             FILTRES DU PLAN
+        ====================================================== -->
+        <section class="settings-section settings-default-block">
+            <h3>Filtres du plan</h3>
+
+            <div id="settings-plan-category-filters"></div>
+
+            <div id="settings-plan-equipment-filters"></div>
+
+            <label class="plan-filter-checkbox">
+                <input
+                    id="settings-plan-auto-exclude-progressions"
+                    type="checkbox"
+                    checked
+                >
+                <span>Exclure les progressions ajoutées au plan</span>
+            </label>
+        </section>
+
+        <!-- =====================================================
+             PARAMÈTRES DU PLAN
+        ====================================================== -->
+        <section class="settings-section settings-default-block">
+            <h3>Paramètres du plan</h3>
+
+            <div class="settings-default-stack">
+                <!-- SÉRIE -->
                 <div class="plan-parameter">
                     <label for="settings-plan-sets">Série</label>
 
@@ -81,6 +157,57 @@
                     </div>
                 </div>
 
+                <!-- RÉPÉTITION -->
+                <div class="plan-parameter">
+                    <label for="settings-plan-reps">Répétition</label>
+
+                    <div class="plan-default-number-control">
+                        <input
+                            id="settings-plan-reps"
+                            class="plan-default-number-input"
+                            type="number"
+                            data-min-chars="3"
+                            min="1"
+                            max="999"
+                            step="1"
+                            value="10"
+                        >
+
+                        <div class="plan-default-arrow-stack">
+                            <button type="button" class="plan-number-arrow" data-direction="1">▲</button>
+                            <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
+                        </div>
+                    </div>
+
+                    <span>Rep</span>
+                </div>
+
+                <!-- DURÉE -->
+                <div class="plan-parameter">
+                    <label for="settings-plan-time">Durée</label>
+
+                    <div class="plan-default-number-control">
+                        <input
+                            id="settings-plan-time"
+                            class="plan-default-number-input"
+                            type="number"
+                            data-min-chars="3"
+                            min="1"
+                            max="999"
+                            step="15"
+                            value="30"
+                        >
+
+                        <div class="plan-default-arrow-stack">
+                            <button type="button" class="plan-number-arrow" data-direction="1">▲</button>
+                            <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
+                        </div>
+                    </div>
+
+                    <span>sec</span>
+                </div>
+
+                <!-- REPOS -->
                 <div class="plan-parameter">
                     <label for="settings-plan-rest">Repos</label>
 
@@ -105,90 +232,74 @@
                     <span>sec</span>
                 </div>
 
+                <!-- TEMPO -->
                 <div class="plan-parameter">
                     <label>Tempo</label>
 
                     <div class="tempo-inputs">
                         <div class="plan-default-number-control plan-default-tempo-control">
                             <button type="button" class="plan-number-arrow" data-direction="1">▲</button>
-                            <input id="settings-plan-tempo-1" class="plan-default-number-input" data-min-chars="1" value="3">
-                            <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
-                        </div>
-
-                        <div class="plan-default-number-control plan-default-tempo-control">
-                            <button type="button" class="plan-number-arrow" data-direction="1">▲</button>
-                            <input id="settings-plan-tempo-2" class="plan-default-number-input" data-min-chars="1" value="0">
-                            <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
-                        </div>
-
-                        <div class="plan-default-number-control plan-default-tempo-control">
-                            <button type="button" class="plan-number-arrow" data-direction="1">▲</button>
-                            <input id="settings-plan-tempo-3" class="plan-default-number-input" data-min-chars="1" value="1">
-                            <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
-                        </div>
-
-                        <div class="plan-default-number-control plan-default-tempo-control">
-                            <button type="button" class="plan-number-arrow" data-direction="1">▲</button>
-                            <input id="settings-plan-tempo-4" class="plan-default-number-input" data-min-chars="1" value="0">
-                            <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="settings-default-column">
-                <h4>Volume</h4>
-
-                <div class="settings-volume-box">
-                    <div class="plan-parameter">
-                        <label for="settings-plan-reps">Répétition</label>
-
-                        <div class="plan-default-number-control">
                             <input
-                                id="settings-plan-reps"
+                                id="settings-plan-tempo-1"
                                 class="plan-default-number-input"
                                 type="number"
-                                data-min-chars="3"
-                                min="1"
-                                max="999"
+                                data-min-chars="1"
+                                min="0"
+                                max="9"
                                 step="1"
-                                value="10"
+                                value="3"
                             >
-
-                            <div class="plan-default-arrow-stack">
-                                <button type="button" class="plan-number-arrow" data-direction="1">▲</button>
-                                <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
-                            </div>
+                            <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
                         </div>
 
-                        <span>Rep</span>
-                    </div>
-
-                    <div class="plan-parameter">
-                        <label for="settings-plan-time">Durée</label>
-
-                        <div class="plan-default-number-control">
+                        <div class="plan-default-number-control plan-default-tempo-control">
+                            <button type="button" class="plan-number-arrow" data-direction="1">▲</button>
                             <input
-                                id="settings-plan-time"
+                                id="settings-plan-tempo-2"
                                 class="plan-default-number-input"
                                 type="number"
-                                data-min-chars="3"
-                                min="1"
-                                max="999"
-                                step="15"
-                                value="30"
+                                data-min-chars="1"
+                                min="0"
+                                max="9"
+                                step="1"
+                                value="0"
                             >
-
-                            <div class="plan-default-arrow-stack">
-                                <button type="button" class="plan-number-arrow" data-direction="1">▲</button>
-                                <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
-                            </div>
+                            <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
                         </div>
 
-                        <span>sec</span>
+                        <div class="plan-default-number-control plan-default-tempo-control">
+                            <button type="button" class="plan-number-arrow" data-direction="1">▲</button>
+                            <input
+                                id="settings-plan-tempo-3"
+                                class="plan-default-number-input"
+                                type="number"
+                                data-min-chars="1"
+                                min="0"
+                                max="9"
+                                step="1"
+                                value="1"
+                            >
+                            <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
+                        </div>
+
+                        <div class="plan-default-number-control plan-default-tempo-control">
+                            <button type="button" class="plan-number-arrow" data-direction="1">▲</button>
+                            <input
+                                id="settings-plan-tempo-4"
+                                class="plan-default-number-input"
+                                type="number"
+                                data-min-chars="1"
+                                min="0"
+                                max="9"
+                                step="1"
+                                value="0"
+                            >
+                            <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
+                        </div>
                     </div>
                 </div>
 
+                <!-- POIDS -->
                 <div class="settings-weight-row">
                     <span>Poids</span>
 
@@ -215,39 +326,55 @@
                             id="settings-weight-unit-switch"
                             class="settings-weight-unit-switch"
                             role="group"
+                            aria-label="Unité de poids"
                         >
                             <button type="button" data-settings-weight-unit="kg">Kg</button>
                             <button type="button" data-settings-weight-unit="lbs" class="active">Lbs</button>
                         </div>
                     </div>
                 </div>
+
+                <!-- OPTIONS -->
+                <div class="settings-default-options">
+                    <label class="plan-setting-checkbox">
+                        <input
+                            id="settings-plan-auto-add-equipment"
+                            type="checkbox"
+                        >
+                        <span>Ajouter les équipements sélectionnés au plan</span>
+                    </label>
+
+                    <label class="plan-setting-checkbox">
+                        <input
+                            id="settings-plan-auto-add-instructions"
+                            type="checkbox"
+                            checked
+                        >
+                        <span>Ajouter les instructions par défaut</span>
+                    </label>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
 
-    <!-- DONNÉES -->
-    <section class="settings-section">
-        <h3>Données</h3>
+        <!-- =====================================================
+             AUTRES
+        ====================================================== -->
+        <section class="settings-section settings-default-block">
+            <h3>Autres</h3>
 
-        <div class="settings-data-actions">
-            <button id="export-backup-button" type="button">
-                Sauvegarder mes données
-            </button>
+            <label class="plan-setting-checkbox">
+                <input
+                    id="settings-plan-always-show-instructions"
+                    type="checkbox"
+                >
+                <span>Toujours afficher les instructions</span>
+            </label>
+        </section>
+    </div>
 
-            <button id="import-backup-button" type="button">
-                Importer une sauvegarde
-            </button>
-        </div>
-
-        <input
-            id="backup-file-input"
-            type="file"
-            accept=".wilf,.json,application/json"
-            hidden
-        >
-    </section>
-
-    <!-- CONFIRMATION IMPORT -->
+    <!-- =========================================================
+         CONFIRMATION IMPORT
+    ========================================================== -->
     <div id="backup-import-modal" class="plan-pdf-modal" hidden>
         <div class="plan-pdf-dialog plan-backup-dialog">
             <h3>Importer une sauvegarde</h3>

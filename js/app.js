@@ -129,6 +129,15 @@ settingsPlanWeightInput,
 settingsPlanTempoInputs,
 settingsWeightUnitSwitch,
 settingsWeightUnitButtons,
+
+settingsPlanCategoryFilters,
+settingsPlanEquipmentFilters,
+settingsPlanAutoExcludeProgressions,
+settingsPlanAutoAddEquipment,
+settingsPlanAutoAddInstructions,
+settingsPlanAlwaysShowInstructions,
+settingsAdvancedToggle,
+settingsAdvancedPanel,
 } from "./app-state.js";
 
 import {
@@ -144,6 +153,12 @@ import {
     refreshSettingsInterface,
     applyAppTheme
 } from "./settings/settings-controller.js";
+
+import {
+    configureDefaultPlanFilters,
+    setupDefaultPlanFilters,
+    refreshDefaultPlanFilters
+} from "./settings/default-plan-filters.js";
 
 import {
     normalizeSearchText,
@@ -313,7 +328,27 @@ configureSettingsController({
     weightInput: settingsPlanWeightInput,
     tempoInputs: settingsPlanTempoInputs,
     weightUnitSwitch: settingsWeightUnitSwitch,
-    weightUnitButtons: settingsWeightUnitButtons
+    weightUnitButtons: settingsWeightUnitButtons,
+    autoAddEquipmentCheckbox: settingsPlanAutoAddEquipment,
+    autoAddInstructionsCheckbox: settingsPlanAutoAddInstructions,
+    alwaysShowInstructionsCheckbox: settingsPlanAlwaysShowInstructions,
+
+    advancedToggle: settingsAdvancedToggle,
+    advancedPanel: settingsAdvancedPanel,
+    onAdvancedOpen: refreshDefaultPlanFilters,
+});
+
+configureDefaultPlanFilters({
+    getAppSettings: () => appSettings,
+    scheduleAppSettingsSave,
+
+    categoryContainer: settingsPlanCategoryFilters,
+    equipmentContainer: settingsPlanEquipmentFilters,
+    autoExcludeCheckbox: settingsPlanAutoExcludeProgressions,
+
+    getCategoryOptions,
+    getEquipmentOptions: () => equipmentOptions,
+    getRelevantEquipment
 });
 
 configurePlanCombinations({
@@ -565,6 +600,7 @@ cancelPlanDeleteButton,
 confirmPlanDeleteButton,
 
 getEquipmentOptions: () => equipmentOptions,
+getCategoryOptions,
 getSelectedPlanEquipment: () => selectedPlanEquipment,
 
     planSetsInput,
@@ -743,6 +779,7 @@ function setupBackupControls() {
             renderPlansList();
             appSettings = await loadAppSettings();
             refreshSettingsInterface();
+            refreshDefaultPlanFilters();
 
             closeBackupImportModal();
 
@@ -832,6 +869,7 @@ async function initializeApp() {
     setupFilterRows();
 
     setupSettingsController();
+    setupDefaultPlanFilters();
     setupPlanDefaultInputs();
     setupPlanController();
     setupPlanPdf();

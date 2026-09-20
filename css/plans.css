@@ -1435,6 +1435,43 @@
    INSTRUCTIONS
 ========================================================= */
 
+.plan-exercise-line-4.has-inline-instructions {
+    align-items: flex-start;
+}
+
+.plan-instructions-inline {
+    min-width: 0;
+    flex: 1 1 auto;
+
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.plan-instructions-inline-title {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.plan-instructions-inline-textarea {
+    width: 100%;
+    min-height: 62px;
+    max-height: 140px;
+    padding: 8px 10px;
+
+    box-sizing: border-box;
+    resize: vertical;
+
+    border: 1px solid #bbb;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
 .plan-instructions-button {
     padding: 2px 0;
     border: none;

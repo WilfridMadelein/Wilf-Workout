@@ -12,6 +12,17 @@ const SETTINGS_SCHEMA_VERSION = 1;
 
 let saveTimer = null;
 
+function normalizeDefaultFilterList(value) {
+    if (value == null) return null;
+    if (!Array.isArray(value)) return null;
+
+    return [
+        ...new Set(
+            value.filter(item => typeof item === "string")
+        )
+    ];
+}
+
 function normalizePlanDefaults(defaults = {}) {
     return {
         sets: defaults.sets ?? 3,
@@ -19,6 +30,7 @@ function normalizePlanDefaults(defaults = {}) {
         time: defaults.time ?? 30,
         rest: defaults.rest ?? 60,
         weight: defaults.weight ?? 0,
+
         weightUnit: ["kg", "lbs"].includes(defaults.weightUnit)
             ? defaults.weightUnit
             : "lbs",
@@ -28,7 +40,17 @@ function normalizePlanDefaults(defaults = {}) {
             second: defaults.tempo?.second ?? 0,
             third: defaults.tempo?.third ?? 1,
             fourth: defaults.tempo?.fourth ?? 0
-        }
+        },
+
+        filters: {
+            categories: normalizeDefaultFilterList(defaults.filters?.categories),
+            equipment: normalizeDefaultFilterList(defaults.filters?.equipment),
+            autoExcludeProgressions: defaults.filters?.autoExcludeProgressions !== false
+        },
+
+        includeEquipment: defaults.includeEquipment === true,
+        autoAddDefaultInstructions: defaults.autoAddDefaultInstructions !== false,
+        alwaysShowInstructions: defaults.alwaysShowInstructions === true
     };
 }
 

@@ -19,6 +19,13 @@ let tempoInputs;
 let weightUnitSwitch;
 let weightUnitButtons;
 
+let autoAddEquipmentCheckbox;
+let autoAddInstructionsCheckbox;
+let alwaysShowInstructionsCheckbox;
+let advancedToggle;
+let advancedPanel;
+let onAdvancedOpen = () => {};
+
 // ============================================================
 // CONFIGURATION
 // ============================================================
@@ -39,7 +46,13 @@ function configureSettingsController(dependencies) {
         weightInput,
         tempoInputs,
         weightUnitSwitch,
-        weightUnitButtons
+        weightUnitButtons,
+        autoAddEquipmentCheckbox,
+        autoAddInstructionsCheckbox,
+        alwaysShowInstructionsCheckbox,
+        advancedToggle,
+        advancedPanel,
+        onAdvancedOpen,
     } = dependencies);
 }
 
@@ -88,6 +101,10 @@ function refreshSettingsInterface() {
 
     const defaults = settings.planDefaults;
 
+    autoAddEquipmentCheckbox.checked = defaults.includeEquipment;
+    autoAddInstructionsCheckbox.checked = defaults.autoAddDefaultInstructions;
+    alwaysShowInstructionsCheckbox.checked = defaults.alwaysShowInstructions;
+
     applyAppTheme(settings.theme);
     updateThemeSwitch(settings.theme);
     updateBodyModelSwitch(settings.bodyModel);
@@ -130,6 +147,21 @@ function refreshSettingsInterface() {
             Number(input.dataset.minChars) || 3
         );
     });
+}
+
+// ============================================================
+// PARAMÈTRES AVANCÉS
+// ============================================================
+
+function updateAdvancedPanel(open) {
+    advancedPanel.hidden = !open;
+    advancedToggle.setAttribute("aria-expanded", String(open));
+    advancedToggle.textContent =
+        open
+            ? "Masquer les paramètres avancés"
+            : "Accéder aux paramètres avancés";
+
+    if (open) requestAnimationFrame(onAdvancedOpen);
 }
 
 // ============================================================
@@ -280,6 +312,36 @@ bodyModelSwitch.addEventListener("click", () => {
 
         scheduleAppSettingsSave(settings);
     });
+
+autoAddEquipmentCheckbox.addEventListener("change", () => {
+    const settings = getAppSettings();
+    if (!settings) return;
+
+    settings.planDefaults.includeEquipment = autoAddEquipmentCheckbox.checked;
+    scheduleAppSettingsSave(settings);
+});
+
+autoAddInstructionsCheckbox.addEventListener("change", () => {
+    const settings = getAppSettings();
+    if (!settings) return;
+
+    settings.planDefaults.autoAddDefaultInstructions = autoAddInstructionsCheckbox.checked;
+    scheduleAppSettingsSave(settings);
+});
+
+alwaysShowInstructionsCheckbox.addEventListener("change", () => {
+    const settings = getAppSettings();
+    if (!settings) return;
+
+    settings.planDefaults.alwaysShowInstructions = alwaysShowInstructionsCheckbox.checked;
+    scheduleAppSettingsSave(settings);
+});   
+
+advancedToggle.addEventListener("click", () => {
+    updateAdvancedPanel(advancedPanel.hidden);
+});
+
+updateAdvancedPanel(false);
 
     refreshSettingsInterface();
 }

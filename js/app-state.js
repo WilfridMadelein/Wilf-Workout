@@ -74,6 +74,30 @@ export const settingsWeightUnitButtons = [
     )
 ];
 
+export const settingsPlanCategoryFilters =
+    document.getElementById("settings-plan-category-filters");
+
+export const settingsPlanEquipmentFilters =
+    document.getElementById("settings-plan-equipment-filters");
+
+export const settingsPlanAutoExcludeProgressions =
+    document.getElementById("settings-plan-auto-exclude-progressions");
+
+export const settingsPlanAutoAddEquipment =
+    document.getElementById("settings-plan-auto-add-equipment");
+
+export const settingsPlanAutoAddInstructions =
+    document.getElementById("settings-plan-auto-add-instructions");
+
+export const settingsPlanAlwaysShowInstructions =
+    document.getElementById("settings-plan-always-show-instructions");
+
+export const settingsAdvancedToggle =
+    document.getElementById("settings-advanced-toggle");
+
+export const settingsAdvancedPanel =
+    document.getElementById("settings-advanced-panel");
+
 // ------------------------------------------------------------
 // DOM — Paramètres du plan
 // ------------------------------------------------------------
