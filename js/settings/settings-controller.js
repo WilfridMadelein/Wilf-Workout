@@ -3,6 +3,11 @@ import {
     updateNumberInputWidth
 } from "../ui/ui.js";
 
+import {
+    getSplitOrderText,
+    normalizeSplitOrder
+} from "../exercises/exercise-split.js";
+
 let getAppSettings = () => null;
 let scheduleAppSettingsSave = () => {};
 
@@ -26,6 +31,14 @@ let advancedToggle;
 let advancedPanel;
 let onAdvancedOpen = () => {};
 let onAlwaysShowInstructionsChange = () => {};
+
+let splitOrderSwitch;
+let splitOrderLabel;
+let splitApplyNewButton;
+let splitApplyAllButton;
+
+let pendingSplitOrder = "left-right";
+let onApplySplitOrderToAll = async () => {};
 
 // ============================================================
 // CONFIGURATION
@@ -55,6 +68,11 @@ function configureSettingsController(dependencies) {
         advancedPanel,
         onAdvancedOpen,
         onAlwaysShowInstructionsChange,
+        splitOrderSwitch,
+        splitOrderLabel,
+        splitApplyNewButton,
+        splitApplyAllButton,
+        onApplySplitOrderToAll,
     } = dependencies);
 }
 
@@ -137,6 +155,7 @@ function refreshSettingsInterface() {
     updateWeightUnitSwitch(defaults.weightUnit);
     alwaysShowInstructionsCheckbox.checked =
         settings.alwaysShowInstructions === true;
+    updateSplitOrderPreview(settings.splitOrder);
 
     [
         setsInput,
@@ -156,6 +175,11 @@ function refreshSettingsInterface() {
 // ============================================================
 // PARAMÈTRES AVANCÉS
 // ============================================================
+
+function updateSplitOrderPreview(order) {
+    pendingSplitOrder = normalizeSplitOrder(order);
+    splitOrderLabel.textContent = getSplitOrderText(pendingSplitOrder);
+}
 
 function updateAdvancedPanel(open) {
     advancedPanel.hidden = !open;
@@ -341,7 +365,39 @@ alwaysShowInstructionsCheckbox.addEventListener("change", () => {
 
     scheduleAppSettingsSave(settings);
     onAlwaysShowInstructionsChange();
-});  
+}); 
+
+splitOrderSwitch.addEventListener("click", () => {
+    updateSplitOrderPreview(
+        pendingSplitOrder === "left-right"
+            ? "right-left"
+            : "left-right"
+    );
+});
+
+splitApplyNewButton.addEventListener("click", () => {
+    const settings = getAppSettings();
+    if (!settings) return;
+
+    settings.splitOrder = pendingSplitOrder;
+    scheduleAppSettingsSave(settings);
+});
+
+splitApplyAllButton.addEventListener("click", async () => {
+    const settings = getAppSettings();
+    if (!settings) return;
+
+    settings.splitOrder = pendingSplitOrder;
+    scheduleAppSettingsSave(settings);
+
+    splitApplyAllButton.disabled = true;
+
+    try {
+        await onApplySplitOrderToAll(pendingSplitOrder);
+    } finally {
+        splitApplyAllButton.disabled = false;
+    }
+});
 
 advancedToggle.addEventListener("click", () => {
     updateAdvancedPanel(advancedPanel.hidden);

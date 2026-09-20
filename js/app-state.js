@@ -92,6 +92,18 @@ export const settingsPlanAutoAddInstructions =
 export const settingsPlanAlwaysShowInstructions =
     document.getElementById("settings-plan-always-show-instructions");
 
+export const settingsSplitOrderSwitch =
+    document.getElementById("settings-split-order-switch");
+
+export const settingsSplitOrderLabel =
+    document.getElementById("settings-split-order-label");
+
+export const settingsSplitApplyNew =
+    document.getElementById("settings-split-apply-new");
+
+export const settingsSplitApplyAll =
+    document.getElementById("settings-split-apply-all");
+
 export const settingsAdvancedToggle =
     document.getElementById("settings-advanced-toggle");
 

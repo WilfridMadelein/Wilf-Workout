@@ -138,6 +138,11 @@ settingsPlanAutoAddInstructions,
 settingsPlanAlwaysShowInstructions,
 settingsAdvancedToggle,
 settingsAdvancedPanel,
+
+settingsSplitOrderSwitch,
+settingsSplitOrderLabel,
+settingsSplitApplyNew,
+settingsSplitApplyAll,
 } from "./app-state.js";
 
 import {
@@ -242,6 +247,10 @@ import {
 } from "./exercises/exercise-muscle-map.js";
 
 import {
+    normalizeSplitOrder
+} from "./exercises/exercise-split.js";
+
+import {
     configurePlanRender,
     createPlanNumberInput,
     renderPlanExercises,
@@ -305,6 +314,30 @@ import {
 
 let appSettings = createDefaultAppSettings();
 
+async function applySplitOrderToAllPlans(order) {
+    const splitOrder =
+        normalizeSplitOrder(order);
+
+    plans.forEach(plan => {
+        plan.exercises.forEach(planExercise => {
+            planExercise.splitOrder =
+                splitOrder;
+        });
+    });
+
+    await Promise.all(
+        plans.map(plan =>
+            savePlanNow(plan)
+        )
+    );
+
+    renderPlansList();
+
+    if (currentPlan) {
+        renderPlanExercises();
+    }
+}
+
 // ============================================================
 // CONFIGURATION DES MODULES
 // ============================================================
@@ -337,6 +370,12 @@ configureSettingsController({
     advancedToggle: settingsAdvancedToggle,
     advancedPanel: settingsAdvancedPanel,
     onAdvancedOpen: refreshDefaultPlanFilters,
+
+    splitOrderSwitch: settingsSplitOrderSwitch,
+    splitOrderLabel: settingsSplitOrderLabel,
+    splitApplyNewButton: settingsSplitApplyNew,
+    splitApplyAllButton: settingsSplitApplyAll,
+    onApplySplitOrderToAll: applySplitOrderToAllPlans,
 });
 
 configureDefaultPlanFilters({
@@ -360,6 +399,7 @@ configurePlanCombinations({
 
 configurePlanManager({
     getCurrentPlan: () => currentPlan,
+    getDefaultSplitOrder: () => appSettings.splitOrder,
 
     getSelectedProgressionsExclude: () => selectedProgressionsExclude,
     getPlanSearchState: () => planSearchState,

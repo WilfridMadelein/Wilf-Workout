@@ -4,6 +4,10 @@ import {
     deleteStoredPlan
 } from "./indexed-db.js";
 
+import {
+    normalizeSplitOrder
+} from "../exercises/exercise-split.js";
+
 // ============================================================
 // STOCKAGE DES PLANS
 // ============================================================
@@ -85,6 +89,8 @@ function serializePlanExercise(planExercise) {
 
         weight: planExercise.weight ?? 0,
         weightUnit: planExercise.weightUnit ?? "lbs",
+        
+        splitOrder: normalizeSplitOrder(planExercise.splitOrder),
 
         combination: {
             group: planExercise.combination?.group ?? 1
@@ -136,6 +142,8 @@ function hydratePlanExercise(savedExercise, exercisesById, exercisesByName) {
 
         weight: savedExercise.weight ?? 0,
         weightUnit: savedExercise.weightUnit ?? "lbs",
+
+        splitOrder: normalizeSplitOrder(savedExercise.splitOrder),
 
         combination: {
             group: savedExercise.combination?.group ?? 1

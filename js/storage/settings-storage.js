@@ -3,6 +3,10 @@ import {
     putStoredSetting
 } from "./indexed-db.js";
 
+import {
+    normalizeSplitOrder
+} from "../exercises/exercise-split.js";
+
 // ============================================================
 // PARAMÈTRES GLOBAUX
 // ============================================================
@@ -61,6 +65,7 @@ function createDefaultAppSettings() {
         theme: "light",
         bodyModel: "male",
         alwaysShowInstructions: false,
+        splitOrder: "left-right",
         planDefaults: normalizePlanDefaults()
     };
 }
@@ -72,8 +77,8 @@ function normalizeAppSettings(settings = {}) {
         updatedAt: Number(settings.updatedAt) || Date.now(),
         theme: settings.theme === "dark" ? "dark" : "light",
         bodyModel: settings.bodyModel === "female" ? "female" : "male",
-        alwaysShowInstructions:
-            settings.alwaysShowInstructions === true,
+        alwaysShowInstructions: settings.alwaysShowInstructions === true,
+        splitOrder: normalizeSplitOrder(settings.splitOrder),
         planDefaults: normalizePlanDefaults(settings.planDefaults)
     };
 }

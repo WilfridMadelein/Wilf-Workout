@@ -16,6 +16,9 @@ import {
     normalizeCombinationNumbers
 } from "./plan-combinations.js";
 
+import {
+    normalizeSplitOrder
+} from "../exercises/exercise-split.js";
 
 
 let getCurrentPlan = () => null;
@@ -29,6 +32,8 @@ let updateProgressionButtons =  () => {};
 let displayExercises =  () => {};
 let schedulePlanSave = () => {};
 
+let getDefaultSplitOrder = () => "left-right";
+
 function configurePlanManager(dependencies) {
     getCurrentPlan = dependencies.getCurrentPlan;
     renderPlanExercises = dependencies.renderPlanExercises;
@@ -39,6 +44,7 @@ function configurePlanManager(dependencies) {
     updateProgressionButtons = dependencies.updateProgressionButtons;
     displayExercises = dependencies.displayExercises;
     schedulePlanSave = dependencies.schedulePlanSave;
+    getDefaultSplitOrder = dependencies.getDefaultSplitOrder;
 }
 
 function getAutoExcludedProgressions(plan) {
@@ -156,6 +162,8 @@ function addExerciseToCurrentPlan(exercise) {
         weight: currentPlan.defaults.weight,
         weightUnit: currentPlan.defaults.weightUnit,
 
+        splitOrder: normalizeSplitOrder(getDefaultSplitOrder()),
+
         details: { 
             instructions:
             createDefaultInstructions(
@@ -233,6 +241,12 @@ function updatePlanExerciseProgression(
 
     planExercise.exercise =
         newExercise;
+        
+    planExercise.splitOrder =
+    normalizeSplitOrder(
+        planExercise.splitOrder ??
+        getDefaultSplitOrder()
+    );
 
     if (!planExercise.details) {
         planExercise.details = {};

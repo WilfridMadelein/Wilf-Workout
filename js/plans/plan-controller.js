@@ -3,6 +3,10 @@ import {
     updateNumberInputWidth
 } from "../ui/ui.js";
 
+import {
+    formatPlanDuration
+} from "./plan-timing.js";
+
 let getCurrentPlan;
 let setCurrentPlan;
 
@@ -636,11 +640,32 @@ export function renderPlansList() {
         title.classList.add("plan-card-title");
         title.textContent = plan.name;
 
-        const summary = document.createElement("span");
-        summary.classList.add("plan-card-info");
-        summary.textContent =
-            `${exerciseCount} exercice${exerciseCount !== 1 ? "s" : ""} | ` +
-            `${setCount} set${setCount !== 1 ? "s" : ""}`;
+        const summary =
+    document.createElement("span");
+
+summary.classList.add(
+    "plan-card-info"
+);
+
+const duration =
+    document.createElement("strong");
+
+duration.textContent =
+    formatPlanDuration(plan);
+
+const counts =
+    document.createElement("span");
+
+counts.textContent =
+    ` (${exerciseCount} exercice${exerciseCount !== 1 ? "s" : ""} | ` +
+    `${setCount} set${setCount !== 1 ? "s" : ""})`;
+
+summary.append(
+    duration,
+    counts
+);
+
+
 
         const muscleList = document.createElement("span");
         muscleList.classList.add("plan-card-muscles");

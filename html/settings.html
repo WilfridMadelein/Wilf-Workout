@@ -317,26 +317,62 @@
         </div>
     </section>
 
-    <!-- =====================================================
-         AUTRES
-    ====================================================== -->
-    <div class="settings-advanced-heading settings-other-heading">
-        <h2>Autres</h2>
+<!-- =====================================================
+     AUTRES
+====================================================== -->
+<div class="settings-advanced-heading settings-other-heading">
+    <h2>Autres</h2>
 
-        <p class="settings-help">
-            Ces réglages s'appliquent à tous les plans.
-        </p>
-    </div>
+    <p class="settings-help">
+        Ces réglages s'appliquent à tous les plans.
+    </p>
+</div>
 
-    <section class="settings-section settings-other-block">
-        <label class="plan-setting-checkbox">
-            <input
-                id="settings-plan-always-show-instructions"
-                type="checkbox"
+<section class="settings-section settings-other-block">
+    <label class="plan-setting-checkbox">
+        <input
+            id="settings-plan-always-show-instructions"
+            type="checkbox"
+        >
+        <span>Toujours afficher les instructions</span>
+    </label>
+
+    <div class="settings-split-setting">
+        <div class="settings-split-row">
+            <strong>Split et Alterne :</strong>
+
+            <button
+                id="settings-split-order-switch"
+                class="settings-split-order-switch"
+                type="button"
+                aria-label="Inverser l'ordre gauche droite"
+                title="Inverser l'ordre"
             >
-            <span>Toujours afficher les instructions</span>
-        </label>
-    </section>
+                ⇄
+            </button>
+
+            <span id="settings-split-order-label">
+                Gauche - Droite
+            </span>
+        </div>
+
+        <div class="settings-split-actions">
+            <button
+                id="settings-split-apply-new"
+                type="button"
+            >
+                Appliquer aux nouveaux exercices seulement
+            </button>
+
+            <button
+                id="settings-split-apply-all"
+                type="button"
+            >
+                Appliquer à tous mes exercices
+            </button>
+        </div>
+    </div>
+</section>
 </div>
 
     <!-- =========================================================

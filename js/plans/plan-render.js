@@ -7,6 +7,14 @@ import {
     destroyExerciseMuscleMapsIn
 } from "../exercises/exercise-muscle-map.js";
 
+import {
+    getPlanExerciseSplitInfo
+} from "../exercises/exercise-split.js";
+
+import {
+    formatPlanDuration
+} from "./plan-timing.js";
+
 // ============================================================
 // DÉPENDANCES
 // ============================================================
@@ -178,9 +186,21 @@ function createExerciseControlRow(label, control, className) {
     return row;
 }
 
+function refreshPlanDurationDisplay(plan = getCurrentPlan()) {
+    const element =
+        document.getElementById("plan-workout-duration");
+
+    if (!element) return;
+
+    element.textContent =
+        formatPlanDuration(plan);
+}
+
 function renderPlanExercises() {
     const list = getPlanExerciseList();
     const plan = getCurrentPlan();
+
+    refreshPlanDurationDisplay(plan);
 
     destroyExerciseMuscleMapsIn(list);
     list.replaceChildren();
@@ -652,6 +672,45 @@ muscleMapToggle.addEventListener(
                     progression
                 );
 
+const header =
+    document.createElement("div");
+
+header.classList.add(
+    "plan-exercise-header"
+);
+
+header.appendChild(line1);
+
+const splitInfo =
+    getPlanExerciseSplitInfo(planExercise);
+
+if (splitInfo) {
+    const splitLine =
+        document.createElement("div");
+
+    splitLine.classList.add(
+        "plan-exercise-split"
+    );
+
+    const splitLabel =
+        document.createElement("strong");
+
+    splitLabel.textContent =
+        splitInfo.label;
+
+    const splitOrder =
+        document.createElement("span");
+
+    splitOrder.textContent =
+        splitInfo.order;
+
+    splitLine.append(
+        splitLabel,
+        splitOrder
+    );
+
+    header.appendChild(splitLine);
+}
 
                 // =================================================
                 // LIGNE 2
@@ -827,6 +886,7 @@ muscleMapToggle.addEventListener(
                         value => {
                             planExercise.value = value ?? 1;
                             schedulePlanSave(getCurrentPlan());
+                            refreshPlanDurationDisplay();
                         },
                         {
                             min: 1,
@@ -876,6 +936,7 @@ muscleMapToggle.addEventListener(
                 valueUnit.addEventListener("change", () => {
                         planExercise.valueUnit = valueUnit.value;
                         schedulePlanSave(getCurrentPlan());
+                        refreshPlanDurationDisplay();
                     }
                 );
 
@@ -906,6 +967,7 @@ muscleMapToggle.addEventListener(
                             value => {
                                 planExercise.tempo[key] = value ?? 0;
                                 schedulePlanSave(getCurrentPlan());
+                                refreshPlanDurationDisplay();
                             },
 
                             {
@@ -958,6 +1020,7 @@ muscleMapToggle.addEventListener(
                         value => {
                             planExercise.rest = value ?? 0;
                             schedulePlanSave(getCurrentPlan());
+                            refreshPlanDurationDisplay();
                         },
 
                         {
@@ -1111,7 +1174,7 @@ if (getAlwaysShowInstructions()) {
 
 
                 card.append(
-                    line1,
+                    header,
                     muscleMapWrap,
                     line2,
                     line3,

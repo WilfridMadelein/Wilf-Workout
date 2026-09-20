@@ -2,6 +2,10 @@ import {
     renderExerciseMuscleMap
 } from "./exercise-muscle-map.js";
 
+import {
+    getExerciseSplitDetailText
+} from "./exercise-split.js";
+
 // ============================================================
 // DÉTAILS DES EXERCICES
 // ============================================================
@@ -164,11 +168,18 @@ function displayExerciseDetails(
     nameElement.textContent =
         exercise.nom;
 
+    const splitDetail =
+    getExerciseSplitDetailText(exercise);
+
     infoElement.innerHTML = `
         <p>
             <strong>Progression :</strong>
             ${getProgressionDisplay(exercise) || "—"}
         </p>
+    
+    ${splitDetail
+    ? `<p><strong>Type de set :</strong> ${splitDetail}</p>`
+    : ""}
 
 <div
     class="exercise-muscle-map"

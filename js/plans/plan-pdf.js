@@ -1,5 +1,7 @@
 import { getProgressionName } from "../exercises/exercise-search.js";
 import { getPlanExerciseDetailsLines } from "../exercises/exercise-details.js";
+import { getPlanExerciseSplitInfo } from "../exercises/exercise-split.js";
+import { formatPlanDuration } from "./plan-timing.js";
 
 let plans = [];
 let downloadPlansButton;
@@ -381,20 +383,27 @@ let detailsY = y + 12;
 
 doc.setFontSize(10);
 
-doc.setFont("helvetica", "bold");
+const durationText =
+    formatPlanDuration(plan);
 
-detailsY = drawWrappedPdfText(
-    doc,
-    `${exerciseCount} exercice${exerciseCount !== 1 ? "s" : ""} | ` +
-    `${setCount} set${setCount !== 1 ? "s" : ""}`,
-    margin,
-    detailsY,
-    contentWidth
-);
+const countText =
+    ` (${exerciseCount} exercice${exerciseCount !== 1 ? "s" : ""} | ` +
+    `${setCount} set${setCount !== 1 ? "s" : ""})`;
+
+doc.setFont("helvetica", "bold");
+doc.text(durationText, margin, detailsY);
+
+const durationWidth =
+    doc.getTextWidth(durationText);
 
 doc.setFont("helvetica", "normal");
+doc.text(
+    countText,
+    margin + durationWidth,
+    detailsY
+);
 
-detailsY += 2;
+detailsY += 6;
 
 detailsY = drawLabeledPdfText(
     doc,
@@ -809,10 +818,23 @@ function getExerciseCardLayout(doc, planExercise, index, width) {
     const weight = Number(planExercise.weight) || 0;
     const showWeight = weight !== 0 || isExclusivelyGym(exercise);
 
-    const bodyRows = [{
-        type: "text",
-        lines: doc.splitTextToSize(muscles, innerWidth)
-    }];
+const bodyRows = [];
+
+const splitInfo =
+    getPlanExerciseSplitInfo(planExercise);
+
+if (splitInfo) {
+    bodyRows.push({
+        type: "split",
+        label: splitInfo.label,
+        value: splitInfo.order
+    });
+}
+
+bodyRows.push({
+    type: "text",
+    lines: doc.splitTextToSize(muscles, innerWidth)
+});
 
     if (showWeight) {
         bodyRows.push({
@@ -916,6 +938,26 @@ function drawExerciseCard(doc, layout, x, y, width) {
     textY += layout.headerLineCount * PDF_HEADER_LINE_HEIGHT + 1.5;
 
     layout.bodyRows.forEach(row => {
+
+if (row.type === "split") {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.text(row.label, left, textY);
+
+    const labelWidth =
+        doc.getTextWidth(row.label);
+
+    doc.setFont("helvetica", "normal");
+    doc.text(
+        ` ${row.value}`,
+        left + labelWidth,
+        textY
+    );
+
+    textY += PDF_BODY_LINE_HEIGHT;
+    return;
+}
+
         if (row.type === "mixed") {
             doc.setFont("helvetica", "normal");
             doc.setFontSize(8.5);

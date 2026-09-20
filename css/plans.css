@@ -909,6 +909,13 @@
     container-type: inline-size;
 }
 
+.plan-workout-duration {
+    margin: -8px 0 14px;
+
+    font-size: 14px;
+    color: #666;
+}
+
 
 /* =========================================================
    SETS
@@ -1554,9 +1561,12 @@
     container-type: inline-size;
 }
 
-.plan-exercise-line-1 {
+.plan-exercise-header {
     grid-area: header;
+    min-width: 0;
+}
 
+.plan-exercise-line-1 {
     display: grid;
     grid-template-columns:
         minmax(0, 1fr)
@@ -1573,6 +1583,17 @@
 
     justify-self: end;
     justify-content: flex-end;
+}
+
+.plan-exercise-split {
+    margin-top: 4px;
+
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    font-size: 13px;
+    color: #666;
 }
 
 .plan-exercise-muscle-map-wrap {
@@ -1687,7 +1708,7 @@
 }
 
 .plan-exercise-rest-row .plan-number-control {
-    transform: translateX(10px);
+    transform: translateX(9px);
 }
 
 
