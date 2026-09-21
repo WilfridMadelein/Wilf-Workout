@@ -85,6 +85,19 @@ planNotesCounter,
     planEditor,
     currentPlanName,
     backToPlansButton,
+    startPlanWorkoutButton,
+
+pageWorkoutExecution,
+workoutExitButton,
+workoutElapsedTime,
+workoutTimerToggleButton,
+workoutExecutionPlanName,
+workoutBeginButton,
+workoutExecutionContent,
+workoutExitModal,
+workoutConfirmExitButton,
+workoutContinueButton,
+workoutFinishButton,
 
     currentDetailExercise,
     currentDetailContext,
@@ -311,6 +324,16 @@ import {
     setupFilterRows,
     updateFilterSummaries
 } from "./ui/filter-ui.js";
+
+import {
+    configureWorkoutExecution,
+    setupWorkoutExecution,
+    startWorkoutExecution
+} from "./workout/workout-execution.js";
+
+import {
+    configureWorkoutOverview
+} from "./workout/workout-overview.js";
 
 let appSettings = createDefaultAppSettings();
 
@@ -612,6 +635,24 @@ configurePlanPdf({
     getPlanPrimaryMuscles
 });
 
+configureWorkoutOverview({
+    getExercises: () => exercises
+});
+
+configureWorkoutExecution({
+    page: pageWorkoutExecution,
+    exitButton: workoutExitButton,
+    elapsedTime: workoutElapsedTime,
+    timerToggleButton: workoutTimerToggleButton,
+    planName: workoutExecutionPlanName,
+    beginButton: workoutBeginButton,
+    content: workoutExecutionContent,
+    exitModal: workoutExitModal,
+    confirmExitButton: workoutConfirmExitButton,
+    continueButton: workoutContinueButton,
+    finishButton: workoutFinishButton
+});
+
 configurePlanController({
     getDefaultPlanSettings:
     () => appSettings.planDefaults,
@@ -627,6 +668,8 @@ configurePlanController({
     planEditor,
     currentPlanName,
     backToPlansButton,
+    startPlanWorkoutButton,
+startWorkout: startWorkoutExecution,
 
 planAutoAddEquipment,
 planAutoAddInstructions,
@@ -914,6 +957,7 @@ async function initializeApp() {
     setupSettingsController();
     setupDefaultPlanFilters();
     setupPlanDefaultInputs();
+    setupWorkoutExecution();
     setupPlanController();
     setupPlanPdf();
     setupBackupControls();

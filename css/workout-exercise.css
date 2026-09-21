@@ -1,0 +1,334 @@
+/* =========================================================
+   ÉCRAN D'EXERCICE
+========================================================= */
+
+.workout-exercise-screen {
+    width: min(100%, 760px);
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 14px 14px 160px;
+
+    box-sizing: border-box;
+}
+
+.workout-log-area[hidden] {
+    display: none;
+}
+
+.workout-exercise-screen-header {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr);
+    align-items: start;
+    gap: 8px;
+}
+
+.workout-exercise-back {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+
+    border: none;
+    background: transparent;
+    color: inherit;
+
+    font-size: 28px;
+    cursor: pointer;
+}
+
+.workout-exercise-screen-heading h1 {
+    margin: 0;
+
+    font-size: clamp(22px, 5vw, 30px);
+}
+
+.workout-exercise-screen-progression {
+    margin-top: 3px;
+
+    color: #666;
+    font-size: 14px;
+}
+
+.workout-exercise-side {
+    display: block;
+
+    margin-top: 7px;
+
+    font-size: 16px;
+}
+
+
+/* =========================================================
+   IMAGE
+========================================================= */
+
+.workout-exercise-screen-map-button {
+    width: min(210px, 55vw);
+    margin: 22px auto;
+    padding: 0;
+
+    display: block;
+
+    border: none;
+    background: transparent;
+
+    cursor: zoom-in;
+}
+
+.workout-exercise-screen-map {
+    width: 100%;
+}
+
+.workout-image-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 2300;
+
+    padding: 20px;
+
+    display: grid;
+    place-items: center;
+
+    background: rgb(0 0 0 / 65%);
+}
+
+.workout-image-dialog {
+    position: relative;
+
+    width: min(92vw, 520px);
+    padding: 20px;
+
+    box-sizing: border-box;
+
+    border-radius: 10px;
+    background: #fff;
+}
+
+.workout-image-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+
+    width: 34px;
+    height: 34px;
+    padding: 0;
+
+    border: none;
+    background: transparent;
+
+    font-size: 28px;
+    cursor: pointer;
+}
+
+.workout-image-large {
+    width: 100%;
+}
+
+
+/* =========================================================
+   CONTRÔLES
+========================================================= */
+
+.workout-exercise-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.workout-exercise-control-row {
+    min-height: 42px;
+
+    display: grid;
+    grid-template-columns: 70px minmax(0, 1fr);
+    align-items: center;
+    gap: 12px;
+}
+
+.workout-exercise-control-values {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.workout-step-control {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.workout-step-control button {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+
+    border: 1px solid #999;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.workout-step-control input {
+    min-width: 36px;
+
+    border: none;
+    background: transparent;
+    color: inherit;
+
+    text-align: center;
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+}
+
+.workout-exercise-control-values select {
+    padding: 5px 7px;
+
+    border: 1px solid #aaa;
+    border-radius: 5px;
+
+    background: transparent;
+    color: inherit;
+}
+
+
+/* =========================================================
+   TEMPO
+========================================================= */
+
+.workout-tempo-editor {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.workout-tempo-editor input {
+    width: 2.5ch;
+    padding: 4px 2px;
+
+    border: none;
+    border-bottom: 1px solid transparent;
+    background: transparent;
+    color: inherit;
+
+    text-align: center;
+    font: inherit;
+}
+
+.workout-tempo-editor input:focus {
+    border-bottom-color: currentColor;
+    outline: none;
+}
+
+
+/* =========================================================
+   INSTRUCTIONS / NOTES
+========================================================= */
+
+.workout-exercise-instructions,
+.workout-exercise-notes {
+    margin-top: 24px;
+}
+
+.workout-exercise-instructions h2 {
+    margin: 0 0 8px;
+
+    font-size: 17px;
+}
+
+.workout-exercise-instructions p {
+    margin: 0;
+
+    white-space: pre-wrap;
+    line-height: 1.45;
+}
+
+.workout-exercise-notes {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.workout-exercise-notes textarea {
+    width: 100%;
+    min-height: 86px;
+    padding: 9px 10px;
+
+    box-sizing: border-box;
+    resize: vertical;
+
+    border: 1px solid #bbb;
+    border-radius: 7px;
+
+    background: transparent;
+    color: inherit;
+
+    font: inherit;
+}
+
+
+/* =========================================================
+   LOG
+========================================================= */
+
+.workout-log-area {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+
+    padding: 12px max(14px, env(safe-area-inset-right))
+        calc(12px + env(safe-area-inset-bottom))
+        max(14px, env(safe-area-inset-left));
+
+    background: #fff;
+    border-top: 1px solid #ddd;
+}
+
+.workout-log-button {
+    width: min(100%, 720px);
+    min-height: 56px;
+    margin: 0 auto;
+    padding: 12px 18px;
+
+    display: block;
+
+    border-radius: 9px;
+
+    color: white;
+    font: inherit;
+    font-size: 18px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.workout-log-button.is-new {
+    border: 1px solid #c45c00;
+    background: #d96a00;
+}
+
+.workout-log-button.is-edit {
+    border: 1px solid #16783b;
+    background: #218b47;
+}
+
+
+/* =========================================================
+   MODE SOMBRE
+========================================================= */
+
+html[data-theme="dark"] .workout-exercise-screen-progression {
+    color: #bbb;
+}
+
+html[data-theme="dark"] .workout-image-dialog,
+html[data-theme="dark"] .workout-log-area {
+    background: #242424;
+    color: #ededed;
+}
+
+html[data-theme="dark"] .workout-log-area {
+    border-color: #444;
+}

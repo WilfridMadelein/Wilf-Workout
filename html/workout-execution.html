@@ -1,0 +1,124 @@
+<!-- =========================================================
+     EXÉCUTION D'UN ENTRAÎNEMENT
+========================================================= -->
+
+<div class="workout-execution-shell">
+
+    <!-- EN-TÊTE -->
+<header class="workout-execution-topbar">
+
+    <button
+        id="workout-exit-button"
+        class="workout-exit-button"
+        type="button"
+        aria-label="Quitter l'entraînement"
+        title="Quitter l'entraînement"
+    >
+        ×
+    </button>
+
+    <div class="workout-execution-clock-controls">
+
+        <button
+            id="workout-timer-toggle-button"
+            class="workout-timer-toggle-button"
+            type="button"
+            aria-label="Mettre le chronomètre en pause"
+            title="Mettre le chronomètre en pause"
+        >
+            ⏸
+        </button>
+
+        <div
+            class="workout-execution-clock"
+            aria-label="Temps écoulé"
+        >
+            <span id="workout-elapsed-time">0:00</span>
+        </div>
+
+    </div>
+
+    <div
+        class="workout-execution-topbar-spacer"
+        aria-hidden="true"
+    ></div>
+
+</header>
+
+
+    <!-- DÉBUT DE L'ENTRAÎNEMENT -->
+    <section class="workout-execution-intro">
+
+        <h1 id="workout-execution-plan-name"></h1>
+
+        <button
+            id="workout-begin-button"
+            class="workout-begin-button"
+            type="button"
+        >
+            Débuter
+        </button>
+
+    </section>
+
+
+    <!-- CONTENU DE L'EXÉCUTION -->
+    <div id="workout-execution-content"></div>
+
+
+    <!-- CONFIRMATION DE SORTIE -->
+    <div
+        id="workout-exit-modal"
+        class="workout-exit-modal"
+        hidden
+    >
+        <div
+            class="workout-exit-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="workout-exit-title"
+        >
+            <h2 id="workout-exit-title">
+                Quitter l'entraînement ?
+            </h2>
+
+            <p>
+                Voulez-vous quitter l'entraînement?
+                Votre progression sera perdue.
+            </p>
+
+            <p class="workout-exit-help">
+                Si vous souhaitez enregistrer votre progression avant de quitter,
+                cliquez sur « Finir l'entraînement ».
+            </p>
+
+            <div class="workout-exit-actions">
+
+                <button
+                    id="workout-confirm-exit-button"
+                    class="workout-confirm-exit-button"
+                    type="button"
+                >
+                    Quitter l'entraînement
+                </button>
+
+                <button
+                    id="workout-continue-button"
+                    type="button"
+                >
+                    Continuer
+                </button>
+
+                <button
+                    id="workout-finish-button"
+                    class="workout-finish-button"
+                    type="button"
+                >
+                    Finir l'entraînement
+                </button>
+
+            </div>
+        </div>
+    </div>
+
+</div>

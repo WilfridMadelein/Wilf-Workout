@@ -150,6 +150,7 @@ export const currentPlanName = document.getElementById("current-plan-name");
 export const editPlanNameButton = document.getElementById("edit-plan-name-button");
 export const currentPlanNameInput = document.getElementById("current-plan-name-input");
 export const backToPlansButton = document.getElementById("back-to-plans-button");
+export const startPlanWorkoutButton = document.getElementById("start-plan-workout-button");
 export const planAutoExcludeProgressions = document.getElementById("plan-auto-exclude-progressions");
 
 export const planAutoAddEquipment = document.getElementById("plan-auto-add-equipment");
@@ -174,6 +175,43 @@ export const backupImportModal = document.getElementById("backup-import-modal");
 export const backupImportMessage = document.getElementById("backup-import-message");
 export const cancelBackupImportButton = document.getElementById("cancel-backup-import-button");
 export const confirmBackupImportButton = document.getElementById("confirm-backup-import-button");
+
+// ------------------------------------------------------------
+// DOM — Exécution d'un entraînement
+// ------------------------------------------------------------
+
+export const pageWorkoutExecution =
+    document.getElementById("page-workout-execution");
+
+export const workoutExitButton =
+    document.getElementById("workout-exit-button");
+
+export const workoutElapsedTime =
+    document.getElementById("workout-elapsed-time");
+
+export const workoutTimerToggleButton =
+    document.getElementById("workout-timer-toggle-button");
+
+export const workoutExecutionPlanName =
+    document.getElementById("workout-execution-plan-name");
+
+export const workoutBeginButton =
+    document.getElementById("workout-begin-button");
+
+export const workoutExecutionContent =
+    document.getElementById("workout-execution-content");
+
+export const workoutExitModal =
+    document.getElementById("workout-exit-modal");
+
+export const workoutConfirmExitButton =
+    document.getElementById("workout-confirm-exit-button");
+
+export const workoutContinueButton =
+    document.getElementById("workout-continue-button");
+
+export const workoutFinishButton =
+    document.getElementById("workout-finish-button");
 
 // ------------------------------------------------------------
 // État — Détails

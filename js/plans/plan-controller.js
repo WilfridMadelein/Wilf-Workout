@@ -16,6 +16,8 @@ let plansList;
 let planEditor;
 let currentPlanName;
 let backToPlansButton;
+let startPlanWorkoutButton;
+let startWorkout = () => {};
 let plans;
 let editPlanNameButton;
 let currentPlanNameInput;
@@ -84,6 +86,8 @@ export function configurePlanController(dependencies) {
         editPlanNameButton,
         currentPlanNameInput,
         backToPlansButton,
+        startPlanWorkoutButton,
+        startWorkout,
 
         planAutoAddEquipment,
         planAutoAddInstructions,
@@ -743,7 +747,31 @@ summary.append(
         });
 
         footer.append(notesBox, deleteButton);
-        card.appendChild(footer);
+
+const startWorkoutButton =
+    document.createElement("button");
+
+startWorkoutButton.type = "button";
+
+startWorkoutButton.classList.add(
+    "plan-start-workout-button"
+);
+
+startWorkoutButton.textContent =
+    "Commencer l'entraînement";
+
+startWorkoutButton.addEventListener(
+    "click",
+    event => {
+        event.stopPropagation();
+        startWorkout(plan);
+    }
+);
+
+card.append(
+    footer,
+    startWorkoutButton
+);
 
         card.addEventListener("click", () => openPlan(plan));
 
@@ -1040,6 +1068,18 @@ const plan = {
         }
     );
 
+startPlanWorkoutButton.addEventListener(
+    "click",
+    () => {
+        const plan = getCurrentPlan();
+        if (!plan) return;
+
+        finishPlanNameEditing();
+        saveCurrentPlanFilters();
+
+        startWorkout(plan);
+    }
+);
 
     backToPlansButton.addEventListener(
         "click",
