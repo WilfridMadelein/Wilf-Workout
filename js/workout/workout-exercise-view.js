@@ -192,7 +192,8 @@ function clearWorkoutExerciseView(container) {
 function renderWorkoutExerciseView(container, session, target, {
     onBack = () => {},
     onLog = async () => {},
-    logAvailable = true
+    logAvailable = true,
+    isLastInSet = false
 } = {}) {
     clearWorkoutExerciseView(container);
 
@@ -220,8 +221,23 @@ function renderWorkoutExerciseView(container, session, target, {
     const heading = document.createElement("div");
     heading.classList.add("workout-exercise-screen-heading");
 
-    const name = document.createElement("h1");
-    name.textContent = exercise.nom;
+const name = document.createElement("h1");
+
+name.classList.add(
+    "workout-exercise-title"
+);
+
+name.textContent =
+    `S${target.set.group} - ${exercise.nom}`;
+
+if (
+    target.set?.isSuperset &&
+    target.set?.colorIndex
+) {
+    name.classList.add(
+        `workout-superset-color-${target.set.colorIndex}`
+    );
+}
 
     const progression = document.createElement("div");
     progression.classList.add("workout-exercise-screen-progression");
@@ -232,16 +248,25 @@ function renderWorkoutExerciseView(container, session, target, {
 
     back.addEventListener("click", onBack);
 
-    // ========================================================
-    // SPLIT
-    // ========================================================
+// ========================================================
+// SÉRIE / CÔTÉ
+// ========================================================
 
-    if (workoutExercise.splitType === "split") {
-        const side = document.createElement("strong");
-        side.classList.add("workout-exercise-side");
-        side.textContent = getWorkoutSideLabel(target.sideKey);
-        heading.appendChild(side);
-    }
+const seriesContext = document.createElement("div");
+seriesContext.classList.add("workout-exercise-series-context");
+
+const seriesLabel = document.createElement("strong");
+seriesLabel.textContent = `Série ${target.series.number}`;
+
+seriesContext.appendChild(seriesLabel);
+
+if (workoutExercise.splitType === "split") {
+    const side = document.createElement("span");
+    side.textContent = ` | ${getWorkoutSideLabel(target.sideKey)}`;
+    seriesContext.appendChild(side);
+}
+
+heading.appendChild(seriesContext);
 
     // ========================================================
     // IMAGE
@@ -380,8 +405,7 @@ function renderWorkoutExerciseView(container, session, target, {
     controls.append(
         createControlRow("Volume", volume),
         createControlRow("Poids", weight),
-        createControlRow("Tempo", tempo),
-        createControlRow("Repos", rest)
+        createControlRow("Tempo", tempo)
     );
 
     // ========================================================
@@ -443,10 +467,23 @@ logButton.classList.add(
         : "is-new"
 );
 
-logButton.textContent =
+const logMainText = document.createElement("span");
+logMainText.classList.add("workout-log-main-text");
+
+logMainText.textContent =
     completed
         ? "Modifier le log"
         : "Log et continuer";
+
+logButton.appendChild(logMainText);
+
+if (!completed && isLastInSet) {
+    const endSetText = document.createElement("span");
+    endSetText.classList.add("workout-log-end-set");
+    endSetText.textContent = "Fin du set";
+
+    logButton.appendChild(endSetText);
+}
 
 function setLogAvailable(available) {
     logArea.hidden = !available;

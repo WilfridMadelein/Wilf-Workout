@@ -13,9 +13,11 @@ import {
     hasWorkoutExerciseLogs,
     addWorkoutSeries,
     removeWorkoutSeries,
+    removeWorkoutExercise,
+    isWorkoutSetCompleted,
     isWorkoutSeriesCompleted,
     updateWorkoutExerciseProgression,
-    replacePendingSeriesProgression
+    replacePendingSeriesProgression,
 } from "./workout-session.js";
 
 // ============================================================
@@ -180,6 +182,78 @@ function confirmSeriesRemoval() {
             .querySelector(
                 ".workout-action-cancel"
             )
+            .addEventListener(
+                "click",
+                () => close(false)
+            );
+
+        modal.addEventListener(
+            "click",
+            event => {
+                if (event.target === modal) {
+                    close(false);
+                }
+            }
+        );
+
+        document.body.appendChild(modal);
+    });
+}
+
+function confirmExerciseRemoval(exerciseName) {
+    return new Promise(resolve => {
+        const modal = document.createElement("div");
+
+        modal.classList.add(
+            "workout-action-modal"
+        );
+
+        modal.innerHTML = `
+            <div
+                class="workout-action-dialog"
+                role="dialog"
+                aria-modal="true"
+            >
+                <h2>Supprimer l'exercice ?</h2>
+
+                <p>
+                    Si vous supprimez « ${exerciseName} »,
+                    toute votre progression sera perdue.
+                    Souhaitez-vous continuer?
+                </p>
+
+                <div class="workout-action-buttons">
+                    <button
+                        type="button"
+                        class="workout-action-delete"
+                    >
+                        Je supprime
+                    </button>
+
+                    <button
+                        type="button"
+                        class="workout-action-cancel"
+                    >
+                        Annuler
+                    </button>
+                </div>
+            </div>
+        `;
+
+        function close(result) {
+            modal.remove();
+            resolve(result);
+        }
+
+        modal
+            .querySelector(".workout-action-delete")
+            .addEventListener(
+                "click",
+                () => close(true)
+            );
+
+        modal
+            .querySelector(".workout-action-cancel")
             .addEventListener(
                 "click",
                 () => close(false)
@@ -514,13 +588,20 @@ function createWorkoutExerciseCard(
     set,
     workoutExercise,
     onOpenExercise,
-    onSetStructureChanged
+    onSetStructureChanged,
+    onSetStateChanged,
+    onDeleteExercise
 ) {
     const card =
         document.createElement("article");
 
     card.classList.add(
         "workout-exercise-card"
+    );
+
+    card.classList.toggle(
+        "is-split",
+        workoutExercise.splitType === "split"
     );
 
     card.dataset.workoutExerciseId =
@@ -611,11 +692,57 @@ function createWorkoutExerciseCard(
         "workout-exercise-body"
     );
 
-    card.append(
-        header,
-        muscles,
-        body
-    );
+const footer =
+    document.createElement("div");
+
+footer.classList.add(
+    "workout-exercise-footer"
+);
+
+const deleteButton =
+    document.createElement("button");
+
+deleteButton.type = "button";
+
+deleteButton.classList.add(
+    "workout-exercise-delete"
+);
+
+deleteButton.textContent = "🗑";
+deleteButton.title = "Supprimer l'exercice";
+
+deleteButton.setAttribute(
+    "aria-label",
+    `Supprimer ${workoutExercise.exercise.nom}`
+);
+
+deleteButton.addEventListener(
+    "click",
+    async event => {
+        event.stopPropagation();
+
+        const confirmed =
+            await confirmExerciseRemoval(
+                workoutExercise.exercise.nom
+            );
+
+        if (!confirmed) return;
+
+        onDeleteExercise(
+            set,
+            workoutExercise
+        );
+    }
+);
+
+footer.appendChild(deleteButton);
+
+card.append(
+    header,
+    muscles,
+    body,
+    footer
+);
 
     // --------------------------------------------------------
     // Corps
@@ -656,7 +783,8 @@ function createWorkoutExerciseCard(
                 );
 
             const refreshSeries =
-                () => renderBody();
+                () => { renderBody();
+                onSetStateChanged(); };
 
             split.append(
                 createSeriesColumn(
@@ -706,18 +834,19 @@ function createWorkoutExerciseCard(
             rest.textContent =
                 `Repos : ${workoutExercise.rest} sec`;
 
-            add.addEventListener(
-                "click",
-                event => {
-                    event.stopPropagation();
+add.addEventListener(
+    "click",
+    event => {
+        event.stopPropagation();
 
-                    addWorkoutSeries(
-                        workoutExercise
-                    );
+        addWorkoutSeries(
+            workoutExercise
+        );
 
-                    renderBody();
-                }
-            );
+        renderBody();
+        onSetStateChanged();
+    }
+);
 
             actions.append(
                 add,
@@ -755,7 +884,10 @@ function createWorkoutExerciseCard(
                             series,
                             "main",
                             onOpenExercise,
-                            renderBody
+                            () => {
+                                renderBody();
+                                onSetStateChanged();
+                            }
                         )
                     );
                 }
@@ -782,18 +914,19 @@ function createWorkoutExerciseCard(
             rest.textContent =
                 `Repos : ${workoutExercise.rest} sec`;
 
-            add.addEventListener(
-                "click",
-                event => {
-                    event.stopPropagation();
+add.addEventListener(
+    "click",
+    event => {
+        event.stopPropagation();
 
-                    addWorkoutSeries(
-                        workoutExercise
-                    );
+        addWorkoutSeries(
+            workoutExercise
+        );
 
-                    renderBody();
-                }
-            );
+        renderBody();
+        onSetStateChanged();
+    }
+);
 
             information.append(
                 list,
@@ -848,6 +981,11 @@ function createWorkoutExerciseCard(
                 -1
             );
 
+        card.classList.toggle(
+                "is-split",
+                workoutExercise.splitType === "split"
+            );
+
         renderBody();
     }
 
@@ -894,20 +1032,23 @@ function createWorkoutExerciseCard(
 
         refreshCard();
 
-        const replacementCard =
-            createWorkoutExerciseCard(
-                session,
-                set,
-                replacement,
-                onOpenExercise,
-                onSetStructureChanged
-            );
+const replacementCard =
+    createWorkoutExerciseCard(
+        session,
+        set,
+        replacement,
+        onOpenExercise,
+        onSetStructureChanged,
+        onSetStateChanged,
+        onDeleteExercise
+    );
 
         card.after(
             replacementCard
         );
 
         onSetStructureChanged();
+        onSetStateChanged();
     }
 
     progressionUp.addEventListener(
@@ -977,6 +1118,25 @@ function renderWorkoutOverview(
             "workout-set"
         );
 
+if (set.isSuperset && set.colorIndex) {
+    block.classList.add(
+        "workout-set-superset",
+        `workout-set-colored-${set.colorIndex}`
+    );
+}    
+
+        block.classList.toggle(
+            "is-completed",
+            isWorkoutSetCompleted(set)
+        );
+
+function refreshSetState() {
+    block.classList.toggle(
+        "is-completed",
+        isWorkoutSetCompleted(set)
+    );
+}
+
         block.dataset.workoutSetId =
             set.id;
 
@@ -1037,6 +1197,27 @@ function renderWorkoutOverview(
             );
         };
 
+const deleteExercise = (
+    targetSet,
+    workoutExercise
+) => {
+    removeWorkoutExercise(
+        session,
+        targetSet,
+        workoutExercise
+    );
+
+    renderWorkoutOverview(
+        container,
+        session,
+        {
+            onFinish,
+            onOpenSet,
+            onOpenExercise
+        }
+    );
+};        
+
         set.exercises.forEach(
             workoutExercise => {
                 exercises.appendChild(
@@ -1045,7 +1226,9 @@ function renderWorkoutOverview(
                         set,
                         workoutExercise,
                         openExercise,
-                        refreshSetCount
+                        refreshSetCount,
+                        refreshSetState,
+                        deleteExercise
                     )
                 );
             }

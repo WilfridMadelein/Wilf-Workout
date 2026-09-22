@@ -371,7 +371,7 @@ function getSelectedPlansInOrder() {
 
 const PDF_SET_COLORS = [
     [244, 237, 248],
-    [235, 247, 240],
+    [250, 237, 243],
     [252, 244, 232]
 ];
 

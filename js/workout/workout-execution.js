@@ -1,9 +1,12 @@
 import {
     createWorkoutSession,
+    hasWorkoutSessionLogs,
+    applyWorkoutLogToFollowingSeries,
     findFirstPendingWorkoutTarget,
     findFirstPendingTargetInSet,
     findFirstPendingTargetInExercise,
     getNextPendingWorkoutTarget,
+    isLastPendingTargetInSet,
     saveWorkoutTargetLog,
     getRestAfterWorkoutTarget
 } from "./workout-session.js";
@@ -50,6 +53,8 @@ let currentTarget = null;
 let currentExerciseView = null;
 
 let timerInterval = null;
+let scrollProgress;
+let scrollProgressFill;
 
 // ============================================================
 // CONFIGURATION
@@ -243,6 +248,53 @@ function toggleWorkoutTimer() {
 }
 
 // ============================================================
+// PROGRESSION DE SCROLL
+// ============================================================
+
+function refreshOverviewScrollProgress() {
+    if (
+        !session ||
+        session.screen !== "overview" ||
+        !scrollProgressFill
+    ) {
+        return;
+    }
+
+    const maxScroll =
+        Math.max(
+            0,
+            page.scrollHeight -
+            page.clientHeight
+        );
+
+    const progress =
+        maxScroll > 0
+            ? Math.min(
+                1,
+                Math.max(
+                    0,
+                    page.scrollTop / maxScroll
+                )
+            )
+            : 1;
+
+    scrollProgressFill.style.width =
+        `${progress * 100}%`;
+}
+
+function showOverviewScrollProgress() {
+    scrollProgress.hidden = false;
+
+    requestAnimationFrame(
+        refreshOverviewScrollProgress
+    );
+}
+
+function hideOverviewScrollProgress() {
+    scrollProgress.hidden = true;
+}
+
+// ============================================================
 // ÉCRANS
 // ============================================================
 
@@ -259,6 +311,12 @@ function showOverview() {
     currentExerciseView = null;
 
     session.screen = "overview";
+    showOverviewScrollProgress();
+
+    beginButton.textContent =
+    hasWorkoutSessionLogs(session)
+        ? "Continuer"
+        : "Débuter";
 
     getShell()?.classList.remove(
         "is-exercise-screen"
@@ -323,6 +381,10 @@ function showOverview() {
     );
 
     page.scrollTop = 0;
+
+    requestAnimationFrame(
+        refreshOverviewScrollProgress
+    );
 }
 
 function showExercise(target) {
@@ -335,27 +397,33 @@ function showExercise(target) {
 
     currentTarget = target;
     session.screen = "exercise";
+    hideOverviewScrollProgress();
 
     getShell()?.classList.add(
         "is-exercise-screen"
     );
 
-    currentExerciseView =
-        renderWorkoutExerciseView(
-            content,
-            session,
-            target,
-            {
-                onBack:
-                    showOverview,
+currentExerciseView =
+    renderWorkoutExerciseView(
+        content,
+        session,
+        target,
+        {
+            onBack: showOverview,
 
-                logAvailable:
-                    !isWorkoutRestTimerActive(),
+            logAvailable:
+                !isWorkoutRestTimerActive(),
 
-                onLog:
-                    handleWorkoutLog
-            }
-        );
+            isLastInSet:
+                isLastPendingTargetInSet(
+                    session,
+                    target
+                ),
+
+            onLog:
+                handleWorkoutLog
+        }
+    );
 
     page.scrollTop = 0;
 }
@@ -372,6 +440,11 @@ async function handleWorkoutLog(
     if (!session) return;
 
     saveWorkoutTargetLog(
+        loggedTarget,
+        values
+    );
+
+    applyWorkoutLogToFollowingSeries(
         loggedTarget,
         values
     );
@@ -395,11 +468,10 @@ async function handleWorkoutLog(
     }
 
     const restSeconds =
-        getRestAfterWorkoutTarget(
-            loggedTarget,
-            next,
-            values
-        );
+    getRestAfterWorkoutTarget(
+        loggedTarget,
+        next
+    );
 
     if (restSeconds > 0) {
         startWorkoutRestTimer(
@@ -442,6 +514,12 @@ function leaveWorkoutExecution() {
 
     clearWorkoutOverview(content);
     clearWorkoutExerciseView(content);
+
+    hideOverviewScrollProgress();
+
+    if (scrollProgressFill) {
+        scrollProgressFill.style.width = "0";
+    }
 
     session = null;
     currentTarget = null;
@@ -527,6 +605,22 @@ function getWorkoutExecutionSession() {
 // ============================================================
 
 function setupWorkoutExecution() {
+    scrollProgress =
+        page.querySelector(
+            "#workout-overview-scroll-progress"
+        );
+
+    scrollProgressFill =
+        page.querySelector(
+            "#workout-overview-scroll-progress-fill"
+        );
+
+    page.addEventListener(
+        "scroll",
+        refreshOverviewScrollProgress,
+        { passive: true }
+    );
+
     setupWorkoutRestTimer(page);
 
     exitButton.addEventListener(

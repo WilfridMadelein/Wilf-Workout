@@ -496,8 +496,8 @@ html[data-theme="dark"] .plan-set-colored-1 {
 }
 
 html[data-theme="dark"] .plan-set-colored-2 {
-    background: rgba(100, 190, 140, 0.18);
-    border-color: #41654f;
+    background: rgba(220, 120, 160, 0.18);
+    border-color: #74465c;
 }
 
 html[data-theme="dark"] .plan-set-colored-3 {
@@ -577,3 +577,4 @@ html[data-theme="dark"] .plan-exercise-split,
 html[data-theme="dark"] .plan-workout-duration {
     color: #bdbdbd;
 }
+

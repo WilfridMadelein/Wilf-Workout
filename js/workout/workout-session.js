@@ -37,6 +37,7 @@ function createWorkoutSeries(workoutExercise, number) {
         weightUnit: workoutExercise.weightUnit,
         tempo: cloneTempo(workoutExercise.tempo),
         rest: workoutExercise.rest,
+        notes: "",
         logs: {}
     };
 }
@@ -51,6 +52,7 @@ function clonePendingSeries(series) {
         weightUnit: series.weightUnit,
         tempo: cloneTempo(series.tempo),
         rest: series.rest,
+        notes: series.notes ?? "",
         logs: {}
     };
 }
@@ -81,6 +83,24 @@ function removeWorkoutSeries(workoutExercise, seriesId) {
     workoutExercise.series.splice(index, 1);
     renumberWorkoutSeries(workoutExercise);
 
+    return true;
+}
+
+function removeWorkoutExercise(session, set, workoutExercise) {
+    const exerciseIndex = set.exercises.indexOf(workoutExercise);
+    if (exerciseIndex === -1) return false;
+
+    set.exercises.splice(exerciseIndex, 1);
+
+    if (!set.exercises.length) {
+        const setIndex = session.sets.indexOf(set);
+
+        if (setIndex !== -1) {
+            session.sets.splice(setIndex, 1);
+        }
+    }
+
+    refreshWorkoutSetMetadata(session);
     return true;
 }
 
@@ -128,6 +148,25 @@ function createWorkoutExercise(planExercise, planExerciseIndex) {
 // SESSION
 // ============================================================
 
+function refreshWorkoutSetMetadata(session) {
+    let supersetColorIndex = 0;
+
+    session.sets.forEach(set => {
+        const sourceExercises = new Set(
+            set.exercises.map(exercise => exercise.sourcePlanExerciseIndex)
+        );
+
+        set.isSuperset = sourceExercises.size > 1;
+
+        if (set.isSuperset) {
+            set.colorIndex = (supersetColorIndex % 3) + 1;
+            supersetColorIndex += 1;
+        } else {
+            set.colorIndex = null;
+        }
+    });
+}
+
 function createWorkoutSession(plan) {
     const sets = [];
 
@@ -154,27 +193,31 @@ function createWorkoutSession(plan) {
         );
     });
 
-    return {
-        id: createWorkoutId("workout"),
-        planId: plan.id,
-        planName: plan.name,
+const session = {
+    id: createWorkoutId("workout"),
+    planId: plan.id,
+    planName: plan.name,
 
-        startedAt: Date.now(),
-        elapsedSeconds: 0,
+    startedAt: Date.now(),
+    elapsedSeconds: 0,
 
-        isPaused: false,
-        pausedAt: null,
-        totalPausedMs: 0,
+    isPaused: false,
+    pausedAt: null,
+    totalPausedMs: 0,
 
-        screen: "overview",
+    screen: "overview",
 
-        defaults: {
-            reps: plan.defaults?.reps ?? 10,
-            time: plan.defaults?.time ?? 30
-        },
+    defaults: {
+        reps: plan.defaults?.reps ?? 10,
+        time: plan.defaults?.time ?? 30
+    },
 
-        sets
-    };
+    sets
+};
+
+refreshWorkoutSetMetadata(session);
+
+return session;
 }
 
 // ============================================================
@@ -221,6 +264,12 @@ function hasWorkoutExerciseLogs(workoutExercise) {
     return workoutExercise.series.some(hasWorkoutSeriesLogs);
 }
 
+function hasWorkoutSessionLogs(session) {
+    return session.sets.some(set =>
+        set.exercises.some(hasWorkoutExerciseLogs)
+    );
+}
+
 function isWorkoutSeriesCompleted(series, sideKey = "main") {
     return Boolean(
         getWorkoutSeriesLog(series, sideKey)?.completedAt
@@ -239,8 +288,8 @@ function getWorkoutTargetValues(target) {
         weight: log?.weight ?? target.series.weight,
         weightUnit: log?.weightUnit ?? target.series.weightUnit,
         tempo: cloneTempo(log?.tempo ?? target.series.tempo),
-        rest: log?.rest ?? target.series.rest,
-        notes: log?.notes ?? ""
+        rest: target.series.rest,
+        notes: log?.notes ?? target.series.notes ?? ""
     };
 }
 
@@ -251,10 +300,31 @@ function saveWorkoutTargetLog(target, values) {
         weight: values.weight,
         weightUnit: values.weightUnit,
         tempo: cloneTempo(values.tempo),
-        rest: values.rest,
+        rest: target.series.rest,
         notes: values.notes ?? "",
         completedAt: Date.now()
     };
+}
+
+function applyWorkoutLogToFollowingSeries(target, values) {
+    const workoutExercise = target.workoutExercise;
+    const currentIndex = workoutExercise.series.indexOf(target.series);
+    if (currentIndex === -1) return;
+
+    workoutExercise.value = values.value;
+    workoutExercise.valueUnit = values.valueUnit;
+    workoutExercise.weight = values.weight;
+    workoutExercise.weightUnit = values.weightUnit;
+    workoutExercise.tempo = cloneTempo(values.tempo);
+
+    workoutExercise.series.slice(currentIndex).forEach(series => {
+        series.value = values.value;
+        series.valueUnit = values.valueUnit;
+        series.weight = values.weight;
+        series.weightUnit = values.weightUnit;
+        series.tempo = cloneTempo(values.tempo);
+        series.notes = values.notes ?? "";
+    });
 }
 
 // ============================================================
@@ -467,47 +537,62 @@ function getNextPendingWorkoutTarget(
     return null;
 }
 
+function isLastPendingTargetInSet(session, target) {
+    const pendingTargets = getWorkoutTargets(session).filter(item =>
+        item.set.id === target.set.id &&
+        !isWorkoutSeriesCompleted(item.series, item.sideKey)
+    );
+
+    return pendingTargets.length === 1 &&
+        pendingTargets[0].workoutExercise.id === target.workoutExercise.id &&
+        pendingTargets[0].series.id === target.series.id &&
+        pendingTargets[0].sideKey === target.sideKey;
+}
+
+function isWorkoutSetCompleted(set) {
+    const targets = [];
+
+    set.exercises.forEach(workoutExercise => {
+        workoutExercise.series.forEach(series => {
+            getWorkoutExerciseSides(workoutExercise).forEach(side => {
+                targets.push({
+                    series,
+                    sideKey: side.key
+                });
+            });
+        });
+    });
+
+    if (!targets.length) return false;
+
+    return targets.every(target =>
+        isWorkoutSeriesCompleted(target.series, target.sideKey)
+    );
+}
+
 // ============================================================
 // REPOS ENTRE DEUX TARGETS
 // ============================================================
 
-function getRestAfterWorkoutTarget(
-    target,
-    nextTarget,
-    loggedValues
-) {
-    const workoutExercise =
-        target.workoutExercise;
+function getRestAfterWorkoutTarget(target, nextTarget) {
+    const workoutExercise = target.workoutExercise;
 
     if (
         workoutExercise.splitType === "split" &&
-        nextTarget?.workoutExercise?.id ===
-            workoutExercise.id &&
-        nextTarget?.series?.id ===
-            target.series.id
+        nextTarget?.workoutExercise?.id === workoutExercise.id &&
+        nextTarget?.series?.id === target.series.id
     ) {
-        const sides =
-            getWorkoutExerciseSides(
-                workoutExercise
-            );
+        const sides = getWorkoutExerciseSides(workoutExercise);
 
         if (
             target.sideKey === sides[0]?.key &&
             nextTarget.sideKey === sides[1]?.key
         ) {
-            return Math.max(
-                0,
-                Number(
-                    workoutExercise.splitRest
-                ) || 0
-            );
+            return Math.max(0, Number(workoutExercise.splitRest) || 0);
         }
     }
 
-    return Math.max(
-        0,
-        Number(loggedValues.rest) || 0
-    );
+    return Math.max(0, Number(target.series.rest) || 0);
 }
 
 export {
@@ -518,13 +603,17 @@ export {
 
     addWorkoutSeries,
     removeWorkoutSeries,
+    removeWorkoutExercise,
 
     getWorkoutSeriesLog,
     hasWorkoutSeriesLogs,
     hasWorkoutExerciseLogs,
+    hasWorkoutSessionLogs,
     isWorkoutSeriesCompleted,
+    isWorkoutSetCompleted,
     getWorkoutTargetValues,
     saveWorkoutTargetLog,
+    applyWorkoutLogToFollowingSeries,
 
     updateWorkoutExerciseProgression,
     replacePendingSeriesProgression,
@@ -533,6 +622,7 @@ export {
     findFirstPendingTargetInSet,
     findFirstPendingTargetInExercise,
     getNextPendingWorkoutTarget,
+    isLastPendingTargetInSet,
 
     getRestAfterWorkoutTarget
 };
