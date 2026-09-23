@@ -29,6 +29,7 @@ export const tabPlans = document.getElementById("tab-plans");
 export const pagePlans = document.getElementById("page-plans");
 export const tabSettings = document.getElementById("tab-settings");
 export const pageSettings = document.getElementById("page-settings");
+export const pageWorkoutSummary = document.getElementById("page-workout-summary");
 
 // ------------------------------------------------------------
 // DOM — Paramètres globaux

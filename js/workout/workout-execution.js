@@ -60,6 +60,7 @@ let scrollProgressFill;
 let finishConfirmModal;
 let finishConfirmContinueButton;
 let finishConfirmFinishButton;
+let summaryEditReturn = null;
 
 // ============================================================
 // CONFIGURATION
@@ -414,14 +415,19 @@ currentExerciseView =
         session,
         target,
         {
-            onBack: (backTarget, values) => {
-                saveWorkoutTargetDraft(
-                    backTarget,
-                    values
-                );
+onBack: (backTarget, values) => {
+    if (summaryEditReturn) {
+        closeSummaryLogEditor();
+        return;
+    }
 
-                showOverview();
-            },
+    saveWorkoutTargetDraft(
+        backTarget,
+        values
+    );
+
+    showOverview();
+},
 
             logAvailable:
                 !isWorkoutRestTimerActive(),
@@ -451,21 +457,25 @@ async function handleWorkoutLog(
 ) {
     if (!session) return;
 
-    saveWorkoutTargetLog(
-        loggedTarget,
-        values
-    );
+saveWorkoutTargetLog(
+    loggedTarget,
+    values
+);
 
-    applyWorkoutLogToFollowingSeries(
-        loggedTarget,
-        values
-    );
-
-    // Un log existant vient simplement d'être corrigé.
-    if (isEdit) {
+if (isEdit) {
+    if (summaryEditReturn) {
+        closeSummaryLogEditor();
+    } else {
         showOverview();
-        return;
     }
+
+    return;
+}
+
+applyWorkoutLogToFollowingSeries(
+    loggedTarget,
+    values
+);
 
     const next =
         getNextPendingWorkoutTarget(
@@ -504,6 +514,49 @@ async function handleWorkoutLog(
     }
 
     showExercise(next);
+}
+
+// ============================================================
+// MODIFICATION D'UN LOG DEPUIS LE RÉCAPITULATIF
+// ============================================================
+
+function closeSummaryLogEditor() {
+    const onDone =
+        summaryEditReturn;
+
+    summaryEditReturn = null;
+
+    leaveWorkoutExecution();
+    onDone?.();
+}
+
+function editWorkoutLogFromSummary(
+    summarySession,
+    target,
+    onDone = () => {}
+) {
+    if (
+        !summarySession ||
+        !target
+    ) {
+        return;
+    }
+
+    stopWorkoutTimerInterval();
+    stopWorkoutRestTimer();
+
+    session = summarySession;
+    summaryEditReturn = onDone;
+
+    page.hidden = false;
+    exitModal.hidden = true;
+    finishConfirmModal.hidden = true;
+
+    document.body.classList.add(
+        "workout-execution-active"
+    );
+
+    showExercise(target);
 }
 
 // ============================================================
@@ -577,12 +630,18 @@ async function completeWorkoutExecution() {
     refreshElapsedTime();
     stopWorkoutRestTimer();
 
+    const completedSession =
+        session;
+
     finishButton.disabled = true;
     finishConfirmFinishButton.disabled = true;
 
     try {
-        await onFinishWorkout(session);
         leaveWorkoutExecution();
+
+        await onFinishWorkout(
+            completedSession
+        );
     } finally {
         finishButton.disabled = false;
         finishConfirmFinishButton.disabled = false;
@@ -618,6 +677,7 @@ function startWorkoutExecution(plan) {
     session =
         createWorkoutSession(plan);
 
+    summaryEditReturn = null;
     currentTarget = null;
     currentExerciseView = null;
 
@@ -745,5 +805,6 @@ export {
     configureWorkoutExecution,
     setupWorkoutExecution,
     startWorkoutExecution,
+    editWorkoutLogFromSummary,
     getWorkoutExecutionSession
 };

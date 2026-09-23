@@ -2,6 +2,7 @@ let searchInput;
 let pageExercises;
 let pagePlans;
 let pageSettings;
+let pageWorkoutSummary;
 
 let exerciseBrowser;
 let planExerciseBrowserContainer;
@@ -39,6 +40,7 @@ export function configureAppController(dependencies) {
         pageExercises,
         pagePlans,
         pageSettings,
+        pageWorkoutSummary,
 
         exerciseBrowser,
         planExerciseBrowserContainer,
@@ -161,6 +163,7 @@ tabExercises.addEventListener("click", () => {
     pageExercises.style.display = "block";
     pagePlans.style.display = "none";
     pageSettings.style.display = "none";
+    pageWorkoutSummary.hidden = true;
 
     pageExercises
         .querySelector("#exercise-browser-container")
@@ -185,6 +188,7 @@ tabPlans.addEventListener("click", () => {
         saveSearchState(searchPageState);
     }
     pageSettings.style.display = "none";
+    pageWorkoutSummary.hidden = true;
     tabSettings.classList.remove("active");
 
     pageExercises.style.display = "none";
@@ -216,6 +220,7 @@ tabSettings.addEventListener("click", () => {
     pageExercises.style.display = "none";
     pagePlans.style.display = "none";
     pageSettings.style.display = "block";
+    pageWorkoutSummary.hidden = true;
 
     tabExercises.classList.remove("active");
     tabPlans.classList.remove("active");

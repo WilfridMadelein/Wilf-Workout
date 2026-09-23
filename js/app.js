@@ -130,6 +130,7 @@ workoutFinishButton,
 
 tabSettings,
 pageSettings,
+pageWorkoutSummary,
 
 settingsThemeSwitch,
 settingsBodyModelSwitch,
@@ -326,9 +327,16 @@ import {
 } from "./ui/filter-ui.js";
 
 import {
+    configureWorkoutSummary,
+    setupWorkoutSummary,
+    renderWorkoutSummary
+} from "./workout/workout-summary.js";
+
+import {
     configureWorkoutExecution,
     setupWorkoutExecution,
-    startWorkoutExecution
+    startWorkoutExecution,
+    editWorkoutLogFromSummary
 } from "./workout/workout-execution.js";
 
 import {
@@ -336,6 +344,35 @@ import {
 } from "./workout/workout-overview.js";
 
 let appSettings = createDefaultAppSettings();
+
+async function openWorkoutSummary(session) {
+    pageExercises.style.display = "none";
+    pagePlans.style.display = "none";
+    pageSettings.style.display = "none";
+
+    pageWorkoutSummary.hidden = false;
+
+    tabExercises.classList.remove("active");
+    tabSettings.classList.remove("active");
+    tabPlans.classList.add("active");
+
+    setCurrentDetailContext("search");
+
+    await renderWorkoutSummary(session);
+}
+
+function closeWorkoutSummaryToPlans() {
+    pageWorkoutSummary.hidden = true;
+
+    tabPlans.click();
+
+    requestAnimationFrame(() => {
+        window.scrollTo({
+            top: 0,
+            behavior: "auto"
+        });
+    });
+}
 
 async function applySplitOrderToAllPlans(order) {
     const splitOrder =
@@ -639,6 +676,21 @@ configureWorkoutOverview({
     getExercises: () => exercises
 });
 
+configureWorkoutSummary({
+    page: pageWorkoutSummary,
+
+    getAppSettings:
+        () => appSettings,
+
+    saveAppSettingsNow,
+
+    onClose:
+        closeWorkoutSummaryToPlans,
+
+    onEditLog:
+        editWorkoutLogFromSummary
+});
+
 configureWorkoutExecution({
     page: pageWorkoutExecution,
     exitButton: workoutExitButton,
@@ -650,7 +702,8 @@ configureWorkoutExecution({
     exitModal: workoutExitModal,
     confirmExitButton: workoutConfirmExitButton,
     continueButton: workoutContinueButton,
-    finishButton: workoutFinishButton
+    finishButton: workoutFinishButton,
+    onFinishWorkout: openWorkoutSummary
 });
 
 configurePlanController({
@@ -753,6 +806,7 @@ configureAppController({
     pageExercises,
     pagePlans,
     pageSettings,
+    pageWorkoutSummary,
     exerciseBrowser,
     planExerciseBrowserContainer,
 
@@ -957,6 +1011,7 @@ async function initializeApp() {
     setupSettingsController();
     setupDefaultPlanFilters();
     setupPlanDefaultInputs();
+    setupWorkoutSummary();
     setupWorkoutExecution();
     setupPlanController();
     setupPlanPdf();

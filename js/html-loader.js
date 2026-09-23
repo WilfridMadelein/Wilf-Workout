@@ -4,6 +4,7 @@ const pages = {
     "page-exercises": "html/exercises.html",
     "page-plans": "html/plans.html",
     "page-settings": "html/settings.html",
+    "page-workout-summary": "html/workout-summary.html",
     "page-workout-execution": "html/workout-execution.html"
 };
 

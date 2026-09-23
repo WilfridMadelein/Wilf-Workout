@@ -66,6 +66,7 @@ function createDefaultAppSettings() {
         bodyModel: "male",
         alwaysShowInstructions: false,
         splitOrder: "left-right",
+        lastWorkoutCompletionMessageId: null,
         planDefaults: normalizePlanDefaults()
     };
 }
@@ -79,6 +80,12 @@ function normalizeAppSettings(settings = {}) {
         bodyModel: settings.bodyModel === "female" ? "female" : "male",
         alwaysShowInstructions: settings.alwaysShowInstructions === true,
         splitOrder: normalizeSplitOrder(settings.splitOrder),
+
+        lastWorkoutCompletionMessageId:
+            typeof settings.lastWorkoutCompletionMessageId === "string"
+                ? settings.lastWorkoutCompletionMessageId
+                : null,
+
         planDefaults: normalizePlanDefaults(settings.planDefaults)
     };
 }
