@@ -306,6 +306,19 @@ function saveWorkoutTargetLog(target, values) {
     };
 }
 
+function saveWorkoutTargetDraft(target, values) {
+    if (isWorkoutSeriesCompleted(target.series, target.sideKey)) return false;
+
+    target.series.value = values.value;
+    target.series.valueUnit = values.valueUnit;
+    target.series.weight = values.weight;
+    target.series.weightUnit = values.weightUnit;
+    target.series.tempo = cloneTempo(values.tempo);
+    target.series.notes = values.notes ?? "";
+
+    return true;
+}
+
 function applyWorkoutLogToFollowingSeries(target, values) {
     const workoutExercise = target.workoutExercise;
     const currentIndex = workoutExercise.series.indexOf(target.series);
@@ -612,6 +625,7 @@ export {
     isWorkoutSeriesCompleted,
     isWorkoutSetCompleted,
     getWorkoutTargetValues,
+    saveWorkoutTargetDraft,
     saveWorkoutTargetLog,
     applyWorkoutLogToFollowingSeries,
 

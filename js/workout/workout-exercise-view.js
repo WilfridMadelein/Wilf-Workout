@@ -246,7 +246,9 @@ if (
     heading.append(name, progression);
     header.append(back, heading);
 
-    back.addEventListener("click", onBack);
+    back.addEventListener("click", () => {
+        onBack(target, draft);
+    });
 
 // ========================================================
 // SÉRIE / CÔTÉ
@@ -377,30 +379,6 @@ heading.appendChild(seriesContext);
         draft.tempo,
         () => {}
     );
-
-    // Repos
-
-    const rest = document.createElement("div");
-    rest.classList.add("workout-exercise-control-values");
-
-    const restNumber = createStepControl(
-        draft.rest,
-        {
-            min: 0,
-            max: 999,
-            step: 15,
-            minChars: 1,
-            snapStep: true
-        },
-        value => {
-            draft.rest = value ?? 0;
-        }
-    );
-
-    const restUnit = document.createElement("span");
-    restUnit.textContent = "sec";
-
-    rest.append(restNumber, restUnit);
 
     controls.append(
         createControlRow("Volume", volume),

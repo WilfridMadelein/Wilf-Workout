@@ -337,6 +337,25 @@ body.workout-execution-active {
     background: #bf5d00;
 }
 
+.workout-finish-confirm-continue {
+    border: 1px solid #0f6332;
+    background: #147a3d;
+    color: #fff;
+}
+
+.workout-finish-confirm-continue:hover {
+    background: #106934;
+}
+
+.workout-finish-confirm-finish {
+    border: 1px solid #c45c00;
+    background: #d96a00;
+    color: #fff;
+}
+
+.workout-finish-confirm-finish:hover {
+    background: #bf5d00;
+}
 
 /* =========================================================
    MODE SOMBRE
@@ -606,7 +625,7 @@ html[data-theme="dark"] .workout-confirm-exit-button {
 }
 
 .workout-series-row.is-completed {
-    background: rgba(100, 190, 140, 0.08);
+    background: rgba(100, 190, 140, 0.13);
 }
 
 .workout-series-remove {
@@ -642,7 +661,7 @@ html[data-theme="dark"] .workout-confirm-exit-button {
     margin-top: 7px;
     padding: 6px 10px;
 
-    border: 1px solid #999;
+    border: 1px solid #d96a00;
     border-radius: 6px;
     background: transparent;
     color: inherit;
@@ -654,7 +673,8 @@ html[data-theme="dark"] .workout-confirm-exit-button {
 }
 
 .workout-add-series-button:hover {
-    background: #f2f2f2;
+    border-color: #bf5d00;
+    background: rgba(217, 106, 0, 0.08);
 }
 
 .workout-exercise-rest {
@@ -866,13 +886,12 @@ html[data-theme="dark"] .workout-exercise-muscles {
 }
 
 html[data-theme="dark"] .workout-add-series-button:hover {
-    background: #303030;
+    border-color: #e8872a;
+    background: rgba(217, 106, 0, 0.12);
 }
 
 html[data-theme="dark"] .workout-series-row.is-completed {
-    border-color: #3f9d62;
-    background: #173c26;
-    color: #bce5c9;
+    background: rgba(100, 190, 140, 0.13);
 }
 
 html[data-theme="dark"] .workout-action-dialog {
@@ -880,6 +899,30 @@ html[data-theme="dark"] .workout-action-dialog {
     color: #ededed;
 }
 
+/* =========================================================
+   RESPONSIVE — SPLIT
+========================================================= */
+
+@media (max-width: 760px) {
+    .workout-exercise-card.is-split .workout-exercise-body {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    .workout-exercise-card.is-split .workout-exercise-muscle-map {
+        width: 105px;
+        justify-self: center;
+    }
+
+    .workout-exercise-card.is-split .workout-split-layout {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .workout-exercise-card.is-split .workout-exercise-actions {
+        grid-column: auto;
+    }
+}
 
 /* =========================================================
    RESPONSIVE — VUE D'ENSEMBLE
@@ -1108,10 +1151,6 @@ html[data-theme="dark"] .workout-action-dialog {
 /* =========================================================
    MODE SOMBRE — REPOS
 ========================================================= */
-
-html[data-theme="dark"] .workout-series-row.is-completed {
-    background: rgba(100, 190, 140, 0.12);
-}
 
 html[data-theme="dark"] .workout-set-colored-1 {
     background: rgba(170, 120, 200, 0.18);

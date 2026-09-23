@@ -7,6 +7,7 @@ import {
     findFirstPendingTargetInExercise,
     getNextPendingWorkoutTarget,
     isLastPendingTargetInSet,
+    saveWorkoutTargetDraft,
     saveWorkoutTargetLog,
     getRestAfterWorkoutTarget
 } from "./workout-session.js";
@@ -55,6 +56,10 @@ let currentExerciseView = null;
 let timerInterval = null;
 let scrollProgress;
 let scrollProgressFill;
+
+let finishConfirmModal;
+let finishConfirmContinueButton;
+let finishConfirmFinishButton;
 
 // ============================================================
 // CONFIGURATION
@@ -409,7 +414,14 @@ currentExerciseView =
         session,
         target,
         {
-            onBack: showOverview,
+            onBack: (backTarget, values) => {
+                saveWorkoutTargetDraft(
+                    backTarget,
+                    values
+                );
+
+                showOverview();
+            },
 
             logAvailable:
                 !isWorkoutRestTimerActive(),
@@ -501,11 +513,25 @@ async function handleWorkoutLog(
 function openExitModal() {
     if (!session) return;
 
+    // Aucun log : probablement un démarrage accidentel.
+    if (!hasWorkoutSessionLogs(session)) {
+        leaveWorkoutExecution();
+        return;
+    }
+
     exitModal.hidden = false;
 }
 
 function closeExitModal() {
     exitModal.hidden = true;
+}
+
+function openFinishConfirmModal() {
+    finishConfirmModal.hidden = false;
+}
+
+function closeFinishConfirmModal() {
+    finishConfirmModal.hidden = true;
 }
 
 function leaveWorkoutExecution() {
@@ -526,6 +552,7 @@ function leaveWorkoutExecution() {
     currentExerciseView = null;
 
     exitModal.hidden = true;
+    finishConfirmModal.hidden = true;
     page.hidden = true;
 
     elapsedTime.textContent = "0:00";
@@ -544,20 +571,38 @@ function leaveWorkoutExecution() {
 // FIN
 // ============================================================
 
-async function finishWorkoutExecution() {
+async function completeWorkoutExecution() {
     if (!session) return;
 
     refreshElapsedTime();
     stopWorkoutRestTimer();
 
     finishButton.disabled = true;
+    finishConfirmFinishButton.disabled = true;
 
     try {
         await onFinishWorkout(session);
         leaveWorkoutExecution();
     } finally {
         finishButton.disabled = false;
+        finishConfirmFinishButton.disabled = false;
     }
+}
+
+function finishWorkoutExecution() {
+    if (!session) return;
+
+    if (!hasWorkoutSessionLogs(session)) {
+        leaveWorkoutExecution();
+        return;
+    }
+
+    if (findFirstPendingWorkoutTarget(session)) {
+        openFinishConfirmModal();
+        return;
+    }
+
+    completeWorkoutExecution();
 }
 
 // ============================================================
@@ -615,6 +660,21 @@ function setupWorkoutExecution() {
             "#workout-overview-scroll-progress-fill"
         );
 
+    finishConfirmModal =
+    page.querySelector(
+        "#workout-finish-confirm-modal"
+    );
+
+    finishConfirmContinueButton =
+    page.querySelector(
+        "#workout-finish-confirm-continue"
+    );
+
+    finishConfirmFinishButton =
+    page.querySelector(
+        "#workout-finish-confirm-finish"
+    );
+
     page.addEventListener(
         "scroll",
         refreshOverviewScrollProgress,
@@ -639,8 +699,24 @@ function setupWorkoutExecution() {
     );
 
     finishButton.addEventListener(
-        "click",
-        finishWorkoutExecution
+    "click",
+    () => {
+        closeExitModal();
+        finishWorkoutExecution();
+    }
+    );
+
+    finishConfirmContinueButton.addEventListener(
+    "click",
+    closeFinishConfirmModal
+    );
+
+    finishConfirmFinishButton.addEventListener(
+    "click",
+    async () => {
+        closeFinishConfirmModal();
+        await completeWorkoutExecution();
+    }
     );
 
     timerToggleButton.addEventListener(
