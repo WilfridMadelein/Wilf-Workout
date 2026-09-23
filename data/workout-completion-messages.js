@@ -21,12 +21,42 @@ export const workoutCompletionMessages = [
     },
     {
         id: 5,
-        male: "No pain, no gain.",
-        female: "No pain, no gain."
+        male: "No pain, no gain 💪.",
+        female: "No pain, no gain 💪."
     },
     {
         id: 6,
-        male: "Tu pleures dans ton entraînement, tu riras sur le champ de bataille.",
-        female: "Tu pleures dans ton entraînement, tu riras sur le champ de bataille."
-    }
+        male: "Tu pleures dans ton entraînement, tu riras sur le champ de bataille ⚔️.",
+        female: "Tu pleures dans ton entraînement, tu riras sur le champ de bataille ⚔️."
+    },
+    {
+        id: 7,
+        male: "Avec de gros muscles viennent de grosses responsabilités 👑.",
+        female: "Avec de gros muscles viennent de grosses responsabilités 👑."
+    },
+    {
+        id: 8,
+        male: "Je m'entraîne, donc je suis 🤔.",
+        female: "Je m'entraîne, donc je suis 🤔."
+    },
+    {
+        id: 9,
+        male: "On ne naît pas fort, on le devient 💪.",
+        female: "On ne naît pas forte, on le devient 💪."
+    },
+    {
+        id: 10,
+        male: "« Nous vivons sur l'avenir. Cette inconséquence est admirable, car enfin il sagit de s'entraîner 🏋️‍♀️. »",
+        female: "« Nous vivons sur l'avenir. Cette inconséquence est admirable, car enfin il sagit de s'entraîner 🏋️‍♀️. »"
+    },
+    {
+        id: 11,
+        male: "C'est un petit pas l'homme, et un grand pas pour les gains 💪.",
+        female: "« C'est un petit pas l'homme, et un grand pas pour les gains 💪. »"
+    },
+    {
+        id: 12,
+        male: "Que la force soit avec toi.",
+        female: "Que la force soit avec toi."
+    },        
 ];
