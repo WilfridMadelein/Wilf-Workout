@@ -2016,3 +2016,136 @@
         flex-basis: 26px;
     }
 }
+
+.plan-drag-handle {
+    color: inherit;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    min-height: 32px;
+    width: 28px;
+    padding: 2px;
+    font-size: 24px;
+    line-height: 1;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+}
+
+.plan-drag-handle:hover,
+.plan-drag-handle:focus-visible {
+    border-color: currentColor;
+}
+
+.plan-drag-handle[aria-pressed="true"] { cursor: grabbing; }
+.plan-exercise-rail .plan-drag-handle { order: 1; flex: 1; }
+
+.plan-drag-status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* Aperçu compact pendant le tri; les cartes et leurs champs restent en place. */
+.plan-sortable-active .plan-exercise-card,
+.plan-sortable-active .plan-combination-button {
+    display: none;
+}
+
+.plan-sortable-active .plan-exercise-shell,
+.plan-sortable-active .plan-set-block {
+    transform-origin: top left;
+}
+
+.plan-sortable-active .plan-exercise-rail {
+    flex: 0 0 28px;
+    width: 28px;
+}
+
+.plan-drag-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-sizing: border-box;
+    flex: 1;
+    min-width: 0;
+    min-height: 62px;
+    padding: 6px 8px;
+    border: 1px solid #d8d8d8;
+    border-radius: 6px;
+    background: #fff;
+    color: #222;
+    font-size: 13px;
+}
+
+.plan-drag-identity {
+    min-width: 0;
+    flex: 1;
+    font-weight: 600;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.plan-drag-progression {
+    max-width: 28%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: #666;
+    font-size: 12px;
+}
+
+.plan-drag-thumbnail {
+    display: flex;
+    flex: 0 0 52px;
+    justify-content: center;
+    width: 52px;
+    height: 48px;
+    overflow: hidden;
+}
+
+.plan-drag-thumbnail canvas {
+    width: auto;
+    max-width: 26px;
+    height: 48px;
+    object-fit: contain;
+}
+
+.plan-sortable-placeholder {
+    opacity: 0.3;
+    outline: 2px dashed #888;
+    outline-offset: -2px;
+    border-radius: 6px;
+}
+
+.plan-sortable-preview {
+    display: grid;
+    gap: 6px;
+    box-sizing: border-box;
+    padding: 5px;
+    border: 1px solid #aaa;
+    border-radius: 8px;
+    background: #fff;
+    color: #222;
+    box-shadow: 0 10px 30px #0003, 0 2px 6px #0002;
+    will-change: transform;
+}
+
+.plan-sortable-preview-title { padding: 2px 6px; font-size: 13px; }
+
+html[data-theme="dark"] .plan-drag-summary,
+html[data-theme="dark"] .plan-sortable-preview {
+    background: #242424;
+    border-color: #555;
+    color: #eee;
+}
+
+html[data-theme="dark"] .plan-drag-progression { color: #bbb; }
+
+@media (prefers-reduced-motion: reduce) {
+    .plan-sortable-preview { will-change: auto; }
+}

@@ -1,3 +1,5 @@
+import { createPlanDragController } from "./plan-drag.js";
+
 import {
     setupNumberInput
 } from "../ui/ui.js";
@@ -30,8 +32,6 @@ let removeExerciseFromCurrentPlan = () => {};
 let closePlanInstructionsPopup = () => {};
 let getPlanExerciseDetailsLines = () => [];
 let openCombinationMenu = () => {};
-let moveExerciseWithinCombination = () => {};
-let moveCombination = () => {};
 let setCombinationSets = () => {};
 let schedulePlanSave = () => {};
 let getAlwaysShowInstructions = () => false;
@@ -49,8 +49,6 @@ function configurePlanRender(dependencies) {
     closePlanInstructionsPopup = dependencies.closePlanInstructionsPopup;
     getPlanExerciseDetailsLines = dependencies.getPlanExerciseDetailsLines;
     openCombinationMenu = dependencies.openCombinationMenu;
-    moveExerciseWithinCombination = dependencies.moveExerciseWithinCombination;
-    moveCombination = dependencies.moveCombination;
     setCombinationSets = dependencies.setCombinationSets;
     schedulePlanSave = dependencies.schedulePlanSave;
     getAlwaysShowInstructions = dependencies.getAlwaysShowInstructions;
@@ -236,13 +234,20 @@ function refreshPlanDurationDisplay(plan = getCurrentPlan()) {
         formatPlanDuration(plan);
 }
 
-function renderPlanExercises() {
+let renderedExerciseCards = new Map();
+let planDragController = null;
+
+function renderPlanExercises(preserveCards = false) {
+    planDragController?.destroy();
+    planDragController = null;
     const list = getPlanExerciseList();
     const plan = getCurrentPlan();
 
     refreshPlanDurationDisplay(plan);
 
-    destroyExerciseMuscleMapsIn(list);
+    const previousCards = preserveCards ? renderedExerciseCards : new Map();
+    renderedExerciseCards = new Map();
+    if (!preserveCards) destroyExerciseMuscleMapsIn(list);
     list.replaceChildren();
 
     if (!plan || plan.exercises.length === 0) {
@@ -291,7 +296,25 @@ workout.classList.add(
     let supersetColorIndex = 0;
 
 
-    groups.forEach((groupData, groupIndex) => {
+    const drag = createPlanDragController(workout, source => {
+        const scrollPositions = [];
+        for (let node = list; node; node = node.parentElement) {
+            scrollPositions.push([node, node.scrollLeft, node.scrollTop]);
+        }
+        closePlanInstructionsPopup();
+        list.querySelectorAll(".combination-menu").forEach(menu => menu.remove());
+        renderPlanExercises(true);
+        const card = renderedExerciseCards.get(source.exercise)?.shell;
+        const handle = source.type === "set"
+            ? card?.closest(".plan-set-block").querySelector(".plan-set-header .plan-drag-handle")
+            : card?.querySelector(".plan-drag-handle");
+        handle?.focus({ preventScroll: true });
+        scrollPositions.forEach(([node, left, top]) => { node.scrollLeft = left; node.scrollTop = top; });
+        list.querySelector(".plan-drag-status").textContent = "Déplacement effectué.";
+    });
+    planDragController = drag;
+
+    groups.forEach(groupData => {
         const group = groupData.group;
         const groupExercises =
             groupData.exercises;
@@ -339,33 +362,7 @@ if (isSuperset) {
             "plan-set-header"
         );
 
-        const setOrder =
-            createVerticalArrowButtons({
-                containerClass:
-                    "plan-set-order-buttons",
-
-                buttonClass:
-                    "plan-order-button",
-
-                upDisabled:
-                    groupIndex === 0,
-
-                downDisabled:
-                    groupIndex ===
-                    groups.length - 1,
-
-                onUp: () =>
-                    moveCombination(
-                        group,
-                        -1
-                    ),
-
-                onDown: () =>
-                    moveCombination(
-                        group,
-                        1
-                    )
-            });
+        const setOrder = drag.addHandle(setHeader, groupExercises[0], "set");
 
         const setTitle =
             document.createElement("strong");
@@ -398,14 +395,31 @@ setBlock.appendChild(setExercises);
         // EXERCICES DU SET
         // ====================================================
 
+        const dragRows = [];
         groupExercises.forEach(
-            (planExercise, exerciseIndex) => {
+            planExercise => {
 
                 const exercise =
                     planExercise.exercise;
 
                 const planIndex =
                     planOrder.get(planExercise);
+
+                const cached = previousCards.get(planExercise);
+                if (cached) {
+                    cached.shell.querySelector(".plan-exercise-number").textContent = `${planIndex} -`;
+                    cached.shell.querySelector(".plan-combination-button").textContent = `S${group}`;
+                    cached.setsInput.value = planExercise.sets;
+                    cached.setsInput.dispatchEvent(new Event("input"));
+                    cached.shell.querySelector(".plan-drag-handle").remove();
+                    drag.addHandle(cached.shell.querySelector(".plan-exercise-rail"), planExercise, "exercise");
+                    const instructions = cached.shell.querySelector(".plan-instructions-button");
+                    if (instructions) instructions.dataset.planExerciseIndex = plan.exercises.indexOf(planExercise);
+                    setExercises.appendChild(cached.shell);
+                    renderedExerciseCards.set(planExercise, cached);
+                    dragRows.push({ element: cached.shell, exercise: planExercise });
+                    return;
+                }
 
                 const shell =
                     document.createElement("div");
@@ -443,36 +457,6 @@ combinationButton.addEventListener(
     }
 );
 
-const exerciseOrder =
-    createVerticalArrowButtons({
-        containerClass:
-            "plan-exercise-order",
-
-        buttonClass:
-            "plan-order-button",
-
-        upDisabled:
-            !isSuperset ||
-            exerciseIndex === 0,
-
-        downDisabled:
-            !isSuperset ||
-            exerciseIndex ===
-            groupExercises.length - 1,
-
-        onUp: () =>
-            moveExerciseWithinCombination(
-                planExercise,
-                -1
-            ),
-
-        onDown: () =>
-            moveExerciseWithinCombination(
-                planExercise,
-                1
-            )
-    });
-
 const exerciseRail =
     document.createElement("div");
 
@@ -480,10 +464,8 @@ exerciseRail.classList.add(
     "plan-exercise-rail"
 );
 
-exerciseRail.append(
-    combinationButton,
-    exerciseOrder
-);
+exerciseRail.appendChild(combinationButton);
+drag.addHandle(exerciseRail, planExercise, "exercise");
 
 shell.appendChild(exerciseRail);
 
@@ -1066,7 +1048,7 @@ if (getAlwaysShowInstructions()) {
     instructionsButton.dataset.planExerciseIndex = exerciseArrayIndex;
 
     instructionsButton.addEventListener("click", () => {
-        openPlanExerciseInstructions(planExercise, exerciseArrayIndex);
+        openPlanExerciseInstructions(planExercise, plan.exercises.indexOf(planExercise));
     });
 
     instructionsControl = instructionsButton;
@@ -1166,6 +1148,8 @@ function refreshProgressionCard(newExercise) {
 
                 shell.appendChild(card);
                 setExercises.appendChild(shell);
+                renderedExerciseCards.set(planExercise, { shell, setsInput: setsControl.querySelector("input") });
+                dragRows.push({ element: shell, exercise: planExercise });
 
                 renderExerciseMuscleMap(
                     muscleMap,
@@ -1179,6 +1163,7 @@ function refreshProgressionCard(newExercise) {
             }
         );
 
+        drag.addSet(setBlock, groupExercises, dragRows);
         workout.appendChild(setBlock);
     });
 

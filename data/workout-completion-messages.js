@@ -58,5 +58,10 @@ export const workoutCompletionMessages = [
         id: 12,
         male: "Que la force soit avec toi.",
         female: "Que la force soit avec toi."
+    },
+    {
+        id: 13,
+        male: "Ne demandes pas ce que tes gains peuvent faire pour toi, demandes ce que tu peux faire pour tes gains 💪.",
+        female: "Ne demandes pas ce que tes gains peuvent faire pour toi, demandes ce que tu peux faire pour tes gains 💪."
     },        
 ];

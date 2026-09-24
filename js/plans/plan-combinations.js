@@ -500,7 +500,42 @@ function moveCombination(
 // EXPORTS
 // ============================================================
 
+// Un exercice déposé entre les Sets devient un Set individuel.
+function dropPlanItem(source, target) {
+    const plan = getCurrentPlan();
+    if (!plan || !plan.exercises.includes(source.exercise) || !plan.exercises.includes(target.exercise)) return false;
+    const exercises = plan.exercises;
+    const sourceGroup = source.exercise.combination.group;
+    const targetGroup = target.exercise.combination.group;
+    const moved = source.type === "set"
+        ? exercises.filter(item => item.combination.group === sourceGroup)
+        : [source.exercise];
+    if (source.type === "set" && (target.inside || sourceGroup === targetGroup)) return false;
+    if (target.inside && moved.includes(target.exercise)) return false;
+
+    const remaining = exercises.filter(item => !moved.includes(item));
+    const targetMembers = remaining.filter(item => item.combination.group === targetGroup);
+    if (!targetMembers.length) return false;
+    const anchor = target.inside ? target.exercise : targetMembers[target.after ? targetMembers.length - 1 : 0];
+    const index = remaining.indexOf(anchor) + (target.after ? 1 : 0);
+    const nextGroup = target.inside ? targetGroup : getNextCombinationGroup();
+    const nextOrder = [...remaining.slice(0, index), ...moved, ...remaining.slice(index)];
+    if (nextOrder.every((item, i) => item === exercises[i]) &&
+        (source.type === "set" || sourceGroup === nextGroup ||
+            (!target.inside && exercises.filter(item => item.combination.group === sourceGroup).length === 1))) return false;
+
+    if (source.type === "exercise") {
+        source.exercise.combination.group = nextGroup;
+        if (target.inside) source.exercise.sets = target.exercise.sets;
+    }
+    exercises.splice(0, exercises.length, ...nextOrder);
+    normalizeCombinationNumbers();
+    schedulePlanSave(plan);
+    return true;
+}
+
 export {
+    dropPlanItem,
     configurePlanCombinations,
     getNextCombinationGroup,
     getCombinationGroups,
