@@ -5,7 +5,7 @@
 // Appeler destroy avant de remplacer le DOM ou de désactiver le composant.
 export function createSortable(root, {
     getSource, getTargets, getElements, onStart, onPreview, onFinish,
-    createPreview, getDropElement, announce = () => {},
+    createPreview, getDropElement, announce = () => {}, onSettled = () => {},
     hoverDelay = 140, animationDuration = 360
 }) {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -230,6 +230,11 @@ export function createSortable(root, {
             () => onFinish(current.source, committed ? current.target : null, committed),
             () => getDropElement(current.source)
         );
+        if (current.started) {
+            // Les canvas doivent retrouver leur résolution après les transformations visuelles.
+            Promise.allSettled([...animations.values()].map(animation => animation.finished))
+                .then(() => onSettled(current.source));
+        }
         current.handle.focus({ preventScroll: true });
         announce(committed ? "Déplacement terminé." : "Déplacement annulé.");
         settling = false;

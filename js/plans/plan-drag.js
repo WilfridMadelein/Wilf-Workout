@@ -1,5 +1,6 @@
 import { dropPlanItem } from "./plan-combinations.js";
 import { createSortable } from "../ui/sortable.js";
+import { renderExerciseMuscleMap } from "../exercises/exercise-muscle-map.js";
 
 export function createPlanDragController(workout, onDrop, {
     setClass = "plan-set-block", listClass = "plan-set-exercises", headerClass = "plan-set-header",
@@ -97,6 +98,13 @@ export function createPlanDragController(workout, onDrop, {
         getDropElement: source => source.type === "set"
             ? getRow(source.exercise).closest(`.${setClass}`) : getRow(source.exercise),
         announce: text => { status.textContent = text; },
+        onSettled() {
+            sets.forEach(set => set.rows.forEach(({ element, exercise }) => {
+                if (!element.isConnected || element.closest(".plan-sortable-active")) return;
+                const map = element.querySelector(".exercise-muscle-map");
+                if (map) renderExerciseMuscleMap(map, exercise.exercise, { compact: true });
+            }));
+        },
         onStart(source) {
             dragging = true;
             sourceElement = source.type === "set"
