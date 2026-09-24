@@ -1,3 +1,5 @@
+import { createPlanDragController } from "../plans/plan-drag.js";
+
 import {
     renderExerciseMuscleMap,
     destroyExerciseMuscleMapsIn
@@ -8,6 +10,7 @@ import {
 } from "../exercises/exercise-search.js";
 
 import {
+    dropWorkoutItem,
     getWorkoutExerciseSides,
     getWorkoutSeriesLog,
     hasWorkoutExerciseLogs,
@@ -729,7 +732,7 @@ deleteButton.addEventListener(
         if (!confirmed) return;
 
         onDeleteExercise(
-            set,
+            session.sets.find(item => item.exercises.includes(workoutExercise)),
             workoutExercise
         );
     }
@@ -992,6 +995,8 @@ add.addEventListener(
     async function changeProgression(
         direction
     ) {
+        set = session.sets.find(item => item.exercises.includes(workoutExercise));
+        if (!set) return;
         const next =
             getWorkoutProgressionNeighbor(
                 workoutExercise.exercise,
@@ -1070,6 +1075,7 @@ const replacementCard =
     card.addEventListener(
         "click",
         event => {
+            if (event.target.closest(".plan-drag-handle")) return;
             event.stopPropagation();
 
             onOpenExercise(
@@ -1087,7 +1093,11 @@ const replacementCard =
 // OVERVIEW
 // ============================================================
 
+let overviewDrag = null;
+
 function clearWorkoutOverview(container) {
+    overviewDrag?.destroy();
+    overviewDrag = null;
     destroyExerciseMuscleMapsIn(container);
     container.replaceChildren();
 }
@@ -1099,9 +1109,15 @@ function renderWorkoutOverview(
         onFinish = () => {},
         onOpenSet = () => {},
         onOpenExercise = () => {}
-    } = {}
+    } = {},
+    preserveCards = false
 ) {
-    clearWorkoutOverview(container);
+    overviewDrag?.destroy();
+    overviewDrag = null;
+    const cards = preserveCards ? new Map([...container.querySelectorAll(".workout-exercise-card")]
+        .map(card => [card.dataset.workoutExerciseId, card])) : new Map();
+    if (preserveCards) container.replaceChildren();
+    else clearWorkoutOverview(container);
 
     const overview =
         document.createElement("div");
@@ -1109,6 +1125,30 @@ function renderWorkoutOverview(
     overview.classList.add(
         "workout-overview"
     );
+
+    function refreshStates() {
+        session.sets.forEach(set => {
+            const block = [...container.querySelectorAll(".workout-set")].find(element => element.dataset.workoutSetId === set.id);
+            block?.classList.toggle("is-completed", isWorkoutSetCompleted(set));
+        });
+    }
+    const rerender = () => renderWorkoutOverview(container, session, { onFinish, onOpenSet, onOpenExercise }, true);
+    const drag = createPlanDragController(overview, source => {
+        rerender();
+        const card = [...container.querySelectorAll(".workout-exercise-card")].find(element => element.dataset.workoutExerciseId === source.exercise.id);
+        const handle = source.type === "set" ? card?.closest(".workout-set").querySelector(".workout-set-header .plan-drag-handle") : card?.querySelector(".plan-drag-handle");
+        handle?.focus({ preventScroll: true });
+    }, {
+        setClass: "workout-set", listClass: "workout-set-exercises", headerClass: "workout-set-header",
+        supersetClass: "workout-set-superset", singleClass: "workout-set-single",
+        nameSelector: ".workout-exercise-name", progressionSelector: ".workout-exercise-progression-name",
+        mapSelector: ".workout-exercise-muscle-map canvas",
+        getNumber: row => `${session.sets.flatMap(set => set.exercises).findIndex(exercise => exercise.id === row.dataset.workoutExerciseId) + 1} -`,
+        getGroup: exercise => session.sets.find(set => set.exercises.includes(exercise))?.group,
+        dropItem: (source, target) => dropWorkoutItem(session, source, target),
+        getEndElement: () => overview.querySelector(".workout-overview-finish-button")
+    });
+    overviewDrag = drag;
 
     session.sets.forEach(set => {
         const block =
@@ -1129,13 +1169,6 @@ if (set.isSuperset && set.colorIndex) {
             "is-completed",
             isWorkoutSetCompleted(set)
         );
-
-function refreshSetState() {
-    block.classList.toggle(
-        "is-completed",
-        isWorkoutSetCompleted(set)
-    );
-}
 
         block.dataset.workoutSetId =
             set.id;
@@ -1177,6 +1210,7 @@ function refreshSetState() {
         );
 
         header.appendChild(title);
+        drag.addHandle(header, set.exercises[0], "set");
 
         const exercises =
             document.createElement("div");
@@ -1218,25 +1252,23 @@ const deleteExercise = (
     );
 };        
 
-        set.exercises.forEach(
-            workoutExercise => {
-                exercises.appendChild(
-                    createWorkoutExerciseCard(
-                        session,
-                        set,
-                        workoutExercise,
-                        openExercise,
-                        refreshSetCount,
-                        refreshSetState,
-                        deleteExercise
-                    )
-                );
-            }
-        );
+        const rows = [];
+        set.exercises.forEach(workoutExercise => {
+            const card = cards.get(workoutExercise.id) ?? createWorkoutExerciseCard(
+                session, set, workoutExercise, openExercise, rerender, refreshStates, deleteExercise
+            );
+            card.querySelectorAll(".plan-drag-handle").forEach(handle => handle.remove());
+            drag.addHandle(card, workoutExercise, "exercise");
+            exercises.appendChild(card);
+            rows.push({ element: card, exercise: workoutExercise });
+        });
+        drag.addSet(block, set.exercises, rows);
 
         block.addEventListener(
             "click",
-            () => onOpenSet(set)
+            event => {
+                if (!event.target.closest(".plan-drag-handle")) onOpenSet(set);
+            }
         );
 
         block.append(

@@ -454,6 +454,9 @@ html[data-theme="dark"] .workout-confirm-exit-button {
 
 .workout-set-header {
     margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .workout-set-title {
@@ -472,6 +475,7 @@ html[data-theme="dark"] .workout-confirm-exit-button {
 }
 
 .workout-exercise-card {
+    position: relative;
     min-width: 0;
     padding: 12px;
 
@@ -1166,4 +1170,30 @@ html[data-theme="dark"] .workout-set-colored-3 {
 
 html[data-theme="dark"] .workout-set.is-completed {
     background: rgba(100, 190, 140, 0.13);
+}
+
+.workout-exercise-card > .plan-drag-handle {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+}
+
+.workout-exercise-card > .workout-exercise-header {
+    padding-left: 30px;
+}
+
+.workout-overview.plan-sortable-active .workout-exercise-card {
+    display: flex;
+    align-items: stretch;
+    gap: 4px;
+    padding: 4px;
+}
+
+.workout-overview.plan-sortable-active .workout-exercise-card > :not(.plan-drag-handle):not(.plan-drag-summary) {
+    display: none;
+}
+
+.workout-overview.plan-sortable-active .workout-exercise-card > .plan-drag-handle {
+    position: static;
+    flex: 0 0 28px;
 }

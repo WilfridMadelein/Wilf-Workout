@@ -1,7 +1,15 @@
 import { dropPlanItem } from "./plan-combinations.js";
 import { createSortable } from "../ui/sortable.js";
 
-export function createPlanDragController(workout, onDrop) {
+export function createPlanDragController(workout, onDrop, {
+    setClass = "plan-set-block", listClass = "plan-set-exercises", headerClass = "plan-set-header",
+    supersetClass = "plan-set-superset", singleClass = "plan-set-single",
+    nameSelector = ".plan-exercise-name", progressionSelector = ".plan-progression-name",
+    mapSelector = ".plan-exercise-muscle-map canvas",
+    getNumber = row => row.querySelector(".plan-exercise-number").textContent,
+    getGroup = exercise => exercise.combination.group,
+    dropItem = dropPlanItem, getEndElement = () => null
+} = {}) {
     const handles = new Map();
     const sets = [];
     let sourceElement = null;
@@ -18,11 +26,11 @@ export function createPlanDragController(workout, onDrop) {
 
     function restoreOrder() {
         sets.forEach(set => {
-            set.rows.forEach(row => set.element.querySelector(".plan-set-exercises").appendChild(row.element));
+            set.rows.forEach(row => set.element.querySelector(`.${listClass}`).appendChild(row.element));
             set.element.hidden = false;
-            set.element.classList.toggle("plan-set-superset", set.rows.length > 1);
-            set.element.classList.toggle("plan-set-single", set.rows.length === 1);
-            workout.appendChild(set.element);
+            set.element.classList.toggle(supersetClass, set.isSuperset);
+            set.element.classList.toggle(singleClass, set.isSingle);
+            workout.insertBefore(set.element, getEndElement());
         });
         temporarySet?.remove();
         temporarySet = null;
@@ -33,14 +41,14 @@ export function createPlanDragController(workout, onDrop) {
         summary.className = "plan-drag-summary";
         const identity = document.createElement("span");
         identity.className = "plan-drag-identity";
-        identity.textContent = `${row.querySelector(".plan-exercise-number").textContent} ${row.querySelector(".plan-exercise-name").textContent}`;
+        identity.textContent = `${getNumber(row)} ${row.querySelector(nameSelector).textContent}`;
         const progression = document.createElement("span");
         progression.className = "plan-drag-progression";
-        progression.textContent = row.querySelector(".plan-progression-name").textContent;
+        progression.textContent = row.querySelector(progressionSelector).textContent;
         const thumbnail = document.createElement("div");
         thumbnail.className = "plan-drag-thumbnail";
         thumbnail.setAttribute("aria-hidden", "true");
-        row.querySelectorAll(".plan-exercise-muscle-map canvas").forEach(original => {
+        row.querySelectorAll(mapSelector).forEach(original => {
             if (!original.width || !original.height) return;
             const canvas = document.createElement("canvas");
             canvas.height = 96;
@@ -58,7 +66,7 @@ export function createPlanDragController(workout, onDrop) {
         [...workout.children].forEach(element => {
             const set = sets.find(item => item.element === element);
             if (!set || element.hidden || (source.type === "set" && sourceElement === element)) return;
-            const group = set.exercises[0].combination.group;
+            const group = getGroup(set.exercises[0]);
             const members = set.rows.filter(row => row.exercise !== source.exercise);
             if (source.type === "exercise" && !members.length) return;
             const reference = members[0]?.exercise ?? set.exercises[0];
@@ -80,19 +88,19 @@ export function createPlanDragController(workout, onDrop) {
         getSource: handle => {
             const source = handles.get(handle);
             if (source && !dragging) sourceElement = source.type === "set"
-                ? getRow(source.exercise).closest(".plan-set-block") : getRow(source.exercise);
+                ? getRow(source.exercise).closest(`.${setClass}`) : getRow(source.exercise);
             return source;
         },
         getTargets: targets,
-        getElements: () => sourceElement?.classList.contains("plan-set-block")
+        getElements: () => sourceElement?.classList.contains(setClass)
             ? sets.map(set => set.element) : sets.flatMap(set => set.rows.map(row => row.element)),
         getDropElement: source => source.type === "set"
-            ? getRow(source.exercise).closest(".plan-set-block") : getRow(source.exercise),
+            ? getRow(source.exercise).closest(`.${setClass}`) : getRow(source.exercise),
         announce: text => { status.textContent = text; },
         onStart(source) {
             dragging = true;
             sourceElement = source.type === "set"
-                ? getRow(source.exercise).closest(".plan-set-block") : getRow(source.exercise);
+                ? getRow(source.exercise).closest(`.${setClass}`) : getRow(source.exercise);
             workout.querySelectorAll(".combination-menu").forEach(menu => menu.remove());
             sets.forEach(set => set.rows.forEach(row => row.element.appendChild(compactRow(row.element))));
             workout.classList.add("plan-sortable-active");
@@ -107,7 +115,7 @@ export function createPlanDragController(workout, onDrop) {
             if (source.type === "set") {
                 const title = document.createElement("strong");
                 title.className = "plan-sortable-preview-title";
-                title.textContent = `Set ${source.exercise.combination.group}`;
+                title.textContent = `Set ${getGroup(source.exercise)}`;
                 preview.appendChild(title);
             }
             rows.forEach(row => preview.appendChild(compactRow(row.element)));
@@ -121,21 +129,21 @@ export function createPlanDragController(workout, onDrop) {
                 target.element.insertAdjacentElement(target.after ? "afterend" : "beforebegin", sourceElement);
             } else {
                 temporarySet = document.createElement("section");
-                temporarySet.className = "plan-set-block plan-set-single";
+                temporarySet.className = `${setClass} ${singleClass}`;
                 const title = document.createElement("div");
-                title.className = "plan-set-header";
+                title.className = headerClass;
                 title.textContent = "Set individuel";
                 const exercises = document.createElement("div");
-                exercises.className = "plan-set-exercises";
+                exercises.className = listClass;
                 exercises.appendChild(sourceElement);
                 temporarySet.append(title, exercises);
                 target.element.insertAdjacentElement(target.after ? "afterend" : "beforebegin", temporarySet);
             }
             sets.forEach(set => {
-                const count = set.element.querySelector(".plan-set-exercises").children.length;
+                const count = set.element.querySelector(`.${listClass}`).children.length;
                 set.element.hidden = count === 0;
-                set.element.classList.toggle("plan-set-superset", count > 1);
-                set.element.classList.toggle("plan-set-single", count === 1);
+                set.element.classList.toggle(supersetClass, count > 1);
+                set.element.classList.toggle(singleClass, count === 1);
             });
         },
         onFinish(source, target, commit) {
@@ -144,7 +152,7 @@ export function createPlanDragController(workout, onDrop) {
             sourceElement?.classList.remove("plan-sortable-placeholder");
             workout.querySelectorAll(".plan-drag-summary").forEach(summary => summary.remove());
             dragging = false;
-            if (commit && target && dropPlanItem(source, target)) onDrop(source);
+            if (commit && target && dropItem(source, target)) onDrop(source);
         }
     });
 
@@ -154,7 +162,7 @@ export function createPlanDragController(workout, onDrop) {
             handle.type = "button";
             handle.className = "plan-drag-handle";
             handle.textContent = "⠿";
-            const label = type === "set" ? `Déplacer le Set ${exercise.combination.group}` : `Déplacer ${exercise.exercise.nom}`;
+            const label = type === "set" ? `Déplacer le Set ${getGroup(exercise)}` : `Déplacer ${exercise.exercise.nom}`;
             handle.setAttribute("aria-label", label);
             handle.setAttribute("aria-pressed", "false");
             handle.setAttribute("aria-description", "Entrée pour saisir, flèches pour choisir une destination, Entrée pour déposer, Échap pour annuler.");
@@ -163,7 +171,9 @@ export function createPlanDragController(workout, onDrop) {
             element.prepend(handle);
             return handle;
         },
-        addSet(element, exercises, rows) { sets.push({ element, exercises, rows }); },
+        addSet(element, exercises, rows) {
+            sets.push({ element, exercises, rows, isSuperset: element.classList.contains(supersetClass), isSingle: element.classList.contains(singleClass) });
+        },
         destroy() {
             sortable.destroy();
             if (dragging) restoreOrder();

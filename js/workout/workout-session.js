@@ -104,6 +104,31 @@ function removeWorkoutExercise(session, set, workoutExercise) {
     return true;
 }
 
+// Déplacer les objets existants conserve leurs séries, brouillons et logs.
+function dropWorkoutItem(session, source, target) {
+    const sourceSet = session.sets.find(set => set.exercises.includes(source.exercise));
+    const targetSet = session.sets.find(set => set.exercises.includes(target.exercise));
+    if (!sourceSet || !targetSet) return false;
+    if (source.type === "set") {
+        if (target.inside || sourceSet === targetSet) return false;
+        session.sets.splice(session.sets.indexOf(sourceSet), 1);
+        session.sets.splice(session.sets.indexOf(targetSet) + (target.after ? 1 : 0), 0, sourceSet);
+    } else {
+        if (source.exercise === target.exercise) return false;
+        sourceSet.exercises.splice(sourceSet.exercises.indexOf(source.exercise), 1);
+        if (target.inside) {
+            targetSet.exercises.splice(targetSet.exercises.indexOf(target.exercise) + (target.after ? 1 : 0), 0, source.exercise);
+        } else {
+            const set = { id: createWorkoutId("set"), exercises: [source.exercise] };
+            session.sets.splice(session.sets.indexOf(targetSet) + (target.after ? 1 : 0), 0, set);
+        }
+        if (!sourceSet.exercises.length) session.sets.splice(session.sets.indexOf(sourceSet), 1);
+    }
+    session.sets.forEach((set, index) => { set.group = index + 1; });
+    refreshWorkoutSetMetadata(session);
+    return true;
+}
+
 // ============================================================
 // EXERCICES
 // ============================================================
@@ -609,6 +634,7 @@ function getRestAfterWorkoutTarget(target, nextTarget) {
 }
 
 export {
+    dropWorkoutItem,
     createWorkoutSession,
 
     getWorkoutExerciseSides,

@@ -401,6 +401,7 @@ function showExercise(target) {
         return;
     }
 
+    clearWorkoutOverview(content);
     currentTarget = target;
     session.screen = "exercise";
     hideOverviewScrollProgress();
