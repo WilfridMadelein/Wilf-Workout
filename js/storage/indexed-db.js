@@ -5,6 +5,7 @@
 const DB_NAME = "wilf-workout";
 const PLAN_STORE = "plans";
 const SETTINGS_STORE = "settings";
+const WORKOUT_HISTORY_STORE = "workoutHistory";
 
 let databasePromise = null;
 
@@ -39,6 +40,19 @@ function openDatabaseRequest(version = null) {
             if (!database.objectStoreNames.contains(SETTINGS_STORE)) {
                 database.createObjectStore(SETTINGS_STORE, { keyPath: "id" });
             }
+
+if (!database.objectStoreNames.contains(WORKOUT_HISTORY_STORE)) {
+    const store = database.createObjectStore(
+        WORKOUT_HISTORY_STORE,
+        { keyPath: "id" }
+    );
+
+    store.createIndex(
+        "startedAt",
+        "startedAt",
+        { unique: false }
+    );
+}            
         };
 
         request.onsuccess = () => resolve(request.result);
@@ -60,7 +74,8 @@ function openDatabase() {
 
         const missingStore =
             !database.objectStoreNames.contains(PLAN_STORE) ||
-            !database.objectStoreNames.contains(SETTINGS_STORE);
+            !database.objectStoreNames.contains(SETTINGS_STORE) ||
+            !database.objectStoreNames.contains(WORKOUT_HISTORY_STORE);
 
         if (missingStore) {
             const nextVersion = database.version + 1;
@@ -128,6 +143,68 @@ async function putStoredSetting(setting) {
     await completed;
 }
 
+async function getStoredWorkoutHistory() {
+    const database = await openDatabase();
+    const transaction = database.transaction(
+        WORKOUT_HISTORY_STORE,
+        "readonly"
+    );
+
+    return requestToPromise(
+        transaction
+            .objectStore(WORKOUT_HISTORY_STORE)
+            .getAll()
+    );
+}
+
+async function getStoredWorkoutHistoryEntry(id) {
+    const database = await openDatabase();
+    const transaction = database.transaction(
+        WORKOUT_HISTORY_STORE,
+        "readonly"
+    );
+
+    return requestToPromise(
+        transaction
+            .objectStore(WORKOUT_HISTORY_STORE)
+            .get(id)
+    );
+}
+
+async function putStoredWorkoutHistory(record) {
+    const database = await openDatabase();
+    const transaction = database.transaction(
+        WORKOUT_HISTORY_STORE,
+        "readwrite"
+    );
+
+    const completed =
+        transactionToPromise(transaction);
+
+    transaction
+        .objectStore(WORKOUT_HISTORY_STORE)
+        .put(record);
+
+    await completed;
+}
+
+async function deleteStoredWorkoutHistory(id) {
+    const database = await openDatabase();
+    const transaction = database.transaction(
+        WORKOUT_HISTORY_STORE,
+        "readwrite"
+    );
+
+    const completed =
+        transactionToPromise(transaction);
+
+    transaction
+        .objectStore(WORKOUT_HISTORY_STORE)
+        .delete(id);
+
+    await completed;
+}
+
 async function requestPersistentStorage() {
     if (!navigator.storage?.persist) return false;
 
@@ -148,4 +225,9 @@ export {
     requestPersistentStorage,
     getStoredSetting,
     putStoredSetting,
+
+    getStoredWorkoutHistory,
+    getStoredWorkoutHistoryEntry,
+    putStoredWorkoutHistory,
+    deleteStoredWorkoutHistory,
 };

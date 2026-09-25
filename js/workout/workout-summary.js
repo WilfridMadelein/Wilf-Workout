@@ -23,9 +23,12 @@ let getAppSettings = () => ({ bodyModel: "male" });
 let saveAppSettingsNow = async () => {};
 let onClose = () => {};
 let onEditLog = () => {};
+let onSessionUpdated = async () => {};
 
 let currentSession = null;
 let isSetup = false;
+
+let currentMode = "completion";
 
 function configureWorkoutSummary(dependencies) {
     ({
@@ -33,7 +36,8 @@ function configureWorkoutSummary(dependencies) {
         getAppSettings,
         saveAppSettingsNow,
         onClose = () => {},
-        onEditLog = () => {}
+        onEditLog = () => {},
+        onSessionUpdated = async () => {}
     } = dependencies);
 }
 
@@ -554,20 +558,21 @@ function createLogItem(
             onEditLog(
                 session,
                 entry,
-                async () => {
-                    page.hidden = false;
+async () => {
+    page.hidden = false;
 
-                    await renderWorkoutSummary(
-                        session,
-                        {
-                            scrollToSummary:
-                                false,
+    await onSessionUpdated(
+        session
+    );
 
-                            restoreState:
-                                returnState
-                        }
-                    );
-                }
+    await renderWorkoutSummary(
+        session,
+        {
+            scrollToSummary: false,
+            restoreState: returnState
+        }
+    );
+}
             );
         }
     );
@@ -796,6 +801,7 @@ function restoreWorkoutSummaryState(state) {
 async function renderWorkoutSummary(
     session,
     {
+        mode = "completion",
         scrollToSummary = true,
         restoreState = null
     } = {}
@@ -803,6 +809,7 @@ async function renderWorkoutSummary(
     if (!session) return;
 
     currentSession = session;
+    currentMode = mode;
     session.screen = "summary";
 
     page.hidden = false;
@@ -832,6 +839,34 @@ const completedSetCount =
     session.sets.filter(
         isWorkoutSetCompleted
     ).length;
+
+const hero =
+    page.querySelector(
+        ".workout-summary-hero"
+    );
+
+const thanksButton =
+    page.querySelector(
+        "#workout-summary-thanks-button"
+    );
+
+const showCelebration =
+    mode === "completion";
+
+hero.hidden =
+    !showCelebration;
+
+thanksButton.hidden =
+    !showCelebration;
+
+if (showCelebration) {
+    page.querySelector(
+        "#workout-summary-message"
+    ).textContent =
+        await getCompletionMessage(
+            session
+        );
+}    
 
     page.querySelector(
         "#workout-summary-message"
@@ -874,12 +909,14 @@ const completedSetCount =
         );
     });
 
-launchOrangeConfetti(
-    page.querySelector(
-        "#workout-summary-confetti"
-    ),
-    session
-);
+if (showCelebration) {
+    launchOrangeConfetti(
+        page.querySelector(
+            "#workout-summary-confetti"
+        ),
+        session
+    );
+}
 
 if (restoreState) {
     restoreWorkoutSummaryState(
@@ -917,7 +954,12 @@ function closeWorkoutSummary() {
     page.hidden = true;
     currentSession = null;
 
-    onClose();
+onClose(
+    currentSession,
+    {
+        mode: currentMode
+    }
+);
 }
 
 // ============================================================

@@ -3,6 +3,8 @@ let pageExercises;
 let pagePlans;
 let pageSettings;
 let pageWorkoutSummary;
+let pageHistory;
+let tabHistory;
 
 let exerciseBrowser;
 let planExerciseBrowserContainer;
@@ -41,6 +43,8 @@ export function configureAppController(dependencies) {
         pagePlans,
         pageSettings,
         pageWorkoutSummary,
+        pageHistory,
+        tabHistory,
 
         exerciseBrowser,
         planExerciseBrowserContainer,
@@ -147,85 +151,85 @@ export function loadSearchState(state) {
 }
 
 export function setupAppController() {
-    searchInput.addEventListener(
-        "input",
-        displayExercises
-    );
+    searchInput.addEventListener("input", displayExercises);
 
-tabExercises.addEventListener("click", () => {
-    if (
-        pagePlans.style.display === "block" &&
-        planEditor.style.display === "block"
-    ) {
-        saveCurrentPlanFilters();
-    }
+    tabExercises.addEventListener("click", () => {
+        if (pagePlans.style.display === "block" && planEditor.style.display === "block") saveCurrentPlanFilters();
 
-    pageExercises.style.display = "block";
-    pagePlans.style.display = "none";
-    pageSettings.style.display = "none";
-    pageWorkoutSummary.hidden = true;
+        pageExercises.style.display = "block";
+        pagePlans.style.display = "none";
+        pageHistory.style.display = "none";
+        pageSettings.style.display = "none";
+        pageWorkoutSummary.hidden = true;
 
-    pageExercises
-        .querySelector("#exercise-browser-container")
-        .appendChild(exerciseBrowser);
+        pageExercises.querySelector("#exercise-browser-container").appendChild(exerciseBrowser);
+        exerciseBrowser.style.display = "block";
 
-    exerciseBrowser.style.display = "block";
+        loadSearchState(searchPageState);
 
-    loadSearchState(searchPageState);
+        tabExercises.classList.add("active");
+        tabPlans.classList.remove("active");
+        tabHistory.classList.remove("active");
+        tabSettings.classList.remove("active");
 
-    tabExercises.classList.add("active");
-    tabPlans.classList.remove("active");
-    tabSettings.classList.remove("active");
+        setCurrentDetailContext("search");
+        removeAddButton();
+        displayExercises();
+    });
 
-    setCurrentDetailContext("search");
+    tabPlans.addEventListener("click", () => {
+        if (pageExercises.style.display === "block") saveSearchState(searchPageState);
 
-    removeAddButton();
-    displayExercises();
-});
+        pageExercises.style.display = "none";
+        pagePlans.style.display = "block";
+        pageHistory.style.display = "none";
+        pageSettings.style.display = "none";
+        pageWorkoutSummary.hidden = true;
 
-tabPlans.addEventListener("click", () => {
-    if (pageExercises.style.display === "block") {
-        saveSearchState(searchPageState);
-    }
-    pageSettings.style.display = "none";
-    pageWorkoutSummary.hidden = true;
-    tabSettings.classList.remove("active");
+        planEditor.style.display = "none";
+        planHome.style.display = "block";
+        renderPlansList();
 
-    pageExercises.style.display = "none";
-    pagePlans.style.display = "block";
+        tabExercises.classList.remove("active");
+        tabPlans.classList.add("active");
+        tabHistory.classList.remove("active");
+        tabSettings.classList.remove("active");
 
-    planEditor.style.display = "none";
-    planHome.style.display = "block";
+        setCurrentDetailContext("search");
+    });
 
-    renderPlansList();
+    tabHistory.addEventListener("click", () => {
+        if (pagePlans.style.display === "block" && planEditor.style.display === "block") saveCurrentPlanFilters();
+        if (pageExercises.style.display === "block") saveSearchState(searchPageState);
 
-    tabExercises.classList.remove("active");
-    tabPlans.classList.add("active");
+        pageExercises.style.display = "none";
+        pagePlans.style.display = "none";
+        pageHistory.style.display = "block";
+        pageSettings.style.display = "none";
 
-    setCurrentDetailContext("search");
-});
+        tabExercises.classList.remove("active");
+        tabPlans.classList.remove("active");
+        tabHistory.classList.add("active");
+        tabSettings.classList.remove("active");
 
-tabSettings.addEventListener("click", () => {
-    if (
-        pagePlans.style.display === "block" &&
-        planEditor.style.display === "block"
-    ) {
-        saveCurrentPlanFilters();
-    }
+        setCurrentDetailContext("search");
+    });
 
-    if (pageExercises.style.display === "block") {
-        saveSearchState(searchPageState);
-    }
+    tabSettings.addEventListener("click", () => {
+        if (pagePlans.style.display === "block" && planEditor.style.display === "block") saveCurrentPlanFilters();
+        if (pageExercises.style.display === "block") saveSearchState(searchPageState);
 
-    pageExercises.style.display = "none";
-    pagePlans.style.display = "none";
-    pageSettings.style.display = "block";
-    pageWorkoutSummary.hidden = true;
+        pageExercises.style.display = "none";
+        pagePlans.style.display = "none";
+        pageHistory.style.display = "none";
+        pageSettings.style.display = "block";
+        pageWorkoutSummary.hidden = true;
 
-    tabExercises.classList.remove("active");
-    tabPlans.classList.remove("active");
-    tabSettings.classList.add("active");
+        tabExercises.classList.remove("active");
+        tabPlans.classList.remove("active");
+        tabHistory.classList.remove("active");
+        tabSettings.classList.add("active");
 
-    setCurrentDetailContext("search");
-});
+        setCurrentDetailContext("search");
+    });
 }

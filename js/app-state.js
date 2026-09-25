@@ -30,6 +30,82 @@ export const pagePlans = document.getElementById("page-plans");
 export const tabSettings = document.getElementById("tab-settings");
 export const pageSettings = document.getElementById("page-settings");
 export const pageWorkoutSummary = document.getElementById("page-workout-summary");
+export const tabHistory = document.getElementById("tab-history");
+export const pageHistory = document.getElementById("page-history");
+
+// ------------------------------------------------------------
+// DOM — Historique
+// ------------------------------------------------------------
+
+export const historyWorkoutList =
+    document.getElementById(
+        "history-workout-list"
+    );
+
+export const historyWorkoutsContent =
+    document.getElementById(
+        "history-workouts-content"
+    );
+
+export const historyPagination =
+    document.getElementById(
+        "history-pagination"
+    );
+
+export const historyPreviousPage =
+    document.getElementById(
+        "history-previous-page"
+    );
+
+export const historyNextPage =
+    document.getElementById(
+        "history-next-page"
+    );
+
+export const historyPageLabel =
+    document.getElementById(
+        "history-page-label"
+    );
+
+export const historyCalendarTitle =
+    document.getElementById(
+        "history-calendar-title"
+    );
+
+export const historyCalendarDays =
+    document.getElementById(
+        "history-calendar-days"
+    );
+
+export const historyCalendarPrevious =
+    document.getElementById(
+        "history-calendar-previous"
+    );
+
+export const historyCalendarNext =
+    document.getElementById(
+        "history-calendar-next"
+    );
+
+export const historySelectedDayPanel =
+    document.getElementById(
+        "history-selected-day-panel"
+    );
+
+export const historySelectedDayTitle =
+    document.getElementById(
+        "history-selected-day-title"
+    );
+
+export const historySelectedDayList =
+    document.getElementById(
+        "history-selected-day-list"
+    );
+
+export const historyWorkoutSummaryHost =
+    document.getElementById(
+        "history-workout-summary-host"
+    );
 
 // ------------------------------------------------------------
 // DOM — Paramètres globaux

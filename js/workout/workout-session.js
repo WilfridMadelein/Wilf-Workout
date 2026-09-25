@@ -319,6 +319,12 @@ function getWorkoutTargetValues(target) {
 }
 
 function saveWorkoutTargetLog(target, values) {
+    const previousLog =
+        getWorkoutSeriesLog(
+            target.series,
+            target.sideKey
+        );
+
     target.series.logs[target.sideKey] = {
         value: values.value,
         valueUnit: values.valueUnit,
@@ -327,7 +333,9 @@ function saveWorkoutTargetLog(target, values) {
         tempo: cloneTempo(values.tempo),
         rest: target.series.rest,
         notes: values.notes ?? "",
-        completedAt: Date.now()
+        completedAt:
+            previousLog?.completedAt ??
+            Date.now()
     };
 }
 

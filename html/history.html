@@ -1,0 +1,123 @@
+<!-- =========================================================
+     HISTORIQUE
+========================================================= -->
+
+<div class="history-page">
+
+    <h2>Historique</h2>
+
+    <!-- CALENDRIER + JOUR SÉLECTIONNÉ -->
+    <section class="history-calendar-section">
+
+        <div
+            id="history-selected-day-panel"
+            class="history-selected-day-panel"
+        >
+            <h3 id="history-selected-day-title">
+                Sélectionnez une date
+            </h3>
+
+            <div
+                id="history-selected-day-list"
+                class="history-selected-day-list"
+            >
+                <p class="history-empty">
+                    Cliquez sur une date du calendrier pour voir les entraînements exécutés.
+                </p>
+            </div>
+        </div>
+
+        <div class="history-calendar">
+
+            <header class="history-calendar-header">
+
+                <button
+                    id="history-calendar-previous"
+                    class="history-calendar-navigation"
+                    type="button"
+                    aria-label="Mois précédent"
+                >
+                    ‹
+                </button>
+
+                <h3 id="history-calendar-title"></h3>
+
+                <button
+                    id="history-calendar-next"
+                    class="history-calendar-navigation"
+                    type="button"
+                    aria-label="Mois suivant"
+                >
+                    ›
+                </button>
+
+            </header>
+
+            <div class="history-calendar-weekdays">
+                <span>Lun</span>
+                <span>Mar</span>
+                <span>Mer</span>
+                <span>Jeu</span>
+                <span>Ven</span>
+                <span>Sam</span>
+                <span>Dim</span>
+            </div>
+
+            <div
+                id="history-calendar-days"
+                class="history-calendar-days"
+            ></div>
+
+        </div>
+
+    </section>
+
+    <!-- ENTRAÎNEMENTS EXÉCUTÉS -->
+    <section class="history-workouts-section">
+
+        <h2>Entraînements exécutés</h2>
+
+        <div id="history-workouts-content">
+
+            <div
+                id="history-workout-list"
+                class="history-workout-list"
+            ></div>
+
+            <nav
+                id="history-pagination"
+                class="history-pagination"
+                aria-label="Pages de l'historique"
+            >
+                <button
+                    id="history-previous-page"
+                    type="button"
+                >
+                    Précédent
+                </button>
+
+                <span id="history-page-label"></span>
+
+                <button
+                    id="history-next-page"
+                    type="button"
+                >
+                    Suivant
+                </button>
+            </nav>
+
+        </div>
+
+        <!--
+            Le même Workout Summary sera déplacé ici
+            lorsqu'on consulte un ancien entraînement.
+        -->
+        <div
+            id="history-workout-summary-host"
+            class="history-workout-summary-host"
+            hidden
+        ></div>
+
+    </section>
+
+</div>

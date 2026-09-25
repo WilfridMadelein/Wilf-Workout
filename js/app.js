@@ -3,6 +3,11 @@
 // ============================================================
 
 import {
+    loadWorkoutHistory,
+    saveWorkoutHistoryNow
+} from "./storage/workout-history-storage.js";
+
+import {
     createDefaultAppSettings,
     loadAppSettings,
     saveAppSettingsNow,
@@ -157,6 +162,27 @@ settingsSplitOrderSwitch,
 settingsSplitOrderLabel,
 settingsSplitApplyNew,
 settingsSplitApplyAll,
+
+tabHistory,
+pageHistory,
+
+historyWorkoutList,
+historyWorkoutsContent,
+historyPagination,
+historyPreviousPage,
+historyNextPage,
+historyPageLabel,
+
+historyCalendarTitle,
+historyCalendarDays,
+historyCalendarPrevious,
+historyCalendarNext,
+
+historySelectedDayPanel,
+historySelectedDayTitle,
+historySelectedDayList,
+
+historyWorkoutSummaryHost,
 } from "./app-state.js";
 
 import {
@@ -165,6 +191,16 @@ import {
     loadSearchState,
     setupAppController
 } from "./app-controller.js";
+
+import {
+    configureHistoryController,
+    setupHistoryController,
+    setWorkoutHistory,
+    refreshWorkoutHistory,
+    showHistoryList,
+    showHistorySummary,
+    getHistorySummaryHost
+} from "./history/history-controller.js";
 
 import {
     configureSettingsController,
@@ -345,32 +381,137 @@ import {
 
 let appSettings = createDefaultAppSettings();
 
-async function openWorkoutSummary(session) {
-    pageExercises.style.display = "none";
-    pagePlans.style.display = "none";
-    pageSettings.style.display = "none";
+let workoutHistory = [];
+let historySummaryReturnScrollY = 0;
 
-    pageWorkoutSummary.hidden = false;
+const workoutSummaryStandaloneParent = pageWorkoutSummary.parentElement;
 
-    tabExercises.classList.remove("active");
-    tabSettings.classList.remove("active");
-    tabPlans.classList.add("active");
+function moveWorkoutSummaryToStandalone() {
+    if (
+        pageWorkoutSummary.parentElement ===
+        workoutSummaryStandaloneParent
+    ) {
+        return;
+    }
 
-    setCurrentDetailContext("search");
-
-    await renderWorkoutSummary(session);
+    workoutSummaryStandaloneParent.appendChild(
+        pageWorkoutSummary
+    );
 }
 
-function closeWorkoutSummaryToPlans() {
+function moveWorkoutSummaryToHistory() {
+    const host =
+        getHistorySummaryHost();
+
+    if (
+        pageWorkoutSummary.parentElement ===
+        host
+    ) {
+        return;
+    }
+
+    host.appendChild(
+        pageWorkoutSummary
+    );
+}
+
+async function openWorkoutSummary(
+    session
+) {
+    try {
+        await saveWorkoutHistoryNow(
+            session,
+            {
+                markCompleted: true
+            }
+        );
+
+        workoutHistory =
+            await loadWorkoutHistory();
+
+        refreshWorkoutHistory(
+            workoutHistory
+        );
+    } catch (error) {
+        console.error(
+            "Impossible de sauvegarder l'entraînement dans l'historique.",
+            error
+        );
+
+        alert(
+            "L'entraînement est terminé, mais son historique n'a pas pu être sauvegardé."
+        );
+    }
+
+    moveWorkoutSummaryToStandalone();
+
+    pageExercises.style.display =
+        "none";
+
+    pagePlans.style.display =
+        "none";
+
+    pageHistory.style.display =
+        "none";
+
+    pageSettings.style.display =
+        "none";
+
+    pageWorkoutSummary.hidden =
+        false;
+
+    tabExercises.classList.remove(
+        "active"
+    );
+
+    tabHistory.classList.remove(
+        "active"
+    );
+
+    tabSettings.classList.remove(
+        "active"
+    );
+
+    tabPlans.classList.add(
+        "active"
+    );
+
+    setCurrentDetailContext(
+        "search"
+    );
+
+    await renderWorkoutSummary(
+        session,
+        {
+            mode: "completion"
+        }
+    );
+}
+
+function closeWorkoutSummary(session, { mode } = {}) {
     pageWorkoutSummary.hidden = true;
 
-    tabPlans.click();
+    if (mode === "history") {
+        showHistoryList();
+        requestAnimationFrame(() => window.scrollTo({ top: historySummaryReturnScrollY, behavior: "auto" }));
+        return;
+    }
 
-    requestAnimationFrame(() => {
-        window.scrollTo({
-            top: 0,
-            behavior: "auto"
-        });
+    moveWorkoutSummaryToStandalone();
+    tabPlans.click();
+    requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "auto" }));
+}
+
+async function openWorkoutSummaryFromHistory(session) {
+    historySummaryReturnScrollY = window.scrollY;
+
+    moveWorkoutSummaryToHistory();
+    showHistorySummary();
+    pageWorkoutSummary.hidden = false;
+
+    await renderWorkoutSummary(session, {
+        mode: "history",
+        scrollToSummary: false
     });
 }
 
@@ -401,6 +542,25 @@ async function applySplitOrderToAllPlans(order) {
 // ============================================================
 // CONFIGURATION DES MODULES
 // ============================================================
+
+configureHistoryController({
+    page: pageHistory,
+    workoutList: historyWorkoutList,
+    workoutsContent: historyWorkoutsContent,
+    pagination: historyPagination,
+    previousPageButton: historyPreviousPage,
+    nextPageButton: historyNextPage,
+    pageLabel: historyPageLabel,
+    calendarTitle: historyCalendarTitle,
+    calendarDays: historyCalendarDays,
+    calendarPreviousButton: historyCalendarPrevious,
+    calendarNextButton: historyCalendarNext,
+    selectedDayPanel: historySelectedDayPanel,
+    selectedDayTitle: historySelectedDayTitle,
+    selectedDayList: historySelectedDayList,
+    summaryHost: historyWorkoutSummaryHost,
+    onOpenWorkout: openWorkoutSummaryFromHistory
+});
 
 configureExerciseMuscleMap({
     getAppSettings: () => appSettings
@@ -678,17 +838,21 @@ configureWorkoutOverview({
 
 configureWorkoutSummary({
     page: pageWorkoutSummary,
-
-    getAppSettings:
-        () => appSettings,
-
+    getAppSettings: () => appSettings,
     saveAppSettingsNow,
+    onClose: closeWorkoutSummary,
+    onEditLog: editWorkoutLogFromSummary,
 
-    onClose:
-        closeWorkoutSummaryToPlans,
-
-    onEditLog:
-        editWorkoutLogFromSummary
+    onSessionUpdated: async session => {
+        try {
+            await saveWorkoutHistoryNow(session);
+            workoutHistory = await loadWorkoutHistory();
+            refreshWorkoutHistory(workoutHistory);
+        } catch (error) {
+            console.error("Impossible de mettre à jour l'historique.", error);
+            alert("La modification a été appliquée, mais elle n'a pas pu être sauvegardée dans l'historique.");
+        }
+    }
 });
 
 configureWorkoutExecution({
@@ -805,6 +969,7 @@ configureAppController({
     searchInput,
     pageExercises,
     pagePlans,
+    pageHistory,
     pageSettings,
     pageWorkoutSummary,
     exerciseBrowser,
@@ -812,6 +977,7 @@ configureAppController({
 
     tabExercises,
     tabPlans,
+    tabHistory,
     tabSettings,
 
     planHome,
@@ -832,7 +998,6 @@ configureAppController({
     selectedCategories,
 
     searchPageState,
-
     setCurrentDetailContext
 });
 
@@ -978,6 +1143,15 @@ async function initializeApp() {
         console.error("Impossible de charger les plans sauvegardés :", error);
     }
 
+    try {
+    workoutHistory = await loadWorkoutHistory();
+    setWorkoutHistory(workoutHistory);
+    } catch (error) {
+    console.error("Impossible de charger l'historique :", error);
+    workoutHistory = [];
+    setWorkoutHistory([]);
+    }
+
     equipmentOptions.forEach(equipment => {
         selectedEquipment.add(equipment);
         selectedPlanEquipment.add(equipment);
@@ -1013,6 +1187,7 @@ async function initializeApp() {
     setupPlanDefaultInputs();
     setupWorkoutSummary();
     setupWorkoutExecution();
+    setupHistoryController();
     setupPlanController();
     setupPlanPdf();
     setupBackupControls();
