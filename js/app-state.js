@@ -37,75 +37,26 @@ export const pageHistory = document.getElementById("page-history");
 // DOM — Historique
 // ------------------------------------------------------------
 
-export const historyWorkoutList =
-    document.getElementById(
-        "history-workout-list"
-    );
+export const historyWorkoutList = document.getElementById("history-workout-list");
+export const historyWorkoutsContent = document.getElementById("history-workouts-content");
+export const historyPagination = document.getElementById("history-pagination");
+export const historyPreviousPage = document.getElementById("history-previous-page");
+export const historyNextPage = document.getElementById("history-next-page");
+export const historyPageLabel = document.getElementById("history-page-label");
 
-export const historyWorkoutsContent =
-    document.getElementById(
-        "history-workouts-content"
-    );
+export const historyCalendarTitle = document.getElementById("history-calendar-title");
+export const historyCalendarDays = document.getElementById("history-calendar-days");
+export const historyCalendarPrevious = document.getElementById("history-calendar-previous");
+export const historyCalendarNext = document.getElementById("history-calendar-next");
 
-export const historyPagination =
-    document.getElementById(
-        "history-pagination"
-    );
+export const historySummaryMeta = document.getElementById("history-summary-meta");
+export const historySummaryWorkoutName = document.getElementById("history-summary-workout-name");
+export const historySummaryWorkoutDate = document.getElementById("history-summary-workout-date");
+export const historyWorkoutSummaryHost = document.getElementById("history-workout-summary-host");
 
-export const historyPreviousPage =
-    document.getElementById(
-        "history-previous-page"
-    );
-
-export const historyNextPage =
-    document.getElementById(
-        "history-next-page"
-    );
-
-export const historyPageLabel =
-    document.getElementById(
-        "history-page-label"
-    );
-
-export const historyCalendarTitle =
-    document.getElementById(
-        "history-calendar-title"
-    );
-
-export const historyCalendarDays =
-    document.getElementById(
-        "history-calendar-days"
-    );
-
-export const historyCalendarPrevious =
-    document.getElementById(
-        "history-calendar-previous"
-    );
-
-export const historyCalendarNext =
-    document.getElementById(
-        "history-calendar-next"
-    );
-
-export const historySelectedDayPanel =
-    document.getElementById(
-        "history-selected-day-panel"
-    );
-
-export const historySelectedDayTitle =
-    document.getElementById(
-        "history-selected-day-title"
-    );
-
-export const historySelectedDayList =
-    document.getElementById(
-        "history-selected-day-list"
-    );
-
-export const historyWorkoutSummaryHost =
-    document.getElementById(
-        "history-workout-summary-host"
-    );
+export const historyDeleteModal = document.getElementById("history-delete-modal");
+export const cancelHistoryDeleteButton = document.getElementById("cancel-history-delete-button");
+export const confirmHistoryDeleteButton = document.getElementById("confirm-history-delete-button");
 
 // ------------------------------------------------------------
 // DOM — Paramètres globaux

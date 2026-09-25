@@ -4,7 +4,8 @@
 
 import {
     loadWorkoutHistory,
-    saveWorkoutHistoryNow
+    saveWorkoutHistoryNow,
+    deleteWorkoutHistoryFromStorage
 } from "./storage/workout-history-storage.js";
 
 import {
@@ -178,11 +179,14 @@ historyCalendarDays,
 historyCalendarPrevious,
 historyCalendarNext,
 
-historySelectedDayPanel,
-historySelectedDayTitle,
-historySelectedDayList,
-
+historySummaryMeta,
+historySummaryWorkoutName,
+historySummaryWorkoutDate,
 historyWorkoutSummaryHost,
+
+historyDeleteModal,
+cancelHistoryDeleteButton,
+confirmHistoryDeleteButton,
 } from "./app-state.js";
 
 import {
@@ -197,6 +201,7 @@ import {
     setupHistoryController,
     setWorkoutHistory,
     refreshWorkoutHistory,
+    setSelectedHistoryWorkout,
     showHistoryList,
     showHistorySummary,
     getHistorySummaryHost
@@ -503,8 +508,12 @@ function closeWorkoutSummary(session, { mode } = {}) {
 }
 
 async function openWorkoutSummaryFromHistory(session) {
-    historySummaryReturnScrollY = window.scrollY;
+    const historyWasVisible = pageHistory.style.display === "block";
+    historySummaryReturnScrollY = historyWasVisible ? window.scrollY : 0;
 
+    if (!historyWasVisible) tabHistory.click();
+
+    setSelectedHistoryWorkout(session);
     moveWorkoutSummaryToHistory();
     showHistorySummary();
     pageWorkoutSummary.hidden = false;
@@ -513,6 +522,13 @@ async function openWorkoutSummaryFromHistory(session) {
         mode: "history",
         scrollToSummary: false
     });
+}
+
+async function deleteWorkoutFromHistory(session) {
+    await deleteWorkoutHistoryFromStorage(session.id);
+    workoutHistory = await loadWorkoutHistory();
+    pageWorkoutSummary.hidden = true;
+    return workoutHistory;
 }
 
 async function applySplitOrderToAllPlans(order) {
@@ -551,15 +567,23 @@ configureHistoryController({
     previousPageButton: historyPreviousPage,
     nextPageButton: historyNextPage,
     pageLabel: historyPageLabel,
+
     calendarTitle: historyCalendarTitle,
     calendarDays: historyCalendarDays,
     calendarPreviousButton: historyCalendarPrevious,
     calendarNextButton: historyCalendarNext,
-    selectedDayPanel: historySelectedDayPanel,
-    selectedDayTitle: historySelectedDayTitle,
-    selectedDayList: historySelectedDayList,
+
     summaryHost: historyWorkoutSummaryHost,
-    onOpenWorkout: openWorkoutSummaryFromHistory
+    summaryMeta: historySummaryMeta,
+    summaryName: historySummaryWorkoutName,
+    summaryDate: historySummaryWorkoutDate,
+
+    deleteModal: historyDeleteModal,
+    cancelDeleteButton: cancelHistoryDeleteButton,
+    confirmDeleteButton: confirmHistoryDeleteButton,
+
+    onOpenWorkout: openWorkoutSummaryFromHistory,
+    onDeleteWorkout: deleteWorkoutFromHistory
 });
 
 configureExerciseMuscleMap({
@@ -842,6 +866,8 @@ configureWorkoutSummary({
     saveAppSettingsNow,
     onClose: closeWorkoutSummary,
     onEditLog: editWorkoutLogFromSummary,
+    getWorkoutHistory: () => workoutHistory,
+    onOpenHistoryWorkout: openWorkoutSummaryFromHistory,
 
     onSessionUpdated: async session => {
         try {
