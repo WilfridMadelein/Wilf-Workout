@@ -1,0 +1,28 @@
+{
+  "name": "app---workout",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+"scripts": {
+  "build:mobile": "node tools/build-mobile.mjs",
+  "sync:android": "npm run build:mobile && npx cap sync android",
+  "open:android": "npx cap open android"
+},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WilfridMadelein/Wilf-Workout.git"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/WilfridMadelein/Wilf-Workout/issues"
+  },
+  "homepage": "https://github.com/WilfridMadelein/Wilf-Workout#readme",
+  "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/core": "^8.5.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.2"
+  }
+}
