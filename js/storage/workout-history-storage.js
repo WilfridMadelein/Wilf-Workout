@@ -2,7 +2,7 @@ import {
     getStoredWorkoutHistory,
     putStoredWorkoutHistory,
     deleteStoredWorkoutHistory
-} from "./indexed-db.js";
+} from "./storage-provider.js";
 
 // ============================================================
 // STOCKAGE DE L'HISTORIQUE D'ENTRAÎNEMENT

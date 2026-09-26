@@ -2,7 +2,7 @@ import {
     getStoredPlans,
     putStoredPlan,
     deleteStoredPlan
-} from "./indexed-db.js";
+} from "./storage-provider.js";
 
 import {
     normalizeSplitOrder

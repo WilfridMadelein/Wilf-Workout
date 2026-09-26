@@ -24,7 +24,7 @@ import {
 
 import {
     requestPersistentStorage
-} from "./storage/indexed-db.js";
+} from "./storage/storage-provider.js";
 
 import {
     downloadBackup,

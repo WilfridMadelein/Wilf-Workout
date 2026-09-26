@@ -2,7 +2,7 @@ import {
     getStoredPlans,
     getStoredSetting,
     putStoredSetting
-} from "./indexed-db.js";
+} from "./storage-provider.js";
 
 import {
     hydratePlan,
