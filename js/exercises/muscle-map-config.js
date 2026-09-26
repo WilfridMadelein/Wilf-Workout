@@ -32,7 +32,10 @@ const SUBMUSCLE_MAP = {
     "dos|erecteur": ["lower-back"],
 
     "quadriceps|hip flexors": ["hip-flexors"],
-    "quadriceps|aducteur": ["adductors"]
+    "quadriceps|aducteur": ["adductors"],
+
+    "mollets|jumeau": ["calves"],
+    "mollets|soleaire": ["tibialis"]
 };
 
 // ============================================================
