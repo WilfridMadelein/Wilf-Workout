@@ -35,6 +35,7 @@ let openCombinationMenu = () => {};
 let setCombinationSets = () => {};
 let schedulePlanSave = () => {};
 let getAlwaysShowInstructions = () => false;
+let closeExerciseDeleteConfirmation = () => {};
 
 
 function configurePlanRender(dependencies) {
@@ -238,6 +239,7 @@ let renderedExerciseCards = new Map();
 let planDragController = null;
 
 function renderPlanExercises(preserveCards = false) {
+    closeExerciseDeleteConfirmation();
     planDragController?.destroy();
     planDragController = null;
     const list = getPlanExerciseList();
@@ -1076,14 +1078,50 @@ if (getAlwaysShowInstructions()) {
                     `Supprimer ${exercise.nom} du plan`
                 );
 
-                deleteButton.addEventListener(
-                    "click",
-                    () => {
-                        removeExerciseFromCurrentPlan(
-                            planExercise
-                        );
-                    }
-                );
+                const deleteControl = document.createElement("div");
+                deleteControl.classList.add("plan-exercise-delete-control");
+                const confirmDeleteButton = document.createElement("button");
+                confirmDeleteButton.type = "button";
+                confirmDeleteButton.classList.add("plan-exercise-delete-confirm");
+                confirmDeleteButton.textContent = "Supprimer";
+                confirmDeleteButton.hidden = true;
+                deleteButton.setAttribute("aria-expanded", "false");
+                deleteControl.append(deleteButton, confirmDeleteButton);
+
+                function closeDeleteConfirmation() {
+                    confirmDeleteButton.hidden = true;
+                    deleteButton.setAttribute("aria-expanded", "false");
+                    document.removeEventListener("pointerdown", closeDeleteOnOutsideClick);
+                    closeExerciseDeleteConfirmation = () => {};
+                }
+
+                function closeDeleteOnOutsideClick(event) {
+                    if (!deleteControl.contains(event.target)) closeDeleteConfirmation();
+                }
+
+                deleteButton.addEventListener("click", () => {
+                    const wasOpen = !confirmDeleteButton.hidden;
+                    closeExerciseDeleteConfirmation();
+                    if (wasOpen) return;
+                    confirmDeleteButton.hidden = false;
+                    deleteButton.setAttribute("aria-expanded", "true");
+                    closeExerciseDeleteConfirmation = closeDeleteConfirmation;
+                    document.addEventListener("pointerdown", closeDeleteOnOutsideClick);
+                    confirmDeleteButton.focus();
+                });
+                deleteControl.addEventListener("keydown", event => {
+                    if (event.key !== "Escape" || confirmDeleteButton.hidden) return;
+                    event.preventDefault();
+                    closeDeleteConfirmation();
+                    deleteButton.focus();
+                });
+                deleteControl.addEventListener("focusout", event => {
+                    if (!deleteControl.contains(event.relatedTarget) && !confirmDeleteButton.hidden) closeDeleteConfirmation();
+                });
+                confirmDeleteButton.addEventListener("click", () => {
+                    closeDeleteConfirmation();
+                    removeExerciseFromCurrentPlan(planExercise);
+                });
 
 function refreshProgressionCard(newExercise) {
     exerciseName.textContent = newExercise.nom;
@@ -1135,7 +1173,7 @@ function refreshProgressionCard(newExercise) {
     refreshPlanDurationDisplay();
 }
 
-                line4.append(instructionsControl, deleteButton);
+                line4.append(instructionsControl, deleteControl);
 
 
                 card.append(

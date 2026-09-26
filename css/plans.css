@@ -1146,6 +1146,32 @@
 
 /* Ligne 4 */
 
+.plan-exercise-delete-control {
+    position: relative;
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.plan-exercise-delete-confirm {
+    position: absolute;
+    top: calc(100% + 5px);
+    right: 0;
+    z-index: 10;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    background: #c62828;
+    color: #fff;
+    font: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+    box-shadow: 0 3px 10px #0003;
+}
+
+.plan-exercise-delete-confirm:hover {
+    background: #a51f1f;
+}
+
 .plan-exercise-line-4 {
     position: relative;
     min-height: 24px;
