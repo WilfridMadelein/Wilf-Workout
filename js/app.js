@@ -187,6 +187,24 @@ historyWorkoutSummaryHost,
 historyDeleteModal,
 cancelHistoryDeleteButton,
 confirmHistoryDeleteButton,
+
+planAutoAddCategories,
+planIncludeNotes,
+planFiltersToggle,
+planFiltersContent,
+planSettingsToggle,
+planSettingsContent,
+planWorkoutMetadataToggle,
+planWorkoutMetadata,
+
+planNotesEditor,
+planCategoryEditor,
+planCategorySelected,
+addPlanCategoryButton,
+planCategoryOptions,
+
+settingsPlanAutoAddCategories,
+settingsPlanIncludeNotes,
 } from "./app-state.js";
 
 import {
@@ -352,6 +370,7 @@ import {
     getPlanPrimaryMuscles,
     renderPlansList,
     setupPlanController,
+    addCategoriesToCurrentPlan,
     addEquipmentToCurrentPlan
 } from "./plans/plan-controller.js";
 
@@ -607,7 +626,9 @@ configureSettingsController({
     tempoInputs: settingsPlanTempoInputs,
     weightUnitSwitch: settingsWeightUnitSwitch,
     weightUnitButtons: settingsWeightUnitButtons,
+    autoAddCategoriesCheckbox: settingsPlanAutoAddCategories,
     autoAddEquipmentCheckbox: settingsPlanAutoAddEquipment,
+    includeNotesCheckbox: settingsPlanIncludeNotes,
     autoAddInstructionsCheckbox: settingsPlanAutoAddInstructions,
     alwaysShowInstructionsCheckbox: settingsPlanAlwaysShowInstructions,
 
@@ -720,6 +741,8 @@ configurePlanFilters({
     updateCategoryAllButton,
     updateEquipmentRelevance,
 
+    getAutoAddCategoriesToPlan: () => planAutoAddCategories.checked,
+    addCategoriesToCurrentPlan,
     getAutoAddEquipmentToPlan: () => planAutoAddEquipment.checked,
     addEquipmentToCurrentPlan
 });
@@ -930,6 +953,7 @@ confirmPlanDeleteButton,
 
 getEquipmentOptions: () => equipmentOptions,
 getCategoryOptions,
+getSelectedPlanCategories: () => selectedPlanCategories,
 getSelectedPlanEquipment: () => selectedPlanEquipment,
 
     planSetsInput,
@@ -956,6 +980,22 @@ getSelectedPlanEquipment: () => selectedPlanEquipment,
     deletePlanFromStorage,
     schedulePlanSave,
     requestPersistentStorage,
+
+planAutoAddCategories,
+planIncludeNotes,
+
+planFiltersToggle,
+planFiltersContent,
+planSettingsToggle,
+planSettingsContent,
+planWorkoutMetadataToggle,
+planWorkoutMetadata,
+
+planNotesEditor,
+planCategoryEditor,
+planCategorySelected,
+addPlanCategoryButton,
+planCategoryOptions,    
 
 });
 

@@ -22,10 +22,27 @@ let plans;
 let editPlanNameButton;
 let currentPlanNameInput;
 
+let planAutoAddCategories;
 let planAutoAddEquipment;
+let planIncludeNotes;
 let planAutoAddInstructions;
+
+let planFiltersToggle;
+let planFiltersContent;
+let planSettingsToggle;
+let planSettingsContent;
+let planWorkoutMetadataToggle;
+let planWorkoutMetadata;
+
+let planNotesEditor;
 let planNotesInput;
 let planNotesCounter;
+
+let planCategoryEditor;
+let planCategorySelected;
+let addPlanCategoryButton;
+let planCategoryOptions;
+
 let planEquipmentEditor;
 let planEquipmentSelected;
 let addPlanEquipmentButton;
@@ -37,6 +54,7 @@ let cancelPlanDeleteButton;
 let confirmPlanDeleteButton;
 
 let getEquipmentOptions = () => [];
+let getSelectedPlanCategories = () => new Set();
 let getSelectedPlanEquipment = () => new Set();
 let getCategoryOptions = () => [];
 
@@ -104,6 +122,7 @@ export function configurePlanController(dependencies) {
         confirmPlanDeleteButton,
 
         getEquipmentOptions,
+        getSelectedPlanCategories,
         getSelectedPlanEquipment,
         getCategoryOptions,
 
@@ -133,6 +152,28 @@ export function configurePlanController(dependencies) {
         requestPersistentStorage,
 
         getDefaultPlanSettings,
+planAutoAddCategories,
+planAutoAddEquipment,
+planIncludeNotes,
+planAutoAddInstructions,
+
+planFiltersToggle,
+planFiltersContent,
+planSettingsToggle,
+planSettingsContent,
+planWorkoutMetadataToggle,
+planWorkoutMetadata,
+
+planNotesEditor,
+planNotesInput,
+planNotesCounter,
+
+planCategoryEditor,
+planCategorySelected,
+addPlanCategoryButton,
+planCategoryOptions,
+
+planEquipmentEditor,        
 
     } = dependencies);
 }
@@ -473,11 +514,96 @@ function ensurePlanMetadata(plan) {
     if (typeof plan.notes !== "string") plan.notes = "";
     plan.notes = plan.notes.slice(0, 500);
 
+    if (!Array.isArray(plan.categories)) plan.categories = [];
     if (!Array.isArray(plan.equipment)) plan.equipment = [];
+
+    if (typeof plan.includeCategories !== "boolean") plan.includeCategories = false;
     if (typeof plan.includeEquipment !== "boolean") plan.includeEquipment = false;
+    if (typeof plan.includeNotes !== "boolean") plan.includeNotes = plan.notes.trim().length > 0;
     if (typeof plan.autoAddDefaultInstructions !== "boolean") plan.autoAddDefaultInstructions = true;
+}
 
+export function addCategoriesToCurrentPlan(...categoryNames) {
+    const plan = getCurrentPlan();
+    if (!plan) return;
 
+    ensurePlanMetadata(plan);
+
+    const validCategories = new Set(getCategoryOptions());
+    let changed = false;
+
+    categoryNames.forEach(category => {
+        if (!validCategories.has(category) || plan.categories.includes(category)) return;
+        plan.categories.push(category);
+        changed = true;
+    });
+
+    if (changed) {
+        schedulePlanSave(plan);
+        renderPlanCategoryEditor();
+    }
+}
+
+function removeCategoryFromCurrentPlan(category) {
+    const plan = getCurrentPlan();
+    if (!plan) return;
+
+    plan.categories = plan.categories.filter(item => item !== category);
+    schedulePlanSave(plan);
+    renderPlanCategoryEditor();
+}
+
+function renderPlanCategoryEditor() {
+    const plan = getCurrentPlan();
+    if (!plan) return;
+
+    ensurePlanMetadata(plan);
+
+    planCategoryEditor.hidden = !plan.includeCategories;
+    planCategoryOptions.hidden = true;
+    planCategorySelected.replaceChildren();
+    planCategoryOptions.replaceChildren();
+
+    if (!plan.includeCategories) return;
+
+    if (!plan.categories.length) {
+        const empty = document.createElement("span");
+        empty.classList.add("plan-metadata-empty");
+        empty.textContent = "Aucune";
+        planCategorySelected.appendChild(empty);
+    }
+
+    plan.categories.forEach(category => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.classList.add("summary-button", "plan-metadata-chip");
+
+        const remove = document.createElement("span");
+        remove.classList.add("summary-remove");
+        remove.textContent = "−";
+
+        const label = document.createElement("span");
+        label.textContent = category;
+
+        button.append(remove, label);
+        button.addEventListener("click", () => removeCategoryFromCurrentPlan(category));
+        planCategorySelected.appendChild(button);
+    });
+
+    getCategoryOptions().filter(category => !plan.categories.includes(category)).forEach(category => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.classList.add("filter-button");
+        button.textContent = category;
+        button.addEventListener("click", () => addCategoriesToCurrentPlan(category));
+        planCategoryOptions.appendChild(button);
+    });
+
+    if (!planCategoryOptions.children.length) {
+        const empty = document.createElement("span");
+        empty.textContent = "Toutes les catégories sont déjà ajoutées.";
+        planCategoryOptions.appendChild(empty);
+    }
 }
 
 export function addEquipmentToCurrentPlan(...equipmentNames) {
@@ -572,12 +698,18 @@ function renderPlanMetadataEditor() {
 
     ensurePlanMetadata(plan);
 
-    planAutoAddEquipment.checked = plan.includeEquipment;
-    planAutoAddInstructions.checked = plan.autoAddDefaultInstructions;
-    planNotesInput.value = plan.notes.slice(0, 500);
-    resizePlanNotesTextarea(planNotesInput);
-    updateNotesCounter(planNotesInput, planNotesCounter);
-    renderPlanEquipmentEditor();
+planAutoAddCategories.checked = plan.includeCategories;
+planAutoAddEquipment.checked = plan.includeEquipment;
+planIncludeNotes.checked = plan.includeNotes;
+planAutoAddInstructions.checked = plan.autoAddDefaultInstructions;
+
+planNotesEditor.hidden = !plan.includeNotes;
+planNotesInput.value = plan.notes.slice(0, 500);
+resizePlanNotesTextarea(planNotesInput);
+updateNotesCounter(planNotesInput, planNotesCounter);
+
+renderPlanCategoryEditor();
+renderPlanEquipmentEditor();
 }
 
 // ------------------------------------------------------------
@@ -644,32 +776,16 @@ export function renderPlansList() {
         title.classList.add("plan-card-title");
         title.textContent = plan.name;
 
-        const summary =
-    document.createElement("span");
+        const summary = document.createElement("span");
+        summary.classList.add("plan-card-info");
 
-summary.classList.add(
-    "plan-card-info"
-);
+        const duration = document.createElement("strong");
+        duration.textContent = formatPlanDuration(plan);
 
-const duration =
-    document.createElement("strong");
+        const counts = document.createElement("span");
+        counts.textContent = ` (${exerciseCount} exercice${exerciseCount !== 1 ? "s" : ""} | ${setCount} set${setCount !== 1 ? "s" : ""})`;
 
-duration.textContent =
-    formatPlanDuration(plan);
-
-const counts =
-    document.createElement("span");
-
-counts.textContent =
-    ` (${exerciseCount} exercice${exerciseCount !== 1 ? "s" : ""} | ` +
-    `${setCount} set${setCount !== 1 ? "s" : ""})`;
-
-summary.append(
-    duration,
-    counts
-);
-
-
+        summary.append(duration, counts);
 
         const muscleList = document.createElement("span");
         muscleList.classList.add("plan-card-muscles");
@@ -677,62 +793,65 @@ summary.append(
 
         card.append(title, summary, muscleList);
 
-        if (plan.includeEquipment) {
-    const equipment = document.createElement("div");
-    equipment.classList.add("plan-card-equipment");
+        const appendMetadataLine = (className, label, values, emptyText) => {
+            const line = document.createElement("div");
+            line.classList.add(className);
 
-    const equipmentLabel = document.createElement("strong");
-    equipmentLabel.textContent = "Équipements : ";
+            const strong = document.createElement("strong");
+            strong.textContent = `${label} : `;
 
-    const equipmentText = document.createElement("span");
-    equipmentText.textContent =
-        plan.equipment.length
-            ? plan.equipment.join(", ")
-            : "Aucun";
+            const text = document.createElement("span");
+            text.textContent = values.length ? values.join(", ") : emptyText;
 
-    equipment.append(equipmentLabel, equipmentText);
-    card.appendChild(equipment);
-    }
+            line.append(strong, text);
+            card.appendChild(line);
+        };
+
+        if (plan.includeCategories) appendMetadataLine("plan-card-categories", "Catégories", plan.categories, "Aucune");
+        if (plan.includeEquipment) appendMetadataLine("plan-card-equipment", "Équipements", plan.equipment, "Aucun");
 
         const footer = document.createElement("div");
         footer.classList.add("plan-card-footer");
 
-        const notesBox = document.createElement("div");
-        notesBox.classList.add("plan-card-notes");
+        let notes = null;
+        let notesCounter = null;
 
-        const notesLabel = document.createElement("strong");
-        notesLabel.textContent = "Notes :";
+        if (plan.includeNotes) {
+            const notesBox = document.createElement("div");
+            notesBox.classList.add("plan-card-notes");
 
-        const notes = document.createElement("textarea");
-        notes.classList.add("plan-card-notes-input");
-        notes.rows = 1;
-        notes.maxLength = 500;
-        notes.placeholder = "Ajouter des notes...";
-        notes.value = plan.notes.slice(0, 500);
+            const notesLabel = document.createElement("strong");
+            notesLabel.textContent = "Notes :";
 
-        const notesWrap = document.createElement("div");
-        notesWrap.classList.add("plan-notes-input-wrap");
+            notes = document.createElement("textarea");
+            notes.classList.add("plan-card-notes-input");
+            notes.rows = 1;
+            notes.maxLength = 500;
+            notes.placeholder = "Ajouter des notes...";
+            notes.value = plan.notes.slice(0, 500);
 
-        const notesCounter = document.createElement("span");
-        notesCounter.classList.add("plan-notes-counter");
-        notesCounter.hidden = true;
-        notesCounter.textContent = "0 / 500";
+            const notesWrap = document.createElement("div");
+            notesWrap.classList.add("plan-notes-input-wrap");
 
-        notes.addEventListener("input", () => {
-            if (notes.value.length > 500) notes.value = notes.value.slice(0, 500);
+            notesCounter = document.createElement("span");
+            notesCounter.classList.add("plan-notes-counter");
+            notesCounter.hidden = true;
+            notesCounter.textContent = "0 / 500";
 
-            plan.notes = notes.value;
-            resizePlanNotesTextarea(notes);
-            updateNotesCounter(notes, notesCounter);
-            schedulePlanSave(plan);
-        });
+            notes.addEventListener("input", () => {
+                if (notes.value.length > 500) notes.value = notes.value.slice(0, 500);
+                plan.notes = notes.value;
+                resizePlanNotesTextarea(notes);
+                updateNotesCounter(notes, notesCounter);
+                schedulePlanSave(plan);
+            });
 
-        ["click", "mousedown", "keydown"].forEach(type => {
-            notes.addEventListener(type, event => event.stopPropagation());
-        });
+            ["click", "mousedown", "keydown"].forEach(type => notes.addEventListener(type, event => event.stopPropagation()));
 
-        notesWrap.append(notes, notesCounter);
-        notesBox.append(notesLabel, notesWrap);
+            notesWrap.append(notes, notesCounter);
+            notesBox.append(notesLabel, notesWrap);
+            footer.appendChild(notesBox);
+        }
 
         const deleteButton = document.createElement("button");
         deleteButton.type = "button";
@@ -746,33 +865,19 @@ summary.append(
             openPlanDeleteModal(plan);
         });
 
-        footer.append(notesBox, deleteButton);
+        footer.appendChild(deleteButton);
 
-const startWorkoutButton =
-    document.createElement("button");
+        const startWorkoutButton = document.createElement("button");
+        startWorkoutButton.type = "button";
+        startWorkoutButton.classList.add("plan-start-workout-button");
+        startWorkoutButton.textContent = "Commencer l'entraînement";
 
-startWorkoutButton.type = "button";
+        startWorkoutButton.addEventListener("click", event => {
+            event.stopPropagation();
+            startWorkout(plan);
+        });
 
-startWorkoutButton.classList.add(
-    "plan-start-workout-button"
-);
-
-startWorkoutButton.textContent =
-    "Commencer l'entraînement";
-
-startWorkoutButton.addEventListener(
-    "click",
-    event => {
-        event.stopPropagation();
-        startWorkout(plan);
-    }
-);
-
-card.append(
-    footer,
-    startWorkoutButton
-);
-
+        card.append(footer, startWorkoutButton);
         card.addEventListener("click", () => openPlan(plan));
 
         card.addEventListener("keydown", event => {
@@ -783,7 +888,7 @@ card.append(
 
         plansList.appendChild(card);
 
-        requestAnimationFrame(() => {
+        if (notes && notesCounter) requestAnimationFrame(() => {
             resizePlanNotesTextarea(notes);
             updateNotesCounter(notes, notesCounter);
         });
@@ -923,7 +1028,35 @@ function createNewPlanDefaults(defaults = {}) {
     };
 }
 
+function setupPlanSectionToggle(button, content, labels) {
+    if (!button || !content) return;
+
+    const setCollapsed = collapsed => {
+        content.hidden = collapsed;
+        button.setAttribute("aria-expanded", String(!collapsed));
+        button.setAttribute("aria-label", collapsed ? labels.show : labels.hide);
+    };
+
+    button.addEventListener("click", () => setCollapsed(!content.hidden));
+    setCollapsed(false);
+}
+
 export function setupPlanController() {
+
+setupPlanSectionToggle(planFiltersToggle, planFiltersContent, {
+    show: "Afficher le filtre du plan",
+    hide: "Masquer le filtre du plan"
+});
+
+setupPlanSectionToggle(planSettingsToggle, planSettingsContent, {
+    show: "Afficher les paramètres du plan",
+    hide: "Masquer les paramètres du plan"
+});
+
+setupPlanSectionToggle(planWorkoutMetadataToggle, planWorkoutMetadata, {
+    show: "Afficher les informations du plan",
+    hide: "Masquer les informations du plan"
+});    
 
 planNotesInput.addEventListener("input", () => {
     const plan = getCurrentPlan();
@@ -941,6 +1074,18 @@ planNotesInput.addEventListener("input", () => {
     updateNotesCounter(planNotesInput, planNotesCounter);
 });
 
+planAutoAddCategories.addEventListener("change", () => {
+    const plan = getCurrentPlan();
+    if (!plan) return;
+
+    ensurePlanMetadata(plan);
+    plan.includeCategories = planAutoAddCategories.checked;
+    schedulePlanSave(plan);
+
+    if (plan.includeCategories) addCategoriesToCurrentPlan(...getSelectedPlanCategories());
+    renderPlanMetadataEditor();
+});
+
 planAutoAddEquipment.addEventListener("change", () => {
     const plan = getCurrentPlan();
     if (!plan) return;
@@ -949,10 +1094,17 @@ planAutoAddEquipment.addEventListener("change", () => {
     plan.includeEquipment = planAutoAddEquipment.checked;
     schedulePlanSave(plan);
 
-    if (plan.includeEquipment) {
-        addEquipmentToCurrentPlan(...getSelectedPlanEquipment());
-    }
+    if (plan.includeEquipment) addEquipmentToCurrentPlan(...getSelectedPlanEquipment());
+    renderPlanMetadataEditor();
+});
 
+planIncludeNotes.addEventListener("change", () => {
+    const plan = getCurrentPlan();
+    if (!plan) return;
+
+    ensurePlanMetadata(plan);
+    plan.includeNotes = planIncludeNotes.checked;
+    schedulePlanSave(plan);
     renderPlanMetadataEditor();
 });
 
@@ -970,6 +1122,10 @@ planAutoAddInstructions.addEventListener(
         schedulePlanSave(plan);
     }
 );
+
+addPlanCategoryButton.addEventListener("click", () => {
+    planCategoryOptions.hidden = !planCategoryOptions.hidden;
+});
 
 addPlanEquipmentButton.addEventListener("click", () => {
     planEquipmentOptions.hidden = !planEquipmentOptions.hidden;
@@ -1005,13 +1161,13 @@ const plan = {
     filters,
     filtersInitialized: true,
 
-    equipment:
-        defaults.includeEquipment === true
-            ? [...filters.equipment]
-            : [],
+categories: defaults.includeCategories === true ? [...filters.categories] : [],
+equipment: defaults.includeEquipment === true ? [...filters.equipment] : [],
 
-    includeEquipment: defaults.includeEquipment === true,
-    autoAddDefaultInstructions: defaults.autoAddDefaultInstructions !== false,
+includeCategories: defaults.includeCategories === true,
+includeEquipment: defaults.includeEquipment === true,
+includeNotes: defaults.includeNotes === true,
+autoAddDefaultInstructions: defaults.autoAddDefaultInstructions !== false,
     };
             ensurePlanDefaults(plan);
 

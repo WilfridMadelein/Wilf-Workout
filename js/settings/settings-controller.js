@@ -24,7 +24,9 @@ let tempoInputs;
 let weightUnitSwitch;
 let weightUnitButtons;
 
+let autoAddCategoriesCheckbox;
 let autoAddEquipmentCheckbox;
+let includeNotesCheckbox;
 let autoAddInstructionsCheckbox;
 let alwaysShowInstructionsCheckbox;
 let advancedToggle;
@@ -61,7 +63,9 @@ function configureSettingsController(dependencies) {
         tempoInputs,
         weightUnitSwitch,
         weightUnitButtons,
+        autoAddCategoriesCheckbox,
         autoAddEquipmentCheckbox,
+        includeNotesCheckbox,
         autoAddInstructionsCheckbox,
         alwaysShowInstructionsCheckbox,
         advancedToggle,
@@ -121,7 +125,9 @@ function refreshSettingsInterface() {
 
     const defaults = settings.planDefaults;
 
+    autoAddCategoriesCheckbox.checked = defaults.includeCategories;
     autoAddEquipmentCheckbox.checked = defaults.includeEquipment;
+    includeNotesCheckbox.checked = defaults.includeNotes;
     autoAddInstructionsCheckbox.checked = defaults.autoAddDefaultInstructions;
     alwaysShowInstructionsCheckbox.checked = settings.alwaysShowInstructions;
 
@@ -341,11 +347,24 @@ bodyModelSwitch.addEventListener("click", () => {
         scheduleAppSettingsSave(settings);
     });
 
+autoAddCategoriesCheckbox.addEventListener("change", () => {
+    const settings = getAppSettings();
+    if (!settings) return;
+    settings.planDefaults.includeCategories = autoAddCategoriesCheckbox.checked;
+    scheduleAppSettingsSave(settings);
+});
+
 autoAddEquipmentCheckbox.addEventListener("change", () => {
     const settings = getAppSettings();
     if (!settings) return;
-
     settings.planDefaults.includeEquipment = autoAddEquipmentCheckbox.checked;
+    scheduleAppSettingsSave(settings);
+});
+
+includeNotesCheckbox.addEventListener("change", () => {
+    const settings = getAppSettings();
+    if (!settings) return;
+    settings.planDefaults.includeNotes = includeNotesCheckbox.checked;
     scheduleAppSettingsSave(settings);
 });
 

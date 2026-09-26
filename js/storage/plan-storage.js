@@ -12,7 +12,7 @@ import {
 // STOCKAGE DES PLANS
 // ============================================================
 
-const PLAN_SCHEMA_VERSION = 2;
+const PLAN_SCHEMA_VERSION = 3;
 const saveTimers = new Map();
 
 // ------------------------------------------------------------
@@ -170,8 +170,11 @@ function migratePlanRecord(record) {
     }
 
     plan.notes = typeof plan.notes === "string" ? plan.notes : "";
+    plan.categories = Array.isArray(plan.categories) ? plan.categories : [];
     plan.equipment = Array.isArray(plan.equipment) ? plan.equipment : [];
+    plan.includeCategories = plan.includeCategories === true;
     plan.includeEquipment = plan.includeEquipment === true;
+    plan.includeNotes = typeof plan.includeNotes === "boolean" ? plan.includeNotes : plan.notes.trim().length > 0;
     plan.autoAddDefaultInstructions = plan.autoAddDefaultInstructions !== false;
 
     plan.defaults ??= {};
@@ -210,8 +213,11 @@ function serializePlan(plan) {
         updatedAt: plan.updatedAt ?? Date.now(),
 
         notes: String(plan.notes ?? "").slice(0, 500),
+        categories: [...(plan.categories ?? [])],
         equipment: [...(plan.equipment ?? [])],
+        includeCategories: plan.includeCategories === true,
         includeEquipment: plan.includeEquipment === true,
+        includeNotes: plan.includeNotes === true,
         autoAddDefaultInstructions: plan.autoAddDefaultInstructions !== false,
 
         defaults: {
@@ -275,11 +281,13 @@ function hydratePlan(record, exercises) {
             Date.now(),
 
         notes: String(savedPlan.notes ?? "").slice(0, 500),
+        categories: [...(savedPlan.categories ?? [])],
         equipment: [...(savedPlan.equipment ?? [])],
+        includeCategories: savedPlan.includeCategories === true,
         includeEquipment: savedPlan.includeEquipment === true,
+        includeNotes: savedPlan.includeNotes === true,
         autoAddDefaultInstructions: savedPlan.autoAddDefaultInstructions !== false,
-        alwaysShowInstructions: savedPlan.alwaysShowInstructions === true,
-
+        
         defaults: {
             sets: savedPlan.defaults?.sets ?? 3,
             reps: savedPlan.defaults?.reps ?? 10,

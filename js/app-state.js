@@ -111,8 +111,14 @@ export const settingsPlanEquipmentFilters =
 export const settingsPlanAutoExcludeProgressions =
     document.getElementById("settings-plan-auto-exclude-progressions");
 
+export const settingsPlanAutoAddCategories =
+    document.getElementById("settings-plan-auto-add-categories");
+
 export const settingsPlanAutoAddEquipment =
     document.getElementById("settings-plan-auto-add-equipment");
+
+export const settingsPlanIncludeNotes =
+    document.getElementById("settings-plan-include-notes");
 
 export const settingsPlanAutoAddInstructions =
     document.getElementById("settings-plan-auto-add-instructions");
@@ -181,11 +187,25 @@ export const backToPlansButton = document.getElementById("back-to-plans-button")
 export const startPlanWorkoutButton = document.getElementById("start-plan-workout-button");
 export const planAutoExcludeProgressions = document.getElementById("plan-auto-exclude-progressions");
 
+export const planAutoAddCategories = document.getElementById("plan-auto-add-categories");
 export const planAutoAddEquipment = document.getElementById("plan-auto-add-equipment");
+export const planIncludeNotes = document.getElementById("plan-include-notes");
 export const planAutoAddInstructions = document.getElementById("plan-auto-add-instructions");
 export const planNotesCounter = document.getElementById("plan-notes-counter");
 
+export const planFiltersToggle = document.getElementById("plan-filters-toggle");
+export const planFiltersContent = document.getElementById("plan-filters-content");
+export const planSettingsToggle = document.getElementById("plan-settings-toggle");
+export const planSettingsContent = document.getElementById("plan-settings-content");
+export const planWorkoutMetadataToggle = document.getElementById("plan-workout-metadata-toggle");
+export const planWorkoutMetadata = document.getElementById("plan-workout-metadata");
+
+export const planNotesEditor = document.getElementById("plan-notes-editor");
 export const planNotesInput = document.getElementById("plan-notes-input");
+export const planCategoryEditor = document.getElementById("plan-category-editor");
+export const planCategorySelected = document.getElementById("plan-category-selected");
+export const addPlanCategoryButton = document.getElementById("add-plan-category-button");
+export const planCategoryOptions = document.getElementById("plan-category-options");
 export const planEquipmentEditor = document.getElementById("plan-equipment-editor");
 export const planEquipmentSelected = document.getElementById("plan-equipment-selected");
 export const addPlanEquipmentButton = document.getElementById("add-plan-equipment-button");

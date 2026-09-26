@@ -638,20 +638,33 @@ detailsY = drawLabeledPdfText(
 
 detailsY += 2;
 
-if (plan.includeEquipment) {
-detailsY = drawLabeledPdfText(
-    doc,
-    "Équipements : ",
-    plan.equipment?.length ? plan.equipment.join(", ") : "Aucun",
-    margin,
-    detailsY,
-    contentWidth
-);
+if (plan.includeCategories) {
+    detailsY = drawLabeledPdfText(
+        doc,
+        "Catégories : ",
+        plan.categories?.length ? plan.categories.join(", ") : "Aucune",
+        margin,
+        detailsY,
+        contentWidth
+    );
 
     detailsY += 2;
 }
 
-if (notes) {
+if (plan.includeEquipment) {
+    detailsY = drawLabeledPdfText(
+        doc,
+        "Équipements : ",
+        plan.equipment?.length ? plan.equipment.join(", ") : "Aucun",
+        margin,
+        detailsY,
+        contentWidth
+    );
+
+    detailsY += 2;
+}
+
+if (plan.includeNotes && notes) {
 detailsY = drawLabeledPdfText(
     doc,
     "Notes : ",

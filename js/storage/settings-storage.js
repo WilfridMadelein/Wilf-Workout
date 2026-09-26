@@ -12,7 +12,7 @@ import {
 // ============================================================
 
 const APP_SETTINGS_ID = "app";
-const SETTINGS_SCHEMA_VERSION = 1;
+const SETTINGS_SCHEMA_VERSION = 2;
 
 let saveTimer = null;
 
@@ -52,8 +52,11 @@ function normalizePlanDefaults(defaults = {}) {
             autoExcludeProgressions: defaults.filters?.autoExcludeProgressions !== false
         },
 
+        includeCategories: defaults.includeCategories === true,
         includeEquipment: defaults.includeEquipment === true,
+        includeNotes: defaults.includeNotes === true,
         autoAddDefaultInstructions: defaults.autoAddDefaultInstructions !== false
+
     };
 }
 

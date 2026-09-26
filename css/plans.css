@@ -2175,3 +2175,127 @@ html[data-theme="dark"] .plan-drag-progression { color: #bbb; }
 @media (prefers-reduced-motion: reduce) {
     .plan-sortable-preview { will-change: auto; }
 }
+
+/* =========================================================
+   SECTIONS REPLIABLES DU PLAN
+========================================================= */
+
+.plan-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.plan-section-heading h2,
+.plan-section-heading h3 {
+    margin: 0;
+}
+
+.plan-section-toggle {
+    flex: 0 0 auto;
+    width: 28px;
+    height: 28px;
+    padding: 6px 8px;
+    display: grid;
+    place-items: center;
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.plan-section-toggle:hover {
+    background: rgba(127, 127, 127, 0.1);
+}
+
+.plan-section-toggle::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid currentColor;
+    border-bottom: 2px solid currentColor;
+    transform: rotate(45deg);
+}
+
+.plan-section-toggle[aria-expanded="true"]::before {
+    transform: rotate(-135deg);
+}
+
+.plan-section-content {
+    margin-top: 10px;
+}
+
+.plan-section-content[hidden],
+.plan-workout-metadata[hidden] {
+    display: none;
+}
+
+.plan-workout-heading {
+    margin-bottom: 10px;
+}
+
+/* =========================================================
+   MÉTADONNÉES DU PLAN
+========================================================= */
+
+.plan-category-editor[hidden],
+.plan-equipment-editor[hidden],
+.plan-notes-editor[hidden],
+.plan-metadata-options[hidden] {
+    display: none;
+}
+
+.plan-category-editor,
+.plan-equipment-editor {
+    margin-bottom: 8px;
+}
+
+.plan-metadata-editor-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+#plan-category-selected,
+#plan-equipment-selected {
+    display: contents;
+}
+
+.plan-metadata-chip .summary-remove,
+.plan-equipment-chip .summary-remove {
+    order: -1;
+}
+
+.plan-metadata-empty,
+.plan-equipment-empty {
+    color: #777;
+    font-size: 14px;
+}
+
+.plan-metadata-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.plan-card-categories,
+.plan-card-equipment {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    margin-top: 4px;
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.plan-card-categories strong,
+.plan-card-equipment strong {
+    font-weight: 700;
+}
+
+.plan-delete-button {
+    grid-column: 2;
+}

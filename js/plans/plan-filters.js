@@ -38,6 +38,8 @@ let getRelevantEquipment = () => new Set();
 let updateCategoryAllButton = () => {};
 let updateEquipmentRelevance = () => {};
 
+let getAutoAddCategoriesToPlan = () => false;
+let addCategoriesToCurrentPlan = () => {};
 let getAutoAddEquipmentToPlan = () => false;
 let addEquipmentToCurrentPlan = () => {};
 
@@ -66,6 +68,8 @@ function configurePlanFilters(dependencies) {
     getRelevantEquipment = dependencies.getRelevantEquipment;
     updateCategoryAllButton = dependencies.updateCategoryAllButton;
     updateEquipmentRelevance = dependencies.updateEquipmentRelevance;
+    getAutoAddCategoriesToPlan = dependencies.getAutoAddCategoriesToPlan;
+    addCategoriesToCurrentPlan = dependencies.addCategoriesToCurrentPlan;
     getAutoAddEquipmentToPlan = dependencies.getAutoAddEquipmentToPlan;
     addEquipmentToCurrentPlan = dependencies.addEquipmentToCurrentPlan;
 }
@@ -136,6 +140,7 @@ function ensurePlanFilterState(plan) {
 }
 
 function refreshPlanFilterInterface() {
+    if (getAutoAddCategoriesToPlan()) addCategoriesToCurrentPlan(...selectedPlanCategories);
     updatePlanCategoryButtons();
     updatePlanEquipmentRelevance();
     updatePlanEquipmentButtons();
@@ -387,19 +392,12 @@ getCategoryOptions().forEach(category => {
         event => {
             event.stopPropagation();
 
-            if (
-                selectedPlanCategories.has(
-                    category
-                )
-            ) {
-                selectedPlanCategories.delete(
-                    category
-                );
-            } else {
-                selectedPlanCategories.add(
-                    category
-                );
-            }
+if (selectedPlanCategories.has(category)) {
+    selectedPlanCategories.delete(category);
+} else {
+    selectedPlanCategories.add(category);
+    if (getAutoAddCategoriesToPlan()) addCategoriesToCurrentPlan(category);
+}
 
             updatePlanCategoryButtons();
             updatePlanEquipmentRelevance();
