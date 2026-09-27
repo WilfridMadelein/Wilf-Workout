@@ -18,6 +18,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
+import android.content.ContentResolver;
+import android.database.Cursor;
+import android.provider.DocumentsContract;
+
 // ============================================================
 // STOCKAGE ANDROID — STORAGE ACCESS FRAMEWORK
 // ============================================================
@@ -282,4 +286,214 @@ public class WilfStoragePlugin extends Plugin {
 
         call.resolve(response);
     }
+
+@PluginMethod
+public void writeDirectoryTextFile(
+    PluginCall call
+) {
+    String directoryUriValue =
+        call.getString("directoryUri");
+
+    String fileName =
+        call.getString("fileName");
+
+    String content =
+        call.getString("content", "");
+
+    String mimeType =
+        call.getString(
+            "mimeType",
+            "application/json"
+        );
+
+    if (
+        directoryUriValue == null ||
+        directoryUriValue.isBlank()
+    ) {
+        call.reject(
+            "URI du dossier manquante."
+        );
+        return;
+    }
+
+    if (
+        fileName == null ||
+        fileName.isBlank()
+    ) {
+        call.reject(
+            "Nom du fichier manquant."
+        );
+        return;
+    }
+
+    Uri treeUri =
+        Uri.parse(directoryUriValue);
+
+    ContentResolver resolver =
+        getContext()
+            .getContentResolver();
+
+    try {
+        Uri fileUri =
+            findDirectoryFile(
+                resolver,
+                treeUri,
+                fileName
+            );
+
+        if (fileUri == null) {
+            String treeDocumentId =
+                DocumentsContract
+                    .getTreeDocumentId(
+                        treeUri
+                    );
+
+            Uri parentUri =
+                DocumentsContract
+                    .buildDocumentUriUsingTree(
+                        treeUri,
+                        treeDocumentId
+                    );
+
+            fileUri =
+                DocumentsContract
+                    .createDocument(
+                        resolver,
+                        parentUri,
+                        mimeType,
+                        fileName
+                    );
+        }
+
+        if (fileUri == null) {
+            call.reject(
+                "Impossible de créer le fichier de données."
+            );
+            return;
+        }
+
+        try (
+            OutputStream output =
+                resolver.openOutputStream(
+                    fileUri,
+                    "wt"
+                )
+        ) {
+            if (output == null) {
+                call.reject(
+                    "Impossible d'ouvrir le fichier de données."
+                );
+                return;
+            }
+
+            output.write(
+                content.getBytes(
+                    StandardCharsets.UTF_8
+                )
+            );
+
+            output.flush();
+        }
+
+        JSObject response =
+            new JSObject();
+
+        response.put(
+            "uri",
+            fileUri.toString()
+        );
+
+        call.resolve(response);
+    } catch (
+        IOException |
+        SecurityException error
+    ) {
+        call.reject(
+            "Impossible d'écrire la copie durable des données.",
+            error
+        );
+    }
+}
+
+private Uri findDirectoryFile(
+    ContentResolver resolver,
+    Uri treeUri,
+    String fileName
+) {
+    String treeDocumentId =
+        DocumentsContract
+            .getTreeDocumentId(
+                treeUri
+            );
+
+    Uri childrenUri =
+        DocumentsContract
+            .buildChildDocumentsUriUsingTree(
+                treeUri,
+                treeDocumentId
+            );
+
+    String[] projection = {
+        DocumentsContract.Document
+            .COLUMN_DOCUMENT_ID,
+
+        DocumentsContract.Document
+            .COLUMN_DISPLAY_NAME
+    };
+
+    try (
+        Cursor cursor =
+            resolver.query(
+                childrenUri,
+                projection,
+                null,
+                null,
+                null
+            )
+    ) {
+        if (cursor == null) return null;
+
+        int idIndex =
+            cursor.getColumnIndex(
+                DocumentsContract.Document
+                    .COLUMN_DOCUMENT_ID
+            );
+
+        int nameIndex =
+            cursor.getColumnIndex(
+                DocumentsContract.Document
+                    .COLUMN_DISPLAY_NAME
+            );
+
+        while (cursor.moveToNext()) {
+            String currentName =
+                cursor.getString(
+                    nameIndex
+                );
+
+            if (
+                !fileName.equals(
+                    currentName
+                )
+            ) {
+                continue;
+            }
+
+            String documentId =
+                cursor.getString(
+                    idIndex
+                );
+
+            return DocumentsContract
+                .buildDocumentUriUsingTree(
+                    treeUri,
+                    documentId
+                );
+        }
+    } catch (Exception error) {
+        return null;
+    }
+
+    return null;
+}  
 }

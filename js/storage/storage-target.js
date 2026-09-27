@@ -70,10 +70,39 @@ async function saveNativeTextFile({
     });
 }
 
+async function writeStorageDirectoryFile({
+    directoryUri,
+    fileName,
+    content,
+    mimeType = "application/json"
+}) {
+    const plugin = getWilfStoragePlugin();
+
+    if (!plugin) {
+        throw new Error(
+            "L'écriture dans un dossier n'est pas disponible sur cette plateforme."
+        );
+    }
+
+    if (!directoryUri) {
+        throw new Error(
+            "Aucun dossier de données n'est sélectionné."
+        );
+    }
+
+    return plugin.writeDirectoryTextFile({
+        directoryUri,
+        fileName,
+        content,
+        mimeType
+    });
+}
+
 export {
     isStorageDirectoryAvailable,
     chooseStorageDirectory,
     hasStorageDirectoryAccess,
     releaseStorageDirectory,
-    saveNativeTextFile
+    saveNativeTextFile,
+    writeStorageDirectoryFile
 };

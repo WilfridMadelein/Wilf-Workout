@@ -67,7 +67,7 @@ function refreshStorageTargetInterface() {
 
     statusElement.textContent =
         directorySelected
-            ? "Dossier sélectionné. Aucune donnée n'y est encore répliquée à cette étape."
+            ? "Wilf conserve automatiquement une copie de ses données dans le dossier sélectionné."
             : "Les données sont actuellement conservées uniquement sur cet appareil.";
 }
 

@@ -3,6 +3,10 @@
 // ============================================================
 
 import {
+    setupStorageTargetSync
+} from "./storage/storage-target-sync.js";
+
+import {
     createDefaultStorageTargetConfig,
     loadStorageTargetConfig,
     saveStorageTargetConfig
@@ -1306,6 +1310,7 @@ try {
 
     setupSettingsController();
     await setupStorageTargetController();
+    setupStorageTargetSync();
     setupDefaultPlanFilters();
     setupPlanDefaultInputs();
     setupWorkoutSummary();
