@@ -28,28 +28,29 @@ function setSyncStatus(message, state = "") {
 
 function getInspectionMessage(result) {
     if (!result?.available) {
-        if (result?.reason === "device-only") return { message: "Synchronisation désactivée : données sur cet appareil seulement.", state: "" };
-        if (result?.reason === "no-shared-file") return { message: "Sélectionne un fichier de synchronisation partagé.", state: "" };
-        if (result?.reason === "permission-required") return { message: "Autorisation requise pour accéder au fichier partagé.", state: "warning" };
-        if (result?.reason === "missing-file") return { message: "Le fichier de synchronisation est introuvable.", state: "warning" };
+        if (result?.reason === "device-only") return { message: "Synchronisation désactivée.", state: "" };
+        if (result?.reason === "no-shared-file") return { message: "Aucun fichier de synchronisation sélectionné.", state: "" };
+        if (result?.reason === "permission-required") return { message: "Autorisation requise pour synchroniser.", state: "warning" };
+        if (result?.reason === "missing-file") return { message: "Fichier de synchronisation introuvable.", state: "warning" };
         return { message: "Synchronisation indisponible.", state: "warning" };
     }
 
     switch (result.sync?.status) {
         case "same":
             return { message: "Synchronisé.", state: "ok" };
+
         case "local-changed":
-            return { message: "Synchronisation des modifications...", state: "warning" };
         case "external-changed":
-            return { message: "Nouvelles données disponibles.", state: "warning" };
-        case "conflict":
-            return { message: "Certaines modifications nécessitent ton attention.", state: "error" };
+        case "mergeable":
         case "untracked-equal":
-            return { message: "Initialisation de la synchronisation...", state: "warning" };
         case "untracked-different":
-            return { message: "Première synchronisation requise.", state: "warning" };
+            return { message: "Synchronisation...", state: "syncing" };
+
+        case "conflict":
+            return { message: "Action requise pour terminer la synchronisation.", state: "error" };
+
         default:
-            return { message: "Vérification de la synchronisation...", state: "" };
+            return { message: "Vérification de la synchronisation...", state: "syncing" };
     }
 }
 
@@ -82,7 +83,7 @@ async function runStorageSync() {
 
     syncing = true;
     syncButton.disabled = true;
-    setSyncStatus("Synchronisation en cours...");
+    setSyncStatus("Synchronisation...", "syncing");
 
     try {
         const result = await syncNow();
@@ -127,10 +128,12 @@ function setupStorageSyncController() {
 
     if (!unsubscribeStorageChanges) {
         unsubscribeStorageChanges = subscribeStorageChanges(change => {
-            if (change?.store === "settings" && change?.id === SYNC_METADATA_ID) return;
+if (change?.store === "settings" && change?.id === SYNC_METADATA_ID) return;
 
-            const storageTargetChanged = change?.store === "settings" && change?.id === "storage-target";
-            scheduleStorageSyncInterfaceRefresh(storageTargetChanged ? 300 : 3500);
+setSyncStatus("Synchronisation...", "syncing");
+
+const storageTargetChanged = change?.store === "settings" && change?.id === "storage-target";
+scheduleStorageSyncInterfaceRefresh(storageTargetChanged ? 300 : 3500);
         });
     }
 

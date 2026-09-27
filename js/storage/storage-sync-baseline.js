@@ -153,6 +153,15 @@ async function createCollectionBaseline(
     return result;
 }
 
+async function fingerprintSettings(settings) {
+    if (!settings) return null;
+
+    const syncableSettings = { ...settings };
+    delete syncableSettings.updatedAt;
+
+    return fingerprintValue(syncableSettings);
+}
+
 async function createSyncBaseline(snapshot) {
     const [
         plans,
@@ -170,11 +179,7 @@ async function createSyncBaseline(snapshot) {
                 ?.workoutHistory
         ),
 
-        snapshot.settings
-            ? fingerprintValue(
-                snapshot.settings
-            )
-            : Promise.resolve(null)
+        fingerprintSettings(snapshot.settings)
     ]);
 
     return {

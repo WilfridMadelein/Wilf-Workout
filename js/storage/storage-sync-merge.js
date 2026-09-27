@@ -184,9 +184,21 @@ const baseline = metadata.baseline ?? {
             mergedLocal.settings = normalizeAppSettings(externalSnapshot.settings);
             localChanges.push({ collection: "settings", id: "app" });
         }
-    } else if (["conflict", "different"].includes(comparison.settings)) {
+} else if (["conflict", "different"].includes(comparison.settings)) {
+    const localTime = getRecordTimestamp(localSnapshot.settings);
+    const externalTime = getRecordTimestamp(externalSnapshot.settings);
+
+    if (localTime > externalTime) {
+        mergedExternal.settings = structuredClone(localSnapshot.settings);
+        externalDirty = true;
+        exported += 1;
+    } else if (externalTime > localTime) {
+        mergedLocal.settings = normalizeAppSettings(externalSnapshot.settings);
+        localChanges.push({ collection: "settings", id: "app" });
+    } else {
         conflicts.push({ collection: "settings", id: "app", reason: comparison.settings });
     }
+}
 
     // --------------------------------------------------------
     // Plans + historique

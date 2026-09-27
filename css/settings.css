@@ -399,24 +399,29 @@ html[data-theme="dark"]
 }
 
 .settings-sync-status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
     margin: 4px 0 0;
     color: #666;
     font-size: 14px;
 }
 
-.settings-sync-button,
-#settings-sync-button {
-    padding: 8px 12px;
-    cursor: pointer;
-}
-
-#settings-sync-button:disabled {
-    cursor: not-allowed;
-    opacity: 0.55;
+.settings-sync-status::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: currentColor;
 }
 
 .settings-sync-status[data-state="ok"] {
     color: #287a3d;
+}
+
+.settings-sync-status[data-state="syncing"] {
+    color: #666;
 }
 
 .settings-sync-status[data-state="warning"] {
@@ -425,6 +430,15 @@ html[data-theme="dark"]
 
 .settings-sync-status[data-state="error"] {
     color: #a83232;
+}
+
+.settings-sync-status[data-state="syncing"]::before {
+    animation: settings-sync-pulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes settings-sync-pulse {
+    from { opacity: 0.3; }
+    to { opacity: 1; }
 }
 
 .settings-shared-sync-file {
@@ -722,4 +736,8 @@ html[data-theme="dark"] .settings-sync-status[data-state="warning"] {
 
 html[data-theme="dark"] .settings-sync-status[data-state="error"] {
     color: #ef8c8c;
+}
+
+html[data-theme="dark"] .settings-sync-status[data-state="syncing"] {
+    color: #aaa;
 }
