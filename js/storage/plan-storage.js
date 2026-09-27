@@ -401,6 +401,7 @@ async function deletePlanFromStorage(id) {
 
 export {
     PLAN_SCHEMA_VERSION,
+    migratePlanRecord,
     serializePlan,
     hydratePlan,
     loadPlans,

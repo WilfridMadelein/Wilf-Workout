@@ -130,6 +130,7 @@ function scheduleAppSettingsSave(settings, delay = 250) {
 
 export {
     createDefaultAppSettings,
+    normalizeAppSettings,
     loadAppSettings,
     saveAppSettingsNow,
     scheduleAppSettingsSave

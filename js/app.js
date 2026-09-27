@@ -3,6 +3,10 @@
 // ============================================================
 
 import {
+    syncStorageBidirectionalNow
+} from "./storage/storage-sync-merge.js";
+
+import {
     inspectStorageSync
 } from "./storage/storage-sync-inspection.js";
 
@@ -1241,30 +1245,33 @@ function setupBackupControls() {
 
 async function initializeApp() {
     try {
-    appSettings = await loadAppSettings();
+        storageTargetConfig = await loadStorageTargetConfig();
     } catch (error) {
-    console.error(
-        "Impossible de charger les paramètres :",
-        error
-    );
+        console.error("Impossible de charger la destination des données :", error);
+        storageTargetConfig = createDefaultStorageTargetConfig();
+    }
 
-    appSettings = createDefaultAppSettings();
+    // Synchronisation avant le chargement des données dans l'interface.
+    try {
+        const syncResult = await syncStorageBidirectionalNow();
+
+        if (!["device-only", "same"].includes(syncResult.status)) {
+            console.info("Synchronisation Wilf :", syncResult);
+        }
+
+        storageTargetConfig = await loadStorageTargetConfig();
+    } catch (error) {
+        console.error("Impossible de synchroniser les données au démarrage :", error);
+    }
+
+    try {
+        appSettings = await loadAppSettings();
+    } catch (error) {
+        console.error("Impossible de charger les paramètres :", error);
+        appSettings = createDefaultAppSettings();
     }
 
     applyAppTheme(appSettings.theme);
-
-try {
-    storageTargetConfig =
-        await loadStorageTargetConfig();
-} catch (error) {
-    console.error(
-        "Impossible de charger la destination des données :",
-        error
-    );
-
-    storageTargetConfig =
-        createDefaultStorageTargetConfig();
-}
 
     try {
         const storedPlans = await loadPlans(exercises);
@@ -1274,12 +1281,12 @@ try {
     }
 
     try {
-    workoutHistory = await loadWorkoutHistory();
-    setWorkoutHistory(workoutHistory);
+        workoutHistory = await loadWorkoutHistory();
+        setWorkoutHistory(workoutHistory);
     } catch (error) {
-    console.error("Impossible de charger l'historique :", error);
-    workoutHistory = [];
-    setWorkoutHistory([]);
+        console.error("Impossible de charger l'historique :", error);
+        workoutHistory = [];
+        setWorkoutHistory([]);
     }
 
     equipmentOptions.forEach(equipment => {
