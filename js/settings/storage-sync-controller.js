@@ -29,7 +29,9 @@ function setSyncStatus(message, state = "") {
 function getInspectionMessage(result) {
     if (!result?.available) {
         if (result?.reason === "device-only") return { message: "Synchronisation désactivée : données sur cet appareil seulement.", state: "" };
-        if (result?.reason === "missing-file") return { message: "Initialisation du fichier de synchronisation...", state: "warning" };
+        if (result?.reason === "no-shared-file") return { message: "Sélectionne un fichier de synchronisation partagé.", state: "" };
+        if (result?.reason === "permission-required") return { message: "Autorisation requise pour accéder au fichier partagé.", state: "warning" };
+        if (result?.reason === "missing-file") return { message: "Le fichier de synchronisation est introuvable.", state: "warning" };
         return { message: "Synchronisation indisponible.", state: "warning" };
     }
 
@@ -37,39 +39,18 @@ function getInspectionMessage(result) {
         case "same":
             return { message: "Synchronisé.", state: "ok" };
         case "local-changed":
-            return { message: "Modifications locales en attente de synchronisation.", state: "warning" };
+            return { message: "Synchronisation des modifications...", state: "warning" };
         case "external-changed":
-            return { message: "Modifications externes disponibles.", state: "warning" };
+            return { message: "Nouvelles données disponibles.", state: "warning" };
         case "conflict":
-            return { message: "Conflit détecté. Aucune version n'a été écrasée.", state: "error" };
+            return { message: "Certaines modifications nécessitent ton attention.", state: "error" };
         case "untracked-equal":
-            return { message: "Données identiques. Initialisation de la synchronisation requise.", state: "warning" };
+            return { message: "Initialisation de la synchronisation...", state: "warning" };
         case "untracked-different":
-            return { message: "Données locales et externes différentes. Vérification requise.", state: "error" };
+            return { message: "Première synchronisation requise.", state: "warning" };
         default:
-            return { message: "État de synchronisation à vérifier.", state: "warning" };
+            return { message: "Vérification de la synchronisation...", state: "" };
     }
-
-if (!result?.available) {
-    if (result?.reason === "device-only") {
-        return { message: "Synchronisation désactivée : données sur cet appareil seulement.", state: "" };
-    }
-
-    if (result?.reason === "no-shared-file") {
-        return { message: "Sélectionne un fichier de synchronisation partagé.", state: "" };
-    }
-
-    if (result?.reason === "permission-required") {
-        return { message: "Autorisation requise pour accéder au fichier partagé.", state: "warning" };
-    }
-
-    if (result?.reason === "missing-file") {
-        return { message: "Le fichier de synchronisation est introuvable.", state: "warning" };
-    }
-
-    return { message: "Synchronisation indisponible.", state: "warning" };
-}
-
 }
 
 async function refreshStorageSyncInterface() {
