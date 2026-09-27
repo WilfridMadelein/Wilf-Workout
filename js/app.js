@@ -235,6 +235,10 @@ settingsStorageDirectoryButton,
 settingsStorageStatus,
 settingsSyncStatus,
 settingsSyncButton,
+settingsSharedSyncFilePanel,
+settingsSharedSyncFileButton,
+settingsSharedSyncFileDisconnect,
+settingsSharedSyncFileStatus
 } from "./app-state.js";
 
 import {
@@ -252,12 +256,7 @@ import {
     setSelectedHistoryWorkout,
     showHistoryList,
     showHistorySummary,
-    getHistorySummaryHost,
-    settingsSharedSyncFilePanel,
-    settingsSharedSyncFileButton,
-    settingsSharedSyncFileDisconnect,
-    settingsSharedSyncFileStatus,
-
+    getHistorySummaryHost
 } from "./history/history-controller.js";
 
 import {
