@@ -6,8 +6,7 @@ import {
     deleteStoredWorkoutHistory
 } from "./storage-provider.js";
 
-import { loadStorageTargetConfig, saveStorageTargetConfig } from "./storage-target-config.js";
-import { readStorageDirectoryFile, writeStorageDirectoryFile } from "./storage-target.js";
+import { STORAGE_DATA_FILE, readSyncFileTarget, writeSyncFileTarget } from "./sync-file-target.js";
 import { createStorageSnapshot, parseStorageSnapshot } from "./storage-snapshot.js";
 import { loadSyncMetadata, saveSyncMetadata } from "./sync-metadata.js";
 import { createSyncBaseline, baselinesEqual, compareSyncBaselines } from "./storage-sync-baseline.js";
@@ -18,8 +17,6 @@ import { migrateWorkoutHistoryRecord } from "./workout-history-storage.js";
 // ============================================================
 // FUSION BIDIRECTIONNELLE LOCAL ↔ EXTERNE
 // ============================================================
-
-const STORAGE_DATA_FILE = "wilf-workout-data.wilf";
 
 function getRecordTimestamp(record) {
     const value = Number(record?.updatedAt ?? record?.createdAt ?? 0);
@@ -123,24 +120,15 @@ function preserveConflictBaseline(nextBaseline, previousBaseline, conflicts) {
 }
 
 async function syncStorageBidirectionalNow() {
-    let config = await loadStorageTargetConfig();
+const file = await readSyncFileTarget();
 
-    if (config.type !== "directory" || !config.directoryUri) {
-        return { status: "device-only", imported: 0, exported: 0, conflicts: [] };
-    }
+if (!file.available) {
+    return { status: file.reason, imported: 0, exported: 0, conflicts: [] };
+}
 
-    const file = await readStorageDirectoryFile({
-        directoryUri: config.directoryUri,
-        fileUri: config.dataFileUri,
-        fileName: STORAGE_DATA_FILE
-    });
-
-    if (!file?.exists) return { status: "missing-file", imported: 0, exported: 0, conflicts: [] };
-
-    if (file.uri && file.uri !== config.dataFileUri) {
-        config.dataFileUri = file.uri;
-        config = await saveStorageTargetConfig(config);
-    }
+if (!file.exists) {
+    return { status: "missing-file", imported: 0, exported: 0, conflicts: [] };
+}
 
     const localSnapshot = await createStorageSnapshot();
     const externalSnapshot = parseStorageSnapshot(file.content);
@@ -151,18 +139,19 @@ async function syncStorageBidirectionalNow() {
         createSyncBaseline(externalSnapshot)
     ]);
 
-    // Première baseline
-    if (!metadata.baseline) {
-        if (!baselinesEqual(localState, externalState)) {
-            return { status: "missing-baseline", imported: 0, exported: 0, conflicts: [] };
-        }
+if (!metadata.baseline && baselinesEqual(localState, externalState)) {
+    metadata.baseline = localState;
+    await saveSyncMetadata(metadata);
+    return { status: "baseline-initialized", imported: 0, exported: 0, conflicts: [] };
+}
 
-        metadata.baseline = localState;
-        await saveSyncMetadata(metadata);
-        return { status: "baseline-initialized", imported: 0, exported: 0, conflicts: [] };
-    }
-
-    const baseline = metadata.baseline;
+const firstPairing = !metadata.baseline;
+const baseline = metadata.baseline ?? {
+    schemaVersion: 1,
+    plans: {},
+    settings: null,
+    workoutHistory: {}
+};
 
     // Déjà synchronisé
     if (baselinesEqual(localState, externalState)) {
@@ -243,13 +232,9 @@ async function syncStorageBidirectionalNow() {
     // --------------------------------------------------------
 
     if (externalDirty) {
-        const latestFile = await readStorageDirectoryFile({
-            directoryUri: config.directoryUri,
-            fileUri: config.dataFileUri,
-            fileName: STORAGE_DATA_FILE
-        });
+        const latestFile = await readSyncFileTarget(file.target);
 
-        if (!latestFile?.exists) {
+        if (!latestFile.available || !latestFile.exists) {
             return {
                 status: "external-changed-during-sync",
                 imported: 0,
@@ -291,18 +276,7 @@ async function syncStorageBidirectionalNow() {
     if (externalDirty) {
         mergedExternal.savedAt = new Date().toISOString();
 
-        const result = await writeStorageDirectoryFile({
-            directoryUri: config.directoryUri,
-            fileUri: config.dataFileUri,
-            fileName: STORAGE_DATA_FILE,
-            content: JSON.stringify(mergedExternal, null, 2),
-            mimeType: "application/json"
-        });
-
-        if (result?.uri && result.uri !== config.dataFileUri) {
-            config.dataFileUri = result.uri;
-            await saveStorageTargetConfig(config);
-        }
+        await writeSyncFileTarget(file.target, JSON.stringify(mergedExternal, null, 2));
     }
 
     // --------------------------------------------------------
@@ -317,12 +291,12 @@ async function syncStorageBidirectionalNow() {
     metadata.baseline = nextBaseline;
     await saveSyncMetadata(metadata);
 
-    return {
-        status: conflicts.length ? "merged-with-conflicts" : "merged",
-        imported: localChanges.length,
-        exported,
-        conflicts
-    };
+return {
+    status: conflicts.length ? "merged-with-conflicts" : firstPairing ? "paired" : "merged",
+    imported: localChanges.length,
+    exported,
+    conflicts
+};
 }
 
 export { syncStorageBidirectionalNow };

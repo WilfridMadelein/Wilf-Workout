@@ -12,6 +12,8 @@ import {
     readSharedSyncFile
 } from "../storage/shared-sync-file.js";
 
+import { clearSyncBaseline } from "../storage/sync-metadata.js";
+
 // ============================================================
 // FICHIER PARTAGÉ — INTERFACE
 // ============================================================
@@ -86,6 +88,7 @@ async function setupSharedSyncFileController() {
             validateWilfSyncFile(file.content);
 
             await saveSharedSyncFileConfig({ fileHandle: selected.handle, fileName: selected.name });
+            await clearSyncBaseline();
             await refreshSharedSyncFileInterface();
         } catch (error) {
             console.error("Impossible de sélectionner le fichier partagé :", error);
@@ -95,6 +98,7 @@ async function setupSharedSyncFileController() {
 
     disconnectButton.addEventListener("click", async () => {
         await clearSharedSyncFileConfig();
+        await clearSyncBaseline();
         await refreshSharedSyncFileInterface();
     });
 

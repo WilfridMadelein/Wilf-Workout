@@ -1,11 +1,4 @@
-import {
-    loadStorageTargetConfig,
-    saveStorageTargetConfig
-} from "./storage-target-config.js";
-
-import {
-    readStorageDirectoryFile
-} from "./storage-target.js";
+import { readSyncFileTarget } from "./sync-file-target.js";
 
 import {
     createStorageSnapshot,
@@ -30,54 +23,17 @@ const STORAGE_DATA_FILE =
     "wilf-workout-data.wilf";
 
 async function inspectStorageSync() {
-    let config =
-        await loadStorageTargetConfig();
+    const file = await readSyncFileTarget();
 
-    if (
-        config.type !== "directory" ||
-        !config.directoryUri
-    ) {
-        return {
-            available: false,
-            reason: "device-only"
-        };
+    if (!file.available) {
+        return { available: false, reason: file.reason };
     }
 
-    const file =
-        await readStorageDirectoryFile({
-            directoryUri:
-                config.directoryUri,
-
-            fileUri:
-                config.dataFileUri,
-
-            fileName:
-                STORAGE_DATA_FILE
-        });
-
-    if (!file?.exists) {
-        return {
-            available: false,
-            reason: "missing-file"
-        };
+    if (!file.exists) {
+        return { available: false, reason: "missing-file" };
     }
 
-    if (
-        file.uri &&
-        file.uri !== config.dataFileUri
-    ) {
-        config.dataFileUri =
-            file.uri;
-
-        await saveStorageTargetConfig(
-            config
-        );
-    }
-
-    const [
-        local,
-        metadata
-    ] = await Promise.all([
+    const [local, metadata] = await Promise.all([
         createStorageSnapshot(),
         loadSyncMetadata()
     ]);

@@ -49,6 +49,27 @@ function getInspectionMessage(result) {
         default:
             return { message: "État de synchronisation à vérifier.", state: "warning" };
     }
+
+if (!result?.available) {
+    if (result?.reason === "device-only") {
+        return { message: "Synchronisation désactivée : données sur cet appareil seulement.", state: "" };
+    }
+
+    if (result?.reason === "no-shared-file") {
+        return { message: "Sélectionne un fichier de synchronisation partagé.", state: "" };
+    }
+
+    if (result?.reason === "permission-required") {
+        return { message: "Autorisation requise pour accéder au fichier partagé.", state: "warning" };
+    }
+
+    if (result?.reason === "missing-file") {
+        return { message: "Le fichier de synchronisation est introuvable.", state: "warning" };
+    }
+
+    return { message: "Synchronisation indisponible.", state: "warning" };
+}
+
 }
 
 async function refreshStorageSyncInterface() {
@@ -59,7 +80,7 @@ async function refreshStorageSyncInterface() {
         const status = getInspectionMessage(result);
 
         setSyncStatus(status.message, status.state);
-        syncButton.disabled = result?.reason === "device-only";
+        syncButton.disabled = ["device-only", "no-shared-file", "permission-required"].includes(result?.reason);
     } catch (error) {
         console.error("Impossible de vérifier la synchronisation :", error);
         setSyncStatus("Impossible de vérifier la synchronisation.", "error");
