@@ -155,6 +155,10 @@ export const settingsStorageStatus =
 
 export const settingsSyncStatus = document.getElementById("settings-sync-status");
 export const settingsSyncButton = document.getElementById("settings-sync-button");    
+export const settingsSharedSyncFilePanel = document.getElementById("settings-shared-sync-file");
+export const settingsSharedSyncFileButton = document.getElementById("settings-shared-sync-file-button");
+export const settingsSharedSyncFileDisconnect = document.getElementById("settings-shared-sync-file-disconnect");
+export const settingsSharedSyncFileStatus = document.getElementById("settings-shared-sync-file-status");
 
 // ------------------------------------------------------------
 // DOM — Paramètres du plan

@@ -252,13 +252,23 @@ import {
     setSelectedHistoryWorkout,
     showHistoryList,
     showHistorySummary,
-    getHistorySummaryHost
+    getHistorySummaryHost,
+    settingsSharedSyncFilePanel,
+    settingsSharedSyncFileButton,
+    settingsSharedSyncFileDisconnect,
+    settingsSharedSyncFileStatus,
+
 } from "./history/history-controller.js";
 
 import {
     configureStorageTargetController,
     setupStorageTargetController
 } from "./settings/storage-target-controller.js";
+
+import {
+    configureSharedSyncFileController,
+    setupSharedSyncFileController
+} from "./settings/shared-sync-file-controller.js";
 
 import {
     configureStorageSyncController,
@@ -635,6 +645,13 @@ async function reloadSyncedAppData() {
 // ============================================================
 // CONFIGURATION DES MODULES
 // ============================================================
+
+configureSharedSyncFileController({
+    panel: settingsSharedSyncFilePanel,
+    chooseButton: settingsSharedSyncFileButton,
+    disconnectButton: settingsSharedSyncFileDisconnect,
+    statusElement: settingsSharedSyncFileStatus
+});
 
 configureHistoryController({
     page: pageHistory,
@@ -1352,6 +1369,11 @@ async function initializeApp() {
 
     setupSettingsController();
     await setupStorageTargetController();
+    setupStorageTargetSync();
+    setupStorageSyncController();
+    setupSettingsController();
+    await setupStorageTargetController();
+    await setupSharedSyncFileController();
     setupStorageTargetSync();
     setupStorageSyncController();
     window.inspectWilfStorageSync =

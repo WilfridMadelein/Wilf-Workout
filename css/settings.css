@@ -427,6 +427,35 @@ html[data-theme="dark"]
     color: #a83232;
 }
 
+.settings-shared-sync-file {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid #ddd;
+}
+
+.settings-shared-sync-file-row {
+    align-items: flex-start;
+}
+
+.settings-shared-sync-file-text {
+    flex: 1;
+}
+
+.settings-shared-sync-file-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.settings-shared-sync-file-actions button {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+html[data-theme="dark"] .settings-shared-sync-file {
+    border-color: #444;
+}
+
 .settings-data-actions {
     display: flex;
     flex-wrap: wrap;
