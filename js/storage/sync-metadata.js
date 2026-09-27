@@ -8,13 +8,14 @@ import {
 // ============================================================
 
 const SYNC_METADATA_ID = "sync-metadata";
-const SYNC_METADATA_SCHEMA_VERSION = 1;
+const SYNC_METADATA_SCHEMA_VERSION = 2;
 
 function createDefaultSyncMetadata() {
     return {
         id: SYNC_METADATA_ID,
         schemaVersion: SYNC_METADATA_SCHEMA_VERSION,
         updatedAt: Date.now(),
+        baseline: null,
         tombstones: {
             plans: [],
             workoutHistory: []
@@ -38,8 +39,15 @@ function normalizeSyncMetadata(metadata = {}) {
         id: SYNC_METADATA_ID,
         schemaVersion: SYNC_METADATA_SCHEMA_VERSION,
         updatedAt: Number(metadata.updatedAt) || Date.now(),
+        baseline:
+            metadata.baseline &&
+            typeof metadata.baseline === "object"
+                ? metadata.baseline
+                : null,
         tombstones: {
-            plans: normalizeTombstones(metadata.tombstones?.plans),
+            plans: normalizeTombstones(
+                metadata.tombstones?.plans
+            ),
             workoutHistory: normalizeTombstones(
                 metadata.tombstones?.workoutHistory
             )
@@ -67,6 +75,24 @@ async function saveSyncMetadata(metadata) {
     return record;
 }
 
+async function saveSyncBaseline(baseline) {
+    const metadata =
+        await loadSyncMetadata();
+
+    metadata.baseline = baseline;
+
+    return saveSyncMetadata(metadata);
+}
+
+async function clearSyncBaseline() {
+    const metadata =
+        await loadSyncMetadata();
+
+    metadata.baseline = null;
+
+    return saveSyncMetadata(metadata);
+}
+
 async function recordDeletion(type, id) {
     if (!["plans", "workoutHistory"].includes(type)) {
         throw new Error(
@@ -77,20 +103,16 @@ async function recordDeletion(type, id) {
     const metadata =
         await loadSyncMetadata();
 
-    const deletedAt = Date.now();
-
     metadata.tombstones[type] =
         metadata.tombstones[type]
             .filter(item => String(item.id) !== String(id));
 
     metadata.tombstones[type].push({
         id,
-        deletedAt
+        deletedAt: Date.now()
     });
 
     await saveSyncMetadata(metadata);
-
-    return deletedAt;
 }
 
 async function removeDeletion(type, id) {
@@ -109,6 +131,8 @@ export {
     createDefaultSyncMetadata,
     loadSyncMetadata,
     saveSyncMetadata,
+    saveSyncBaseline,
+    clearSyncBaseline,
     recordDeletion,
     removeDeletion
 };

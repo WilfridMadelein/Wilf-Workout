@@ -1,3 +1,8 @@
+
+import {
+    clearSyncBaseline
+} from "../storage/sync-metadata.js";
+
 // ============================================================
 // DESTINATION DES DONNÉES
 // ============================================================
@@ -89,6 +94,7 @@ async function setupStorageTargetController() {
                 config.type = "device";
                 config.directoryUri = null;
                 config.dataFileUri = null;
+                await clearSyncBaseline();
                 config =
                     await saveStorageTargetConfig(
                         config
@@ -112,6 +118,7 @@ async function setupStorageTargetController() {
         current.type = "device";
         current.directoryUri = null;
         current.dataFileUri = null;
+        await clearSyncBaseline();
 
         try {
             await saveStorageTargetConfig(current);
@@ -160,6 +167,8 @@ current.directoryUri = selected.uri;
 
 if (previousUri !== selected.uri) {
     current.dataFileUri = null;
+
+    await clearSyncBaseline();
 }
 
             await saveStorageTargetConfig(

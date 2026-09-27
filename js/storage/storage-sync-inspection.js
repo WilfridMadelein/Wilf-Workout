@@ -13,8 +13,14 @@ import {
 } from "./storage-snapshot.js";
 
 import {
-    compareCollection
-} from "./storage-sync-compare.js";
+    loadSyncMetadata
+} from "./sync-metadata.js";
+
+import {
+    createSyncBaseline,
+    baselinesEqual,
+    compareSyncBaselines
+} from "./storage-sync-baseline.js";
 
 // ============================================================
 // INSPECTION DE LA SYNCHRONISATION
@@ -68,13 +74,83 @@ async function inspectStorageSync() {
         );
     }
 
-    const local =
-        await createStorageSnapshot();
+    const [
+        local,
+        metadata
+    ] = await Promise.all([
+        createStorageSnapshot(),
+        loadSyncMetadata()
+    ]);
 
     const external =
         parseStorageSnapshot(
             file.content
         );
+
+    const [
+        localState,
+        externalState
+    ] = await Promise.all([
+        createSyncBaseline(local),
+        createSyncBaseline(external)
+    ]);
+
+    const baseline =
+        metadata.baseline;
+
+    if (!baseline) {
+        return {
+            available: true,
+            local,
+            external,
+
+            sync: {
+                hasBaseline: false,
+
+                status:
+                    baselinesEqual(
+                        localState,
+                        externalState
+                    )
+                        ? "untracked-equal"
+                        : "untracked-different"
+            },
+
+            comparison: null
+        };
+    }
+
+    const localChanged =
+        !baselinesEqual(
+            localState,
+            baseline
+        );
+
+    const externalChanged =
+        !baselinesEqual(
+            externalState,
+            baseline
+        );
+
+    let status = "same";
+
+    if (
+        !baselinesEqual(
+            localState,
+            externalState
+        )
+    ) {
+        if (
+            localChanged &&
+            externalChanged
+        ) {
+            status = "conflict";
+        } else if (localChanged) {
+            status = "local-changed";
+        } else if (externalChanged) {
+            status = "external-changed";
+        }
+    }
 
     return {
         available: true,
@@ -82,37 +158,19 @@ async function inspectStorageSync() {
         local,
         external,
 
-        plans:
-            compareCollection({
-                localRecords:
-                    local.plans,
+        sync: {
+            hasBaseline: true,
+            status,
+            localChanged,
+            externalChanged
+        },
 
-                externalRecords:
-                    external.plans,
-
-                localTombstones:
-                    local.tombstones.plans,
-
-                externalTombstones:
-                    external.tombstones.plans
-            }),
-
-        workoutHistory:
-            compareCollection({
-                localRecords:
-                    local.workoutHistory,
-
-                externalRecords:
-                    external.workoutHistory,
-
-                localTombstones:
-                    local.tombstones
-                        .workoutHistory,
-
-                externalTombstones:
-                    external.tombstones
-                        .workoutHistory
-            })
+        comparison:
+            compareSyncBaselines(
+                localState,
+                externalState,
+                baseline
+            )
     };
 }
 
