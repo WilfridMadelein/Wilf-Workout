@@ -7,6 +7,11 @@ import {
 } from "./storage/storage-sync-merge.js";
 
 import {
+    configureSyncLifecycle,
+    setupSyncLifecycle
+} from "./storage/sync-lifecycle.js";
+
+import {
     inspectStorageSync
 } from "./storage/storage-sync-inspection.js";
 
@@ -650,6 +655,12 @@ configureSharedSyncFileController({
     chooseButton: settingsSharedSyncFileButton,
     disconnectButton: settingsSharedSyncFileDisconnect,
     statusElement: settingsSharedSyncFileStatus
+});
+
+configureSyncLifecycle({
+    syncNow: syncStorageBidirectionalNow,
+    onDataImported: reloadSyncedAppData,
+    refreshSyncInterface: refreshStorageSyncInterface
 });
 
 configureHistoryController({
@@ -1368,15 +1379,10 @@ async function initializeApp() {
 
     setupSettingsController();
     await setupStorageTargetController();
-    setupStorageTargetSync();
-    setupStorageSyncController();
-    setupSettingsController();
-    await setupStorageTargetController();
     await setupSharedSyncFileController();
     setupStorageTargetSync();
     setupStorageSyncController();
-    window.inspectWilfStorageSync =
-        inspectStorageSync;
+    await setupSyncLifecycle();
     setupDefaultPlanFilters();
     setupPlanDefaultInputs();
     setupWorkoutSummary();
