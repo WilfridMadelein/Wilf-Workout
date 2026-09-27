@@ -1161,7 +1161,8 @@ function setupBackupControls() {
             const backup = await readBackupFile(file);
             pendingBackupImport = backup;
 
-            const count = backup.plans.length;
+            const planCount = backup.plans.length;
+            const workoutCount = backup.workoutHistory?.length ?? 0;
             const exportDate = new Date(backup.exportedAt);
 
             const dateText = Number.isNaN(exportDate.getTime())
@@ -1172,10 +1173,10 @@ function setupBackupControls() {
                     day: "numeric"
                 }).format(exportDate)}`;
 
-            backupImportMessage.textContent =
-                `Cette sauvegarde${dateText} contient ${count} plan` +
-                `${count !== 1 ? "s" : ""}. Les nouveaux plans seront ajoutés. ` +
-                `Si un plan existe déjà, Wilf conservera la version la plus récemment modifiée.`;
+backupImportMessage.textContent =
+    `Cette sauvegarde${dateText} contient ${planCount} plan${planCount !== 1 ? "s" : ""} et ` +
+    `${workoutCount} entraînement${workoutCount !== 1 ? "s" : ""}. ` +
+    `Wilf conservera la version la plus récemment modifiée de chaque élément.`;
 
             backupImportModal.hidden = false;
         } catch (error) {
@@ -1196,25 +1197,25 @@ function setupBackupControls() {
         confirmBackupImportButton.disabled = true;
 
         try {
-            const result = await importBackup(
-                pendingBackupImport,
-                exercises
-            );
+const result = await importBackup(pendingBackupImport, exercises);
 
-            plans.splice(0, plans.length, ...result.plans);
-            renderPlansList();
-            appSettings = await loadAppSettings();
-            refreshSettingsInterface();
-            refreshDefaultPlanFilters();
+plans.splice(0, plans.length, ...result.plans);
+renderPlansList();
+
+workoutHistory = result.workoutHistory;
+setWorkoutHistory(workoutHistory);
+
+appSettings = await loadAppSettings();
+refreshSettingsInterface();
+refreshDefaultPlanFilters();
 
             closeBackupImportModal();
 
-            alert(
-                `Import terminé.\n` +
-                `${result.added} ajouté${result.added !== 1 ? "s" : ""}, ` +
-                `${result.updated} mis à jour, ` +
-                `${result.kept} conservé${result.kept !== 1 ? "s" : ""}.`
-            );
+alert(
+    `Import terminé.\n` +
+    `Plans : ${result.added} ajouté${result.added !== 1 ? "s" : ""}, ${result.updated} mis à jour, ${result.kept} conservé${result.kept !== 1 ? "s" : ""}.\n` +
+    `Historique : ${result.historyAdded} ajouté${result.historyAdded !== 1 ? "s" : ""}, ${result.historyUpdated} mis à jour, ${result.historyKept} conservé${result.historyKept !== 1 ? "s" : ""}.`
+);
         } catch (error) {
             console.error("Impossible d'importer la sauvegarde :", error);
             alert(error.message || "Impossible d'importer cette sauvegarde.");
