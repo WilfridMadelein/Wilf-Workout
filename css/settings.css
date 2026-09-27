@@ -384,6 +384,49 @@ html[data-theme="dark"]
     font-size: 14px;
 }
 
+.settings-sync {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid #ddd;
+}
+
+.settings-sync-row {
+    align-items: center;
+}
+
+.settings-sync-row > div {
+    flex: 1;
+}
+
+.settings-sync-status {
+    margin: 4px 0 0;
+    color: #666;
+    font-size: 14px;
+}
+
+.settings-sync-button,
+#settings-sync-button {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+#settings-sync-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.settings-sync-status[data-state="ok"] {
+    color: #287a3d;
+}
+
+.settings-sync-status[data-state="warning"] {
+    color: #9a6300;
+}
+
+.settings-sync-status[data-state="error"] {
+    color: #a83232;
+}
+
 .settings-data-actions {
     display: flex;
     flex-wrap: wrap;
@@ -630,4 +673,24 @@ html[data-theme="dark"] .settings-storage-target-actions button.active {
 
 html[data-theme="dark"] .settings-storage-status {
     color: #aaa;
+}
+
+html[data-theme="dark"] .settings-sync {
+    border-color: #444;
+}
+
+html[data-theme="dark"] .settings-sync-status {
+    color: #aaa;
+}
+
+html[data-theme="dark"] .settings-sync-status[data-state="ok"] {
+    color: #7fd694;
+}
+
+html[data-theme="dark"] .settings-sync-status[data-state="warning"] {
+    color: #e7b45c;
+}
+
+html[data-theme="dark"] .settings-sync-status[data-state="error"] {
+    color: #ef8c8c;
 }

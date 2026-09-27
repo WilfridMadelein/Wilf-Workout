@@ -153,6 +153,9 @@ export const settingsStorageDirectoryButton =
 export const settingsStorageStatus =
     document.getElementById("settings-storage-status");    
 
+export const settingsSyncStatus = document.getElementById("settings-sync-status");
+export const settingsSyncButton = document.getElementById("settings-sync-button");    
+
 // ------------------------------------------------------------
 // DOM — Paramètres du plan
 // ------------------------------------------------------------

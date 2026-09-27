@@ -233,6 +233,8 @@ settingsPlanIncludeNotes,
 settingsStorageDeviceButton,
 settingsStorageDirectoryButton,
 settingsStorageStatus,
+settingsSyncStatus,
+settingsSyncButton,
 } from "./app-state.js";
 
 import {
@@ -257,6 +259,12 @@ import {
     configureStorageTargetController,
     setupStorageTargetController
 } from "./settings/storage-target-controller.js";
+
+import {
+    configureStorageSyncController,
+    setupStorageSyncController,
+    refreshStorageSyncInterface
+} from "./settings/storage-sync-controller.js";
 
 import {
     configureSettingsController,
@@ -610,6 +618,20 @@ async function applySplitOrderToAllPlans(order) {
     }
 }
 
+async function reloadSyncedAppData() {
+    appSettings = await loadAppSettings();
+    applyAppTheme(appSettings.theme);
+    refreshSettingsInterface();
+    refreshDefaultPlanFilters();
+
+    const storedPlans = await loadPlans(exercises);
+    plans.splice(0, plans.length, ...storedPlans);
+    renderPlansList();
+
+    workoutHistory = await loadWorkoutHistory();
+    setWorkoutHistory(workoutHistory);
+}
+
 // ============================================================
 // CONFIGURATION DES MODULES
 // ============================================================
@@ -662,6 +684,14 @@ configureStorageTargetController({
     chooseDirectory: chooseStorageDirectory,
     hasDirectoryAccess: hasStorageDirectoryAccess,
     releaseDirectory: releaseStorageDirectory
+});
+
+configureStorageSyncController({
+    syncButton: settingsSyncButton,
+    statusElement: settingsSyncStatus,
+    inspectSync: inspectStorageSync,
+    syncNow: syncStorageBidirectionalNow,
+    onDataImported: reloadSyncedAppData
 });
 
 configureSettingsController({
@@ -1323,6 +1353,7 @@ async function initializeApp() {
     setupSettingsController();
     await setupStorageTargetController();
     setupStorageTargetSync();
+    setupStorageSyncController();
     window.inspectWilfStorageSync =
         inspectStorageSync;
     setupDefaultPlanFilters();
