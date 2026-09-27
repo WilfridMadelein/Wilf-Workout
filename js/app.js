@@ -3,6 +3,19 @@
 // ============================================================
 
 import {
+    createDefaultStorageTargetConfig,
+    loadStorageTargetConfig,
+    saveStorageTargetConfig
+} from "./storage/storage-target-config.js";
+
+import {
+    isStorageDirectoryAvailable,
+    chooseStorageDirectory,
+    hasStorageDirectoryAccess,
+    releaseStorageDirectory
+} from "./storage/storage-target.js";
+
+import {
     loadWorkoutHistory,
     saveWorkoutHistoryNow,
     deleteWorkoutHistoryFromStorage
@@ -205,6 +218,9 @@ planCategoryOptions,
 
 settingsPlanAutoAddCategories,
 settingsPlanIncludeNotes,
+settingsStorageDeviceButton,
+settingsStorageDirectoryButton,
+settingsStorageStatus,
 } from "./app-state.js";
 
 import {
@@ -224,6 +240,11 @@ import {
     showHistorySummary,
     getHistorySummaryHost
 } from "./history/history-controller.js";
+
+import {
+    configureStorageTargetController,
+    setupStorageTargetController
+} from "./settings/storage-target-controller.js";
 
 import {
     configureSettingsController,
@@ -404,6 +425,9 @@ import {
 } from "./workout/workout-overview.js";
 
 let appSettings = createDefaultAppSettings();
+
+let storageTargetConfig =
+    createDefaultStorageTargetConfig();
 
 let workoutHistory = [];
 let historySummaryReturnScrollY = 0;
@@ -607,6 +631,25 @@ configureHistoryController({
 
 configureExerciseMuscleMap({
     getAppSettings: () => appSettings
+});
+
+configureStorageTargetController({
+    getStorageTargetConfig: () => storageTargetConfig,
+
+    saveStorageTargetConfig: async config => {
+            storageTargetConfig =
+                await saveStorageTargetConfig(
+                    config
+                );
+            return storageTargetConfig;
+        },
+    deviceButton: settingsStorageDeviceButton,
+    directoryButton: settingsStorageDirectoryButton,
+    statusElement: settingsStorageStatus,
+    isDirectoryAvailable: isStorageDirectoryAvailable,
+    chooseDirectory: chooseStorageDirectory,
+    hasDirectoryAccess: hasStorageDirectoryAccess,
+    releaseDirectory: releaseStorageDirectory
 });
 
 configureSettingsController({
@@ -1202,6 +1245,19 @@ async function initializeApp() {
 
     applyAppTheme(appSettings.theme);
 
+try {
+    storageTargetConfig =
+        await loadStorageTargetConfig();
+} catch (error) {
+    console.error(
+        "Impossible de charger la destination des données :",
+        error
+    );
+
+    storageTargetConfig =
+        createDefaultStorageTargetConfig();
+}
+
     try {
         const storedPlans = await loadPlans(exercises);
         plans.splice(0, plans.length, ...storedPlans);
@@ -1249,6 +1305,7 @@ async function initializeApp() {
     setupFilterRows();
 
     setupSettingsController();
+    await setupStorageTargetController();
     setupDefaultPlanFilters();
     setupPlanDefaultInputs();
     setupWorkoutSummary();

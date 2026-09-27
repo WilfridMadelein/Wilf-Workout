@@ -341,6 +341,49 @@ html[data-theme="dark"]
    DONNÉES
 ========================================================= */
 
+.settings-storage-target {
+    margin-bottom: 18px;
+}
+
+.settings-storage-target-row {
+    align-items: flex-start;
+}
+
+.settings-storage-target-text {
+    flex: 1;
+}
+
+.settings-storage-target-text .settings-help {
+    margin: 4px 0 0;
+}
+
+.settings-storage-target-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.settings-storage-target-actions button {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.settings-storage-target-actions button.active {
+    background: #111;
+    color: #fff;
+}
+
+.settings-storage-target-actions button:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.settings-storage-status {
+    margin: 10px 0 0;
+    color: #666;
+    font-size: 14px;
+}
+
 .settings-data-actions {
     display: flex;
     flex-wrap: wrap;
@@ -578,3 +621,13 @@ html[data-theme="dark"] .plan-workout-duration {
     color: #bdbdbd;
 }
 
+/*storage*/
+
+html[data-theme="dark"] .settings-storage-target-actions button.active {
+    background: #ededed;
+    color: #181818;
+}
+
+html[data-theme="dark"] .settings-storage-status {
+    color: #aaa;
+}

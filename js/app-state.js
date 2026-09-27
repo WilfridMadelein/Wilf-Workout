@@ -144,6 +144,15 @@ export const settingsAdvancedToggle =
 export const settingsAdvancedPanel =
     document.getElementById("settings-advanced-panel");
 
+export const settingsStorageDeviceButton =
+    document.getElementById("settings-storage-device");
+
+export const settingsStorageDirectoryButton =
+    document.getElementById("settings-storage-directory");
+
+export const settingsStorageStatus =
+    document.getElementById("settings-storage-status");    
+
 // ------------------------------------------------------------
 // DOM — Paramètres du plan
 // ------------------------------------------------------------

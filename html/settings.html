@@ -57,6 +57,47 @@
     <section class="settings-section">
         <h3>Données</h3>
 
+<div class="settings-storage-target">
+    <div class="settings-row settings-storage-target-row">
+        <div class="settings-storage-target-text">
+            <strong>Emplacement des données</strong>
+
+            <p class="settings-help">
+                Wilf conserve toujours une copie locale pour fonctionner hors connexion.
+            </p>
+        </div>
+
+        <div
+            class="settings-storage-target-actions"
+            role="group"
+            aria-label="Emplacement des données"
+        >
+            <button
+                id="settings-storage-device"
+                type="button"
+                class="active"
+                aria-pressed="true"
+            >
+                Cet appareil
+            </button>
+
+            <button
+                id="settings-storage-directory"
+                type="button"
+                aria-pressed="false"
+            >
+                Choisir un dossier
+            </button>
+        </div>
+    </div>
+
+    <p
+        id="settings-storage-status"
+        class="settings-storage-status"
+        aria-live="polite"
+    ></p>
+</div>
+
         <div class="settings-data-actions">
             <button id="export-backup-button" type="button">
                 Sauvegarder mes données

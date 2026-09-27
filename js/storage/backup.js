@@ -5,6 +5,10 @@ import {
 } from "./storage-provider.js";
 
 import {
+    saveNativeTextFile
+} from "./storage-target.js";
+
+import {
     hydratePlan,
     loadPlans,
     savePlanNow
@@ -85,17 +89,39 @@ const backup = {
     settings: settings ?? null
 };
 
+    const content =
+        JSON.stringify(backup, null, 2);
+
+    const date =
+        new Date()
+            .toISOString()
+            .slice(0, 10);
+
+    const fileName =
+        `wilf-workout-backup-${date}.wilf`;
+
+    const nativeResult =
+        await saveNativeTextFile({
+            fileName,
+            content,
+            mimeType: "application/json"
+        });
+
+    if (nativeResult !== null) return;
+
     const blob = new Blob(
-        [JSON.stringify(backup, null, 2)],
+        [content],
         { type: "application/json" }
     );
 
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    const date = new Date().toISOString().slice(0, 10);
+    const url =
+        URL.createObjectURL(blob);
+
+    const link =
+        document.createElement("a");
 
     link.href = url;
-    link.download = `wilf-workout-backup-${date}.wilf`;
+    link.download = fileName;
 
     document.body.appendChild(link);
     link.click();
