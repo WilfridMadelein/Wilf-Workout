@@ -1383,6 +1383,7 @@ async function initializeApp() {
     setupStorageTargetSync();
     setupStorageSyncController();
     await setupSyncLifecycle();
+    window.inspectWilfStorageSync = inspectStorageSync;
     setupDefaultPlanFilters();
     setupPlanDefaultInputs();
     setupWorkoutSummary();
