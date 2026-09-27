@@ -3,6 +3,10 @@
 // ============================================================
 
 import {
+    inspectStorageSync
+} from "./storage/storage-sync-inspection.js";
+
+import {
     setupStorageTargetSync
 } from "./storage/storage-target-sync.js";
 
@@ -1311,6 +1315,8 @@ try {
     setupSettingsController();
     await setupStorageTargetController();
     setupStorageTargetSync();
+    window.inspectWilfStorageSync =
+        inspectStorageSync;
     setupDefaultPlanFilters();
     setupPlanDefaultInputs();
     setupWorkoutSummary();

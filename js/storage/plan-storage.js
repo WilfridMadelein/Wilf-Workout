@@ -5,6 +5,10 @@ import {
 } from "./storage-provider.js";
 
 import {
+    recordDeletion
+} from "./sync-metadata.js";
+
+import {
     normalizeSplitOrder
 } from "../exercises/exercise-split.js";
 
@@ -380,7 +384,19 @@ function schedulePlanSave(plan, delay = 250) {
 async function deletePlanFromStorage(id) {
     clearTimeout(saveTimers.get(id));
     saveTimers.delete(id);
-    await deleteStoredPlan(id);
+
+    await recordDeletion("plans", id);
+
+    try {
+        await deleteStoredPlan(id);
+    } catch (error) {
+        console.error(
+            `Impossible de supprimer le plan ${id}.`,
+            error
+        );
+
+        throw error;
+    }
 }
 
 export {

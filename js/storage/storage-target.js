@@ -101,11 +101,39 @@ async function writeStorageDirectoryFile({
     });
 }
 
+async function readStorageDirectoryFile({
+    directoryUri,
+    fileUri = null,
+    fileName
+}) {
+    const plugin =
+        getWilfStoragePlugin();
+
+    if (!plugin) {
+        throw new Error(
+            "La lecture du dossier n'est pas disponible sur cette plateforme."
+        );
+    }
+
+    if (!directoryUri) {
+        throw new Error(
+            "Aucun dossier de données n'est sélectionné."
+        );
+    }
+
+    return plugin.readDirectoryTextFile({
+        directoryUri,
+        fileUri,
+        fileName
+    });
+}
+
 export {
     isStorageDirectoryAvailable,
     chooseStorageDirectory,
     hasStorageDirectoryAccess,
     releaseStorageDirectory,
     saveNativeTextFile,
-    writeStorageDirectoryFile
+    writeStorageDirectoryFile,
+    readStorageDirectoryFile,
 };

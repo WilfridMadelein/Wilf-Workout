@@ -22,6 +22,10 @@ import android.content.ContentResolver;
 import android.database.Cursor;
 import android.provider.DocumentsContract;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
 // ============================================================
 // STOCKAGE ANDROID — STORAGE ACCESS FRAMEWORK
 // ============================================================
@@ -534,4 +538,129 @@ private Uri findDirectoryFile(
 
     return null;
 }  
+
+@PluginMethod
+public void readDirectoryTextFile(
+    PluginCall call
+) {
+    String directoryUriValue =
+        call.getString("directoryUri");
+
+    String fileUriValue =
+        call.getString("fileUri");
+
+    String fileName =
+        call.getString("fileName");
+
+    if (
+        directoryUriValue == null ||
+        directoryUriValue.isBlank()
+    ) {
+        call.reject(
+            "URI du dossier manquante."
+        );
+        return;
+    }
+
+    if (
+        fileName == null ||
+        fileName.isBlank()
+    ) {
+        call.reject(
+            "Nom du fichier manquant."
+        );
+        return;
+    }
+
+    Uri treeUri =
+        Uri.parse(directoryUriValue);
+
+    ContentResolver resolver =
+        getContext().getContentResolver();
+
+    try {
+        Uri fileUri = null;
+
+        if (
+            fileUriValue != null &&
+            !fileUriValue.isBlank()
+        ) {
+            fileUri =
+                Uri.parse(fileUriValue);
+        } else {
+            fileUri =
+                findDirectoryFile(
+                    resolver,
+                    treeUri,
+                    fileName
+                );
+        }
+
+        JSObject response =
+            new JSObject();
+
+        if (fileUri == null) {
+            response.put("exists", false);
+            call.resolve(response);
+            return;
+        }
+
+        StringBuilder content =
+            new StringBuilder();
+
+        try (
+            InputStream input =
+                resolver.openInputStream(
+                    fileUri
+                )
+        ) {
+            if (input == null) {
+                call.reject(
+                    "Impossible d'ouvrir le fichier de données."
+                );
+                return;
+            }
+
+            try (
+                BufferedReader reader =
+                    new BufferedReader(
+                        new InputStreamReader(
+                            input,
+                            StandardCharsets.UTF_8
+                        )
+                    )
+            ) {
+                String line;
+
+                while (
+                    (line = reader.readLine()) != null
+                ) {
+                    content
+                        .append(line)
+                        .append('\n');
+                }
+            }
+        }
+
+        response.put("exists", true);
+        response.put(
+            "uri",
+            fileUri.toString()
+        );
+        response.put(
+            "content",
+            content.toString()
+        );
+
+        call.resolve(response);
+    } catch (
+        IOException |
+        SecurityException error
+    ) {
+        call.reject(
+            "Impossible de lire les données Wilf.",
+            error
+        );
+    }
+}
 }

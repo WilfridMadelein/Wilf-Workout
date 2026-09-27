@@ -4,6 +4,10 @@ import {
     deleteStoredWorkoutHistory
 } from "./storage-provider.js";
 
+import {
+    recordDeletion
+} from "./sync-metadata.js";
+
 // ============================================================
 // STOCKAGE DE L'HISTORIQUE D'ENTRAÎNEMENT
 // ============================================================
@@ -156,6 +160,11 @@ async function saveWorkoutHistoryNow(
 
 async function deleteWorkoutHistoryFromStorage(id) {
     if (!id) return;
+
+    await recordDeletion(
+        "workoutHistory",
+        id
+    );
 
     await deleteStoredWorkoutHistory(id);
 }
