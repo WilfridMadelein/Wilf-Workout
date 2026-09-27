@@ -88,6 +88,7 @@ async function setupStorageTargetController() {
             if (granted === false) {
                 config.type = "device";
                 config.directoryUri = null;
+                config.dataFileUri = null;
                 config =
                     await saveStorageTargetConfig(
                         config
@@ -110,6 +111,7 @@ async function setupStorageTargetController() {
 
         current.type = "device";
         current.directoryUri = null;
+        current.dataFileUri = null;
 
         try {
             await saveStorageTargetConfig(current);
@@ -150,12 +152,15 @@ async function setupStorageTargetController() {
             let current =
                 getStorageTargetConfig();
 
-            const previousUri =
-                current.directoryUri;
+const previousUri =
+    current.directoryUri;
 
-            current.type = "directory";
-            current.directoryUri =
-                selected.uri;
+current.type = "directory";
+current.directoryUri = selected.uri;
+
+if (previousUri !== selected.uri) {
+    current.dataFileUri = null;
+}
 
             await saveStorageTargetConfig(
                 current

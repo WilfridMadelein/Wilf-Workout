@@ -8,7 +8,7 @@ import {
 // ============================================================
 
 const STORAGE_TARGET_ID = "storage-target";
-const STORAGE_TARGET_SCHEMA_VERSION = 1;
+const STORAGE_TARGET_SCHEMA_VERSION = 2;
 
 function createDefaultStorageTargetConfig() {
     return {
@@ -16,7 +16,8 @@ function createDefaultStorageTargetConfig() {
         schemaVersion: STORAGE_TARGET_SCHEMA_VERSION,
         updatedAt: Date.now(),
         type: "device",
-        directoryUri: null
+        directoryUri: null,
+        dataFileUri: null
     };
 }
 
@@ -26,39 +27,57 @@ function normalizeStorageTargetConfig(config = {}) {
             ? config.directoryUri
             : null;
 
+    const directorySelected =
+        config.type === "directory" &&
+        Boolean(directoryUri);
+
+    const dataFileUri =
+        directorySelected &&
+        typeof config.dataFileUri === "string" &&
+        config.dataFileUri
+            ? config.dataFileUri
+            : null;
+
     return {
         id: STORAGE_TARGET_ID,
         schemaVersion: STORAGE_TARGET_SCHEMA_VERSION,
         updatedAt: Number(config.updatedAt) || Date.now(),
-        type:
-            config.type === "directory" && directoryUri
-                ? "directory"
-                : "device",
-        directoryUri
+        type: directorySelected ? "directory" : "device",
+        directoryUri: directorySelected ? directoryUri : null,
+        dataFileUri
     };
 }
 
 async function loadStorageTargetConfig() {
-    const stored = await getStoredSetting(STORAGE_TARGET_ID);
+    const stored =
+        await getStoredSetting(STORAGE_TARGET_ID);
 
-    if (stored) return normalizeStorageTargetConfig(stored);
+    if (stored) {
+        return normalizeStorageTargetConfig(stored);
+    }
 
-    const config = createDefaultStorageTargetConfig();
+    const config =
+        createDefaultStorageTargetConfig();
+
     await putStoredSetting(config);
+
     return config;
 }
 
 async function saveStorageTargetConfig(config) {
-    config.updatedAt = Date.now();
-
-    const record = normalizeStorageTargetConfig(config);
-    record.updatedAt = config.updatedAt;
+    const record =
+        normalizeStorageTargetConfig({
+            ...config,
+            updatedAt: Date.now()
+        });
 
     await putStoredSetting(record);
+
     return record;
 }
 
 export {
+    STORAGE_TARGET_ID,
     createDefaultStorageTargetConfig,
     loadStorageTargetConfig,
     saveStorageTargetConfig

@@ -72,11 +72,13 @@ async function saveNativeTextFile({
 
 async function writeStorageDirectoryFile({
     directoryUri,
+    fileUri = null,
     fileName,
     content,
     mimeType = "application/json"
 }) {
-    const plugin = getWilfStoragePlugin();
+    const plugin =
+        getWilfStoragePlugin();
 
     if (!plugin) {
         throw new Error(
@@ -92,6 +94,7 @@ async function writeStorageDirectoryFile({
 
     return plugin.writeDirectoryTextFile({
         directoryUri,
+        fileUri,
         fileName,
         content,
         mimeType

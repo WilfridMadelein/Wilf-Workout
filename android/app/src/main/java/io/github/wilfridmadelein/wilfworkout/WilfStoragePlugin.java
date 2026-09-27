@@ -294,6 +294,9 @@ public void writeDirectoryTextFile(
     String directoryUriValue =
         call.getString("directoryUri");
 
+    String fileUriValue =
+        call.getString("fileUri");
+
     String fileName =
         call.getString("fileName");
 
@@ -334,65 +337,72 @@ public void writeDirectoryTextFile(
             .getContentResolver();
 
     try {
-        Uri fileUri =
-            findDirectoryFile(
-                resolver,
-                treeUri,
-                fileName
-            );
+        Uri fileUri = null;
 
-        if (fileUri == null) {
-            String treeDocumentId =
-                DocumentsContract
-                    .getTreeDocumentId(
-                        treeUri
-                    );
-
-            Uri parentUri =
-                DocumentsContract
-                    .buildDocumentUriUsingTree(
-                        treeUri,
-                        treeDocumentId
-                    );
-
-            fileUri =
-                DocumentsContract
-                    .createDocument(
-                        resolver,
-                        parentUri,
-                        mimeType,
-                        fileName
-                    );
-        }
-
-        if (fileUri == null) {
-            call.reject(
-                "Impossible de créer le fichier de données."
-            );
-            return;
-        }
-
-        try (
-            OutputStream output =
-                resolver.openOutputStream(
-                    fileUri,
-                    "wt"
-                )
+        /*
+         * Si Wilf connaît déjà exactement son fichier,
+         * on le réutilise directement.
+         */
+        if (
+            fileUriValue != null &&
+            !fileUriValue.isBlank()
         ) {
-            if (output == null) {
+            fileUri =
+                Uri.parse(fileUriValue);
+
+            writeTextToUri(
+                resolver,
+                fileUri,
+                content
+            );
+        } else {
+            /*
+             * Première écriture seulement :
+             * recherche ou création du fichier.
+             */
+            fileUri =
+                findDirectoryFile(
+                    resolver,
+                    treeUri,
+                    fileName
+                );
+
+            if (fileUri == null) {
+                String treeDocumentId =
+                    DocumentsContract
+                        .getTreeDocumentId(
+                            treeUri
+                        );
+
+                Uri parentUri =
+                    DocumentsContract
+                        .buildDocumentUriUsingTree(
+                            treeUri,
+                            treeDocumentId
+                        );
+
+                fileUri =
+                    DocumentsContract
+                        .createDocument(
+                            resolver,
+                            parentUri,
+                            mimeType,
+                            fileName
+                        );
+            }
+
+            if (fileUri == null) {
                 call.reject(
-                    "Impossible d'ouvrir le fichier de données."
+                    "Impossible de créer le fichier de données."
                 );
                 return;
             }
 
-            output.write(
-                content.getBytes(
-                    StandardCharsets.UTF_8
-                )
+            writeTextToUri(
+                resolver,
+                fileUri,
+                content
             );
-
-            output.flush();
         }
 
         JSObject response =
@@ -412,6 +422,34 @@ public void writeDirectoryTextFile(
             "Impossible d'écrire la copie durable des données.",
             error
         );
+    }
+}
+
+private void writeTextToUri(
+    ContentResolver resolver,
+    Uri fileUri,
+    String content
+) throws IOException {
+    try (
+        OutputStream output =
+            resolver.openOutputStream(
+                fileUri,
+                "wt"
+            )
+    ) {
+        if (output == null) {
+            throw new IOException(
+                "Impossible d'ouvrir le fichier en écriture."
+            );
+        }
+
+        output.write(
+            content.getBytes(
+                StandardCharsets.UTF_8
+            )
+        );
+
+        output.flush();
     }
 }
 

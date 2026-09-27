@@ -1,14 +1,15 @@
 import {
-    getStoredSetting
-} from "./storage-provider.js";
-
-import {
     subscribeStorageChanges
 } from "./storage-change-events.js";
 
 import {
     createStorageSnapshot
 } from "./storage-snapshot.js";
+
+import {
+    loadStorageTargetConfig,
+    saveStorageTargetConfig
+} from "./storage-target-config.js";
 
 import {
     isStorageDirectoryAvailable,
@@ -19,9 +20,6 @@ import {
 // COPIE AUTOMATIQUE VERS LE DOSSIER CHOISI
 // ============================================================
 
-const STORAGE_TARGET_ID =
-    "storage-target";
-
 const STORAGE_DATA_FILE =
     "wilf-workout-data.wilf";
 
@@ -30,7 +28,7 @@ let syncRunning = false;
 let syncPending = false;
 let unsubscribeStorageChanges = null;
 
-function scheduleStorageTargetSync(delay = 750) {
+function scheduleStorageTargetSync(delay = 3000) {
     clearTimeout(syncTimer);
 
     syncTimer = setTimeout(() => {
@@ -48,13 +46,11 @@ async function syncStorageTargetNow() {
     syncRunning = true;
 
     try {
-        const config =
-            await getStoredSetting(
-                STORAGE_TARGET_ID
-            );
+        let config =
+            await loadStorageTargetConfig();
 
         if (
-            config?.type !== "directory" ||
+            config.type !== "directory" ||
             !config.directoryUri
         ) {
             return false;
@@ -67,23 +63,44 @@ async function syncStorageTargetNow() {
         const snapshot =
             await createStorageSnapshot();
 
-        await writeStorageDirectoryFile({
-            directoryUri:
-                config.directoryUri,
+        const result =
+            await writeStorageDirectoryFile({
+                directoryUri:
+                    config.directoryUri,
 
-            fileName:
-                STORAGE_DATA_FILE,
+                fileUri:
+                    config.dataFileUri,
 
-            content:
-                JSON.stringify(
-                    snapshot,
-                    null,
-                    2
-                ),
+                fileName:
+                    STORAGE_DATA_FILE,
 
-            mimeType:
-                "application/json"
-        });
+                content:
+                    JSON.stringify(
+                        snapshot,
+                        null,
+                        2
+                    ),
+
+                mimeType:
+                    "application/json"
+            });
+
+        /*
+         * Première écriture :
+         * conserver l'URI exacte du document créé.
+         */
+        if (
+            result?.uri &&
+            result.uri !== config.dataFileUri
+        ) {
+            config.dataFileUri =
+                result.uri;
+
+            config =
+                await saveStorageTargetConfig(
+                    config
+                );
+        }
 
         return true;
     } catch (error) {
@@ -98,7 +115,7 @@ async function syncStorageTargetNow() {
 
         if (syncPending) {
             syncPending = false;
-            scheduleStorageTargetSync(250);
+            scheduleStorageTargetSync(500);
         }
     }
 }
@@ -107,15 +124,22 @@ function setupStorageTargetSync() {
     if (unsubscribeStorageChanges) return;
 
     unsubscribeStorageChanges =
-        subscribeStorageChanges(
-            () =>
-                scheduleStorageTargetSync()
-        );
+        subscribeStorageChanges(change => {
+            /*
+             * Modifier la configuration du stockage
+             * ne signifie pas que les données utilisateur
+             * elles-mêmes ont changé.
+             */
+            if (
+                change?.store === "settings" &&
+                change?.id === "storage-target"
+            ) {
+                return;
+            }
 
-    /*
-     * Met aussi à jour la copie au démarrage,
-     * si un dossier avait déjà été choisi.
-     */
+            scheduleStorageTargetSync();
+        });
+
     scheduleStorageTargetSync(0);
 }
 
