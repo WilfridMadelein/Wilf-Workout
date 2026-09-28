@@ -162,6 +162,15 @@ async function fingerprintSettings(settings) {
     return fingerprintValue(syncableSettings);
 }
 
+async function fingerprintSettings(settings) {
+    if (!settings) return null;
+
+    const comparable = structuredClone(settings);
+    delete comparable.updatedAt;
+
+    return fingerprintValue(comparable);
+}
+
 async function createSyncBaseline(snapshot) {
     const [
         plans,

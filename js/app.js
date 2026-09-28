@@ -239,7 +239,6 @@ settingsStorageDeviceButton,
 settingsStorageDirectoryButton,
 settingsStorageStatus,
 settingsSyncStatus,
-settingsSyncButton,
 settingsSharedSyncFilePanel,
 settingsSharedSyncFileButton,
 settingsSharedSyncFileDisconnect,
@@ -714,7 +713,6 @@ configureStorageTargetController({
 });
 
 configureStorageSyncController({
-    syncButton: settingsSyncButton,
     statusElement: settingsSyncStatus,
     inspectSync: inspectStorageSync,
     syncNow: syncStorageBidirectionalNow,
