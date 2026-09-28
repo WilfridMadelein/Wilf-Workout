@@ -64,7 +64,6 @@ async function refreshStorageSyncInterface() {
     } catch (error) {
         console.error("Impossible de vérifier la synchronisation :", error);
         setSyncStatus("Impossible de vérifier la synchronisation.", "error");
-        syncButton.disabled = false;
     }
 }
 

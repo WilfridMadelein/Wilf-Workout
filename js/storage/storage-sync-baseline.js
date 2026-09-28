@@ -156,15 +156,6 @@ async function createCollectionBaseline(
 async function fingerprintSettings(settings) {
     if (!settings) return null;
 
-    const syncableSettings = { ...settings };
-    delete syncableSettings.updatedAt;
-
-    return fingerprintValue(syncableSettings);
-}
-
-async function fingerprintSettings(settings) {
-    if (!settings) return null;
-
     const comparable = structuredClone(settings);
     delete comparable.updatedAt;
 
