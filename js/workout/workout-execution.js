@@ -9,6 +9,7 @@ import {
     isLastPendingTargetInSet,
     saveWorkoutTargetDraft,
     saveWorkoutTargetLog,
+    setWorkoutTargetReserveToFailure,
     getRestAfterWorkoutTarget
 } from "./workout-session.js";
 
@@ -478,43 +479,29 @@ applyWorkoutLogToFollowingSeries(
     values
 );
 
-    const next =
-        getNextPendingWorkoutTarget(
-            session,
-            loggedTarget
-        );
+const next = getNextPendingWorkoutTarget(session, loggedTarget);
+const restSeconds = getRestAfterWorkoutTarget(loggedTarget, next);
 
-    // Plus rien à exécuter.
-    if (!next) {
-        showOverview();
-        return;
-    }
+{
+    startWorkoutRestTimer(restSeconds, {
+        feedback: {
+            value: values.value,
+            valueUnit: values.valueUnit,
+            reserveToFailure: null,
+            onChange: reserve => setWorkoutTargetReserveToFailure(loggedTarget, reserve)
+        },
+        onComplete: () => currentExerciseView?.setLogAvailable(true)
+    });
 
-    const restSeconds =
-    getRestAfterWorkoutTarget(
-        loggedTarget,
-        next
-    );
+    if (session.isPaused) pauseWorkoutRestTimer();
+}
 
-    if (restSeconds > 0) {
-        startWorkoutRestTimer(
-            restSeconds,
-            {
-                onComplete: () => {
-                    currentExerciseView
-                        ?.setLogAvailable(
-                            true
-                        );
-                }
-            }
-        );
+if (!next) {
+    showOverview();
+    return;
+}
 
-        if (session.isPaused) {
-            pauseWorkoutRestTimer();
-        }
-    }
-
-    showExercise(next);
+showExercise(next);
 }
 
 // ============================================================

@@ -8,6 +8,12 @@ import {
 import { getProgressionName } from "../exercises/exercise-search.js";
 
 import {
+    formatReserveToFailure,
+    getReserveToFailureOptions,
+    normalizeReserveToFailure
+} from "../training/reserve-to-failure.js";
+
+import {
     getWorkoutSideLabel,
     getWorkoutTargetValues,
     isWorkoutSeriesCompleted
@@ -59,6 +65,42 @@ function createUnitSelect(values, selected, onChange) {
 
     select.addEventListener("change", () => {
         onChange(select.value);
+    });
+
+    return select;
+}
+
+function createReserveToFailureSelect(draft) {
+    const select = document.createElement("select");
+
+    const empty = document.createElement("option");
+    empty.value = "";
+    empty.textContent = "Non renseigné";
+    select.appendChild(empty);
+
+    const values = getReserveToFailureOptions(draft.value, draft.valueUnit);
+    const current = normalizeReserveToFailure(draft.reserveToFailure);
+
+    values.forEach(value => {
+        const option = document.createElement("option");
+        option.value = String(value);
+        option.textContent = value === values.at(-1)
+            ? `${value} + ${draft.valueUnit === "sec" ? "sec" : "rep"}`
+            : formatReserveToFailure(value, draft.valueUnit);
+        select.appendChild(option);
+    });
+
+    if (current !== null && !values.includes(current)) {
+        const option = document.createElement("option");
+        option.value = String(current);
+        option.textContent = formatReserveToFailure(current, draft.valueUnit);
+        select.appendChild(option);
+    }
+
+    select.value = current === null ? "" : String(current);
+
+    select.addEventListener("change", () => {
+        draft.reserveToFailure = normalizeReserveToFailure(select.value);
     });
 
     return select;
@@ -385,6 +427,16 @@ heading.appendChild(seriesContext);
         createControlRow("Poids", weight),
         createControlRow("Tempo", tempo)
     );
+
+if (completed) {
+    const reserve = document.createElement("div");
+    reserve.classList.add("workout-exercise-control-values");
+    reserve.appendChild(createReserveToFailureSelect(draft));
+
+    controls.appendChild(
+        createControlRow("Réserve avant échec", reserve)
+    );
+}
 
     // ========================================================
     // INSTRUCTIONS

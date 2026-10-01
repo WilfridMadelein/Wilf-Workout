@@ -12,11 +12,34 @@ import {
 // STOCKAGE DE L'HISTORIQUE D'ENTRAÎNEMENT
 // ============================================================
 
-const WORKOUT_HISTORY_SCHEMA_VERSION = 1;
+const WORKOUT_HISTORY_SCHEMA_VERSION = 2;
 
 // ------------------------------------------------------------
 // Migration
 // ------------------------------------------------------------
+
+function normalizeReserveToFailureLogs(session) {
+    session.sets?.forEach(set => set.exercises?.forEach(workoutExercise => {
+        workoutExercise.series?.forEach(series => {
+            Object.values(series.logs ?? {}).forEach(log => {
+                if (!log || typeof log !== "object") return;
+
+                const reserve = log.reserveToFailure;
+
+                if (reserve === null || reserve === undefined || reserve === "") {
+                    log.reserveToFailure = null;
+                    return;
+                }
+
+                const value = Number(reserve);
+                log.reserveToFailure =
+                    Number.isFinite(value) && value >= 0
+                        ? value
+                        : null;
+            });
+        });
+    }));
+}
 
 function migrateWorkoutHistoryRecord(record) {
     const session = structuredClone(record);
@@ -53,13 +76,15 @@ function migrateWorkoutHistoryRecord(record) {
         Number(session.updatedAt) ||
         session.completedAt;
 
-    session.defaults ??= {
-        reps: 10,
-        time: 30
-    };
+session.defaults ??= {
+    reps: 10,
+    time: 30
+};
 
-    session.schemaVersion =
-        WORKOUT_HISTORY_SCHEMA_VERSION;
+normalizeReserveToFailureLogs(session);
+
+session.schemaVersion =
+    WORKOUT_HISTORY_SCHEMA_VERSION;
 
     return session;
 }

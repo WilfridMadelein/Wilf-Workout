@@ -1,3 +1,5 @@
+import { formatReserveToFailure } from "../training/reserve-to-failure.js";
+
 import {
     renderExerciseMuscleMap,
     destroyExerciseMuscleMapsIn
@@ -477,10 +479,16 @@ function createLogItem(
             entry.log
         );
 
-    row.append(
-        heading,
-        volume
-    );
+row.append(heading, volume);
+
+if (entry.log.reserveToFailure !== null && entry.log.reserveToFailure !== undefined) {
+    const reserve = document.createElement("span");
+    reserve.classList.add("workout-summary-log-reserve");
+    reserve.textContent =
+        `Réserve avant échec : ${formatReserveToFailure(entry.log.reserveToFailure, entry.log.valueUnit)}`;
+
+    row.appendChild(reserve);
+}
 
     if (
         entry.log.notes?.trim()

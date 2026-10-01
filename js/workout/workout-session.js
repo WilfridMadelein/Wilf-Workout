@@ -1,4 +1,5 @@
 import { isIsometricExercise } from "../exercises/exercise-search.js";
+import { normalizeReserveToFailure } from "../training/reserve-to-failure.js";
 
 import {
     getExerciseSplitType,
@@ -307,15 +308,16 @@ function getWorkoutTargetValues(target) {
         target.sideKey
     );
 
-    return {
-        value: log?.value ?? target.series.value,
-        valueUnit: log?.valueUnit ?? target.series.valueUnit,
-        weight: log?.weight ?? target.series.weight,
-        weightUnit: log?.weightUnit ?? target.series.weightUnit,
-        tempo: cloneTempo(log?.tempo ?? target.series.tempo),
-        rest: target.series.rest,
-        notes: log?.notes ?? target.series.notes ?? ""
-    };
+return {
+    value: log?.value ?? target.series.value,
+    valueUnit: log?.valueUnit ?? target.series.valueUnit,
+    weight: log?.weight ?? target.series.weight,
+    weightUnit: log?.weightUnit ?? target.series.weightUnit,
+    tempo: cloneTempo(log?.tempo ?? target.series.tempo),
+    rest: target.series.rest,
+    notes: log?.notes ?? target.series.notes ?? "",
+    reserveToFailure: log?.reserveToFailure ?? null
+};
 }
 
 function saveWorkoutTargetLog(target, values) {
@@ -325,18 +327,27 @@ function saveWorkoutTargetLog(target, values) {
             target.sideKey
         );
 
-    target.series.logs[target.sideKey] = {
-        value: values.value,
-        valueUnit: values.valueUnit,
-        weight: values.weight,
-        weightUnit: values.weightUnit,
-        tempo: cloneTempo(values.tempo),
-        rest: target.series.rest,
-        notes: values.notes ?? "",
-        completedAt:
-            previousLog?.completedAt ??
-            Date.now()
-    };
+target.series.logs[target.sideKey] = {
+    value: values.value,
+    valueUnit: values.valueUnit,
+    weight: values.weight,
+    weightUnit: values.weightUnit,
+    tempo: cloneTempo(values.tempo),
+    rest: target.series.rest,
+    notes: values.notes ?? "",
+    reserveToFailure: Object.hasOwn(values, "reserveToFailure")
+        ? normalizeReserveToFailure(values.reserveToFailure)
+        : normalizeReserveToFailure(previousLog?.reserveToFailure),
+    completedAt: previousLog?.completedAt ?? Date.now()
+};
+}
+
+function setWorkoutTargetReserveToFailure(target, value) {
+    const log = getWorkoutSeriesLog(target.series, target.sideKey);
+    if (!log?.completedAt) return false;
+
+    log.reserveToFailure = normalizeReserveToFailure(value);
+    return true;
 }
 
 function saveWorkoutTargetDraft(target, values) {
@@ -661,6 +672,7 @@ export {
     getWorkoutTargetValues,
     saveWorkoutTargetDraft,
     saveWorkoutTargetLog,
+    setWorkoutTargetReserveToFailure,
     applyWorkoutLogToFollowingSeries,
 
     updateWorkoutExerciseProgression,

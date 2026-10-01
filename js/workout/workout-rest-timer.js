@@ -1,3 +1,9 @@
+import {
+    formatReserveToFailure,
+    getReserveToFailureOptions,
+    normalizeReserveToFailure
+} from "../training/reserve-to-failure.js";
+
 // ============================================================
 // ÉTAT
 // ============================================================
@@ -8,6 +14,13 @@ let expandedClock;
 let compactClock;
 let minusButton;
 let plusButton;
+
+let reserveDialog;
+let reserveProgress;
+let reserveFeedback;
+let reserveQuestion;
+let reserveSelect;
+let reserveIgnoreButton;
 
 let timer = null;
 let interval = null;
@@ -77,7 +90,16 @@ function createRestTimer() {
                     +
                 </button>
             </div>
+<div class="workout-rest-feedback" hidden>
+    <label class="workout-rest-feedback-label">
+        <span id="workout-reserve-question" class="workout-rest-feedback-question"></span>
+        <select class="workout-rest-feedback-select"></select>
+    </label>
 
+    <button type="button" class="workout-rest-feedback-ignore">
+        Ignorer
+    </button>
+</div>
             <button
                 type="button"
                 class="workout-rest-skip"
@@ -123,8 +145,85 @@ function createRestTimer() {
         host.querySelector(
             ".workout-rest-plus"
         );
-
+reserveFeedback = host.querySelector(".workout-rest-feedback");
+reserveQuestion = host.querySelector(".workout-rest-feedback-question");
+reserveSelect = host.querySelector(".workout-rest-feedback-select");
+reserveIgnoreButton = host.querySelector(".workout-rest-feedback-ignore");
     page.appendChild(host);
+    reserveDialog = document.createElement("dialog");
+    reserveDialog.classList.add("workout-reserve-dialog");
+    reserveDialog.setAttribute("aria-labelledby", "workout-reserve-question");
+    reserveProgress = document.createElement("div");
+    reserveProgress.classList.add("workout-reserve-progress");
+    reserveProgress.setAttribute("aria-hidden", "true");
+    reserveDialog.appendChild(reserveProgress);
+    page.appendChild(reserveDialog);
+    reserveDialog.addEventListener("cancel", event => {
+        event.preventDefault();
+        finishReserveFeedback(null);
+    });
+}
+
+// ============================================================
+// FEEDBACK AVANT ÉCHEC
+// ============================================================
+
+function clearReserveFeedback() {
+    if (!reserveFeedback) return;
+
+    if (timer) timer.reserveFeedback = null;
+    if (reserveDialog.open) reserveDialog.close();
+    if (host.parentNode === reserveDialog) page.appendChild(host);
+    reserveFeedback.hidden = true;
+    reserveSelect.replaceChildren();
+}
+
+function finishReserveFeedback(value) {
+    if (!timer?.reserveFeedback) return;
+    const onChange = timer.reserveFeedback.onChange;
+    clearReserveFeedback();
+    onChange(value);
+    refreshRestTimer();
+}
+
+function configureReserveFeedback(feedback) {
+    clearReserveFeedback();
+    if (!feedback || !timer) return;
+
+    const valueUnit = feedback.valueUnit === "sec" ? "sec" : "rep";
+    const options = getReserveToFailureOptions(feedback.value, valueUnit);
+
+    reserveQuestion.textContent = valueUnit === "sec"
+        ? "Combien de secondes auriez-vous pu faire de plus avant l'échec ?"
+        : "Combien de répétitions auriez-vous pu faire de plus avant l'échec ?";
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Choisir...";
+    reserveSelect.appendChild(placeholder);
+
+    options.forEach(value => {
+        const option = document.createElement("option");
+        option.value = String(value);
+        option.textContent = value === options.at(-1)
+            ? `${value} + ${valueUnit}`
+            : formatReserveToFailure(value, valueUnit);
+        reserveSelect.appendChild(option);
+    });
+
+    const selected = normalizeReserveToFailure(feedback.reserveToFailure);
+    reserveSelect.value = selected === null ? "" : String(selected);
+
+    timer.reserveFeedback = {
+        endsAt: Date.now() + 30000,
+        onChange: feedback.onChange ?? (() => {})
+    };
+
+    reserveFeedback.hidden = false;
+    reserveProgress.style.transform = "scaleX(1)";
+    reserveDialog.appendChild(host);
+    reserveDialog.showModal();
+    reserveSelect.focus();
 }
 
 // ============================================================
@@ -151,6 +250,15 @@ function getRemainingSeconds() {
 
 function refreshRestTimer() {
     if (!timer) return;
+
+    if (timer.reserveFeedback) {
+        const remaining = Math.max(0, timer.reserveFeedback.endsAt - Date.now());
+        reserveProgress.style.transform = `scaleX(${remaining / 30000})`;
+        if (remaining <= 0) {
+            finishReserveFeedback(null);
+            return;
+        }
+    }
 
     const seconds =
         getRemainingSeconds();
@@ -195,9 +303,8 @@ function stopWorkoutRestTimer() {
     interval = null;
     timer = null;
 
-    if (host) {
-        host.hidden = true;
-    }
+    if (host) host.hidden = true;
+    clearReserveFeedback();
 
     page?.classList.remove(
         "has-active-rest"
@@ -205,7 +312,7 @@ function stopWorkoutRestTimer() {
 }
 
 function completeWorkoutRestTimer() {
-    if (!timer) return;
+    if (!timer || timer.reserveFeedback) return;
 
     const onComplete =
         timer.onComplete;
@@ -215,7 +322,10 @@ function completeWorkoutRestTimer() {
 }
 
 function skipWorkoutRestTimer() {
-    completeWorkoutRestTimer();
+    if (!timer) return;
+    timer.remainingSeconds = 0;
+    timer.endsAt = Date.now();
+    refreshRestTimer();
 }
 
 // ============================================================
@@ -232,7 +342,7 @@ function adjustWorkoutRestTimer(delta) {
         );
 
     if (next <= 0) {
-        completeWorkoutRestTimer();
+        skipWorkoutRestTimer();
         return;
     }
 
@@ -258,7 +368,7 @@ function expandWorkoutRestTimer() {
 }
 
 function collapseWorkoutRestTimer() {
-    if (!timer) return;
+    if (!timer || timer.reserveFeedback) return;
 
     timer.expanded = false;
     refreshRestTimer();
@@ -275,9 +385,6 @@ function pauseWorkoutRestTimer() {
         getRemainingSeconds();
 
     timer.paused = true;
-
-    clearInterval(interval);
-    interval = null;
 
     refreshRestTimer();
 }
@@ -302,7 +409,8 @@ function resumeWorkoutRestTimer() {
 function startWorkoutRestTimer(
     seconds,
     {
-        onComplete = () => {}
+        onComplete = () => {},
+        feedback = null
     } = {}
 ) {
     stopWorkoutRestTimer();
@@ -313,7 +421,7 @@ function startWorkoutRestTimer(
             Math.ceil(Number(seconds) || 0)
         );
 
-    if (duration <= 0) {
+    if (duration <= 0 && !feedback) {
         onComplete();
         return;
     }
@@ -331,6 +439,8 @@ function startWorkoutRestTimer(
     };
 
     host.hidden = false;
+    host.classList.add("is-expanded");
+    configureReserveFeedback(feedback);
 
     page.classList.add(
         "has-active-rest"
@@ -373,6 +483,19 @@ function setupWorkoutRestTimer(
             adjustWorkoutRestTimer(15);
         }
     );
+
+reserveSelect.addEventListener("change", event => {
+    event.stopPropagation();
+    if (!timer?.reserveFeedback) return;
+
+    finishReserveFeedback(normalizeReserveToFailure(reserveSelect.value));
+});
+
+reserveIgnoreButton.addEventListener("click", event => {
+    event.stopPropagation();
+
+    finishReserveFeedback(null);
+});
 
     host
         .querySelector(

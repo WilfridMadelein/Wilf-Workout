@@ -358,6 +358,120 @@ body.workout-execution-active {
 }
 
 /* =========================================================
+   FEEDBACK AVANT ÉCHEC
+========================================================= */
+
+.workout-rest-feedback[hidden] {
+    display: none;
+}
+
+.workout-reserve-dialog {
+    padding: 0;
+    border: none;
+    overflow: visible;
+    background: transparent;
+    max-width: none;
+    max-height: calc(100dvh - 24px);
+}
+
+.workout-reserve-dialog::backdrop {
+    background: rgb(0 0 0 / 65%);
+}
+
+.workout-reserve-dialog .workout-rest-timer {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    opacity: 1;
+}
+
+.workout-reserve-dialog .workout-rest-timer.is-expanded .workout-rest-expanded {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.workout-reserve-dialog .workout-rest-feedback {
+    order: -1;
+    margin: 0 0 16px;
+    padding: 0 0 16px;
+    border-top: none;
+    border-bottom: 1px solid #aaa;
+}
+
+.workout-reserve-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: #d96a00;
+    transform-origin: right center;
+    transition: transform 250ms linear;
+    pointer-events: none;
+}
+
+.workout-rest-feedback {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #ddd;
+}
+
+.workout-rest-feedback-label {
+    display: grid;
+    gap: 7px;
+}
+
+.workout-rest-feedback-question {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.workout-rest-feedback-select {
+    width: 100%;
+    padding: 8px 9px;
+    border: 1px solid #aaa;
+    border-radius: 7px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+}
+
+.workout-rest-feedback-ignore {
+    margin: 7px 0 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #666;
+    font: inherit;
+    font-size: 12px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+html[data-theme="dark"] .workout-rest-timer {
+    background: #242424;
+    border-color: #444;
+    color: #ededed;
+}
+
+html[data-theme="dark"] .workout-rest-feedback {
+    border-top-color: #444;
+}
+
+html[data-theme="dark"] .workout-rest-feedback-select {
+    border-color: #555;
+    background: #2b2b2b;
+    color: #ededed;
+}
+
+html[data-theme="dark"] .workout-rest-feedback-ignore {
+    color: #aaa;
+}
+
+/* =========================================================
    MODE SOMBRE
 ========================================================= */
 

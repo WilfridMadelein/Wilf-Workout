@@ -630,3 +630,12 @@ html[data-theme="dark"] .workout-summary-history-empty {
         gap: 8px;
     }
 }
+
+.workout-summary-log-reserve {
+    margin-top: 2px;
+    color: #666;
+}
+
+html[data-theme="dark"] .workout-summary-log-reserve {
+    color: #aaa;
+}
