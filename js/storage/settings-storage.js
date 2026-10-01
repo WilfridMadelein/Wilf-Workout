@@ -4,6 +4,10 @@ import {
 } from "./storage-provider.js";
 
 import {
+    normalizeProgressionPreferences
+} from "../training/progression-preferences.js";
+
+import {
     normalizeSplitOrder
 } from "../exercises/exercise-split.js";
 
@@ -12,7 +16,7 @@ import {
 // ============================================================
 
 const APP_SETTINGS_ID = "app";
-const SETTINGS_SCHEMA_VERSION = 2;
+const SETTINGS_SCHEMA_VERSION = 3;
 
 let saveTimer = null;
 
@@ -70,6 +74,7 @@ function createDefaultAppSettings() {
         alwaysShowInstructions: false,
         splitOrder: "left-right",
         lastWorkoutCompletionMessageId: null,
+        progressionPreferences: {},
         planDefaults: normalizePlanDefaults()
     };
 }
@@ -84,12 +89,15 @@ function normalizeAppSettings(settings = {}) {
         alwaysShowInstructions: settings.alwaysShowInstructions === true,
         splitOrder: normalizeSplitOrder(settings.splitOrder),
 
-        lastWorkoutCompletionMessageId:
-            typeof settings.lastWorkoutCompletionMessageId === "string"
-                ? settings.lastWorkoutCompletionMessageId
-                : null,
+lastWorkoutCompletionMessageId:
+    typeof settings.lastWorkoutCompletionMessageId === "string"
+        ? settings.lastWorkoutCompletionMessageId
+        : null,
 
-        planDefaults: normalizePlanDefaults(settings.planDefaults)
+progressionPreferences:
+    normalizeProgressionPreferences(settings.progressionPreferences),
+
+planDefaults: normalizePlanDefaults(settings.planDefaults)
     };
 }
 

@@ -1,0 +1,66 @@
+/* =========================================================
+   PRÉFÉRENCES DE PROGRESSION
+========================================================= */
+
+.progression-preference-select {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    padding: 0;
+    border: 2px solid rgba(0, 0, 0, 0.18);
+    border-radius: 50%;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: none;
+    color: transparent;
+    font-size: 0;
+    cursor: pointer;
+}
+
+.progression-preference-select.is-more { background: #2f9e44; }
+.progression-preference-select.is-neutral { background: #999; }
+.progression-preference-select.is-less { background: #f28c28; }
+.progression-preference-select.is-never { background: #c83c3c; }
+
+.progression-preference-select:focus-visible {
+    outline: 2px solid #555;
+    outline-offset: 2px;
+}
+
+.progression-preference-select option {
+    background: #fff;
+    color: #111;
+    font-size: 14px;
+}
+
+.exercise-progression-wrap {
+    flex-shrink: 0;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.exercise-progression-wrap .exercise-progression {
+    margin-left: 0;
+}
+
+.exercise-detail-progression {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+html[data-theme="dark"] .progression-preference-select {
+    border-color: rgba(255, 255, 255, 0.28);
+}
+
+html[data-theme="dark"] .progression-preference-select:focus-visible {
+    outline-color: #ddd;
+}
+
+html[data-theme="dark"] .progression-preference-select option {
+    background: #2b2b2b;
+    color: #ededed;
+}

@@ -219,6 +219,7 @@
 }
 
 .workout-summary-exercise-card {
+    container-type: inline-size;
     overflow: hidden;
 
     border: 1px solid #bbb;
@@ -232,8 +233,8 @@
     padding: 12px;
 
     display: grid;
-    grid-template-columns: 120px minmax(0, 1fr);
-    align-items: center;
+    grid-template-columns: clamp(36px, 16vw, 120px) minmax(0, 1fr);
+    align-items: start;
     gap: 16px;
 
     box-sizing: border-box;
@@ -248,7 +249,7 @@
     min-width: 0;
 
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 34px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: center;
     gap: 8px;
 }
@@ -261,51 +262,24 @@
     overflow-wrap: anywhere;
 }
 
-.workout-summary-exercise-total {
-    grid-column: 1;
-
-    font-size: 14px;
+.workout-summary-progression {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 7px;
+    color: #777;
+    font-size: 13px;
 }
 
-.workout-summary-details-toggle {
-    grid-column: 2;
-    grid-row: 1 / span 2;
-
-    width: 32px;
-    height: 32px;
-    padding: 0;
-
-    display: grid;
-    place-items: center;
-
-    border: none;
-    background: transparent;
-    color: inherit;
-
-    cursor: pointer;
+.workout-summary-progression span {
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
-.workout-summary-details-toggle::before {
-    content: "";
-
-    width: 8px;
-    height: 8px;
-
-    border-right: 2px solid currentColor;
-    border-bottom: 2px solid currentColor;
-
-    transform:
-        translateY(-2px)
-        rotate(45deg);
+html[data-theme="dark"] .workout-summary-progression {
+    color: #aaa;
 }
-
-.workout-summary-exercise-card.is-details-open
-.workout-summary-details-toggle::before {
-    transform:
-        translateY(2px)
-        rotate(-135deg);
-}
-
 
 /* =========================================================
    DÉTAILS DES LOGS
@@ -316,9 +290,8 @@
 }
 
 .workout-summary-exercise-details {
-    padding: 12px;
-
-    border-top: 1px solid #ddd;
+    grid-column: 1 / -1;
+    min-width: 0;
 }
 
 .workout-summary-log-list {
@@ -334,9 +307,24 @@
     gap: 6px;
 }
 
+.workout-summary-series-line {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+.workout-summary-series-line .workout-summary-log-item {
+    min-width: 0;
+}
+
+.workout-summary-series-separator {
+    padding-top: 5px;
+    font-size: 13px;
+}
+
 .workout-summary-log-row {
     width: 100%;
-    padding: 9px 10px;
+    padding: 4px 0;
 
     display: flex;
     flex-direction: column;
@@ -345,7 +333,7 @@
 
     box-sizing: border-box;
 
-    border: 1px solid #ccc;
+    border: 1px solid transparent;
     border-radius: 6px;
 
     background: transparent;
@@ -444,8 +432,8 @@ html[data-theme="dark"] .workout-summary-exercise-details {
     border-color: #444;
 }
 
-html[data-theme="dark"] .workout-summary-log-row {
-    border-color: #555;
+html[data-theme="dark"] .workout-summary-history-link {
+    color: #fff;
 }
 
 
@@ -453,14 +441,23 @@ html[data-theme="dark"] .workout-summary-log-row {
    RESPONSIVE
 ========================================================= */
 
-@media (max-width: 520px) {
+@container (max-width: 520px) {
     .workout-summary-exercise-main {
+        grid-template-columns: clamp(32px, 15cqi, 78px) minmax(0, 1fr);
+        padding: 8px;
+        gap: 8px;
+    }
+
+    .workout-summary-exercise-information {
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .workout-summary-exercise-map {
-        width: 105px;
-        justify-self: center;
+    .workout-summary-progression {
+        justify-content: flex-start;
+    }
+
+    .workout-summary-progression .progression-preference-select {
+        order: -1;
     }
 }
 
@@ -480,15 +477,17 @@ html[data-theme="dark"] .workout-summary-log-row {
 
 .workout-summary-history-link {
     grid-column: 1;
-    width: max-content;
+    max-width: 100%;
     padding: 0;
     border: none;
     background: transparent;
-    color: #d96a00;
+    color: inherit;
     font: inherit;
-    font-size: 14px;
-    font-weight: 700;
+    text-align: left;
+    overflow-wrap: anywhere;
     text-decoration: underline;
+    text-decoration-color: #d96a00;
+    text-decoration-thickness: 2px;
     text-underline-offset: 3px;
     cursor: pointer;
 }

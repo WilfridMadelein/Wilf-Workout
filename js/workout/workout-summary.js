@@ -1,4 +1,5 @@
-import { formatReserveToFailure } from "../training/reserve-to-failure.js";
+import { createProgressionPreferenceSelect } from "../training/progression-preferences.js";
+import { getProgressionId, getProgressionName } from "../exercises/exercise-search.js";
 
 import {
     renderExerciseMuscleMap,
@@ -18,7 +19,8 @@ import {
 
 import {
     getExerciseHistory,
-    getExerciseRecords
+    getExerciseRecords,
+    groupEntriesBySeries
 } from "../history/exercise-history.js";
 
 // ============================================================
@@ -107,9 +109,14 @@ function formatSeriesVolume(log) {
     }
 
     return (
-        `${volume} X ` +
+        `${volume} x ` +
         `${log.weight} ${log.weightUnit}`
     );
+}
+
+function formatSeriesEntry(entry) {
+    const side = entry.sideKey === "left" ? "G: " : entry.sideKey === "right" ? "D: " : "";
+    return `${side}${formatSeriesVolume(entry.log)}`;
 }
 
 // ============================================================
@@ -240,66 +247,6 @@ function groupCompletedEntriesByExercise(entries) {
     return [...groups.values()];
 }
 
-function getExerciseTotals(group) {
-    let repetitions = 0;
-    let seconds = 0;
-
-    group.entries.forEach(entry => {
-        const value =
-            Math.max(
-                0,
-                Number(entry.log.value) || 0
-            );
-
-        if (
-            entry.log.valueUnit === "sec"
-        ) {
-            seconds += value;
-            return;
-        }
-
-        const multiplier =
-            entry.workoutExercise.splitType ===
-            "alternate"
-                ? 2
-                : 1;
-
-        repetitions +=
-            value * multiplier;
-    });
-
-    return {
-        repetitions,
-        seconds
-    };
-}
-
-function formatExerciseTotals(group) {
-    const {
-        repetitions,
-        seconds
-    } = getExerciseTotals(group);
-
-    const parts = [];
-
-    if (repetitions > 0) {
-        parts.push(
-            `${repetitions} répétition` +
-            `${repetitions !== 1 ? "s" : ""}`
-        );
-    }
-
-    if (seconds > 0) {
-        parts.push(
-            formatDuration(seconds)
-        );
-    }
-
-    return parts.length
-        ? `Total : ${parts.join(" · ")}`
-        : "Total : —";
-}
-
 // ============================================================
 // CONFETTIS
 // ============================================================
@@ -363,31 +310,7 @@ function launchOrangeConfetti(
 // DÉTAILS D'UN EXERCICE
 // ============================================================
 
-function setDetailsOpen(card, open) {
-    const details =
-        card.querySelector(
-            ".workout-summary-exercise-details"
-        );
-
-    const toggle =
-        card.querySelector(
-            ".workout-summary-details-toggle"
-        );
-
-    card.classList.toggle(
-        "is-details-open",
-        open
-    );
-
-    details.hidden = !open;
-
-    toggle.setAttribute(
-        "aria-expanded",
-        String(open)
-    );
-
-    if (open) return;
-
+function clearLogSelection(card) {
     card
         .querySelectorAll(
             ".workout-summary-log-row.is-selected"
@@ -404,23 +327,6 @@ function setDetailsOpen(card, open) {
         )
         .forEach(button => {
             button.hidden = true;
-        });
-}
-
-function closeOtherDetails(
-    currentCard = null
-) {
-    page
-        .querySelectorAll(
-            ".workout-summary-exercise-card.is-details-open"
-        )
-        .forEach(card => {
-            if (card !== currentCard) {
-                setDetailsOpen(
-                    card,
-                    false
-                );
-            }
         });
 }
 
@@ -454,57 +360,15 @@ function createLogItem(
     row.dataset.sideKey =
         entry.sideKey;
 
-    const heading =
-        document.createElement("strong");
-
-    const sideLabel =
-        getWorkoutSideLabel(
-            entry.sideKey
-        );
-
-    heading.textContent =
-        `Set ${entry.set.group} · ` +
-        `Série ${entry.series.number}` +
-        (
-            sideLabel
-                ? ` | ${sideLabel}`
-                : ""
-        );
+    const sideLabel = getWorkoutSideLabel(entry.sideKey);
+    row.setAttribute("aria-label", `Série ${entry.series.number}${sideLabel ? ` | ${sideLabel}` : ""} : ${formatSeriesVolume(entry.log)}`);
 
     const volume =
         document.createElement("span");
 
-    volume.textContent =
-        formatSeriesVolume(
-            entry.log
-        );
+    volume.textContent = formatSeriesEntry(entry);
 
-row.append(heading, volume);
-
-if (entry.log.reserveToFailure !== null && entry.log.reserveToFailure !== undefined) {
-    const reserve = document.createElement("span");
-    reserve.classList.add("workout-summary-log-reserve");
-    reserve.textContent =
-        `Réserve avant échec : ${formatReserveToFailure(entry.log.reserveToFailure, entry.log.valueUnit)}`;
-
-    row.appendChild(reserve);
-}
-
-    if (
-        entry.log.notes?.trim()
-    ) {
-        const note =
-            document.createElement("span");
-
-        note.classList.add(
-            "workout-summary-log-note"
-        );
-
-        note.textContent =
-            `Note : ${entry.log.notes.trim()}`;
-
-        row.appendChild(note);
-    }
+    row.appendChild(volume);
 
     const editButton =
         document.createElement("button");
@@ -636,44 +500,21 @@ function createExerciseSummaryCard(
     const name =
         document.createElement("h3");
 
-    name.textContent =
-        group.exercise.nom;
+    const historyButton = document.createElement("button");
+    historyButton.type = "button";
+    historyButton.classList.add("workout-summary-history-link");
+    historyButton.textContent = group.exercise.nom;
+    historyButton.setAttribute("aria-label", `Historique de ${group.exercise.nom}`);
+    name.appendChild(historyButton);
 
-    const total =
-        document.createElement("strong");
-
-    total.classList.add(
-        "workout-summary-exercise-total"
-    );
-
-    total.textContent =
-        formatExerciseTotals(group);
-
-    const toggle =
-        document.createElement("button");
-
-    toggle.type = "button";
-
-    toggle.classList.add(
-        "workout-summary-details-toggle"
-    );
-
-    toggle.setAttribute(
-        "aria-expanded",
-        "false"
-    );
-
-    toggle.setAttribute(
-        "aria-label",
-        `Voir les séries de ${group.exercise.nom}`
-    );
-
-const historyButton = document.createElement("button");
-historyButton.type = "button";
-historyButton.classList.add("workout-summary-history-link");
-historyButton.textContent = "Historique";
-
-information.append(name, total, historyButton, toggle);
+    const progression = document.createElement("div");
+    progression.classList.add("workout-summary-progression");
+    const progressionName = document.createElement("span");
+    progressionName.textContent = getProgressionName(group.exercise) || "—";
+    progression.appendChild(progressionName);
+    const preference = createProgressionPreferenceSelect(getProgressionId(group.exercise), getProgressionName(group.exercise));
+    if (preference) progression.appendChild(preference);
+    information.append(name, progression);
 
     main.append(
         map,
@@ -687,7 +528,6 @@ information.append(name, total, historyButton, toggle);
         "workout-summary-exercise-details"
     );
 
-    details.hidden = true;
 
 const logs =
     document.createElement("div");
@@ -696,46 +536,31 @@ logs.classList.add(
     "workout-summary-log-list"
 );
 
-group.entries.forEach(entry => {
-    logs.appendChild(
-        createLogItem(
-            entry,
-            card,
-            session
-        )
-    );
+groupEntriesBySeries(group.entries).forEach(entries => {
+    const line = document.createElement("div");
+    line.classList.add("workout-summary-series-line");
+    entries.forEach((entry, index) => {
+        if (index > 0) {
+            const separator = document.createElement("span");
+            separator.classList.add("workout-summary-series-separator");
+            separator.textContent = "|";
+            separator.setAttribute("aria-hidden", "true");
+            line.appendChild(separator);
+        }
+        line.appendChild(createLogItem(entry, card, session));
+    });
+    logs.appendChild(line);
 });
 
 details.appendChild(logs);
-
-toggle.addEventListener(
-    "click",
-    event => {
-        event.stopPropagation();
-
-        const open =
-            !card.classList.contains(
-                "is-details-open"
-            );
-
-        closeOtherDetails(card);
-
-        setDetailsOpen(
-            card,
-            open
-        );
-    }
-);
 
 historyButton.addEventListener("click", event => {
     event.stopPropagation();
     renderExerciseHistory(group.exercise);
 });
 
-card.append(
-    main,
-    details
-);
+information.appendChild(details);
+card.appendChild(main);
 
     requestAnimationFrame(() => {
         if (!map.isConnected) return;
@@ -761,13 +586,6 @@ function formatHistoryDate(timestamp) {
 function formatHistoryValue(value, unit) {
     if (unit === "sec") return formatDuration(value);
     return `${value} rep${Number(value) !== 1 ? "s" : ""}`;
-}
-
-function formatHistoryEntry(entry) {
-    const value = formatHistoryValue(entry.log.value, entry.log.valueUnit);
-    const weight = Math.max(0, Number(entry.log.weight) || 0);
-    const side = entry.sideLabel ? ` · ${entry.sideLabel}` : "";
-    return `Série ${entry.seriesNumber}${side} : ${value}${weight > 0 ? ` X ${entry.log.weight} ${entry.log.weightUnit}` : ""}`;
 }
 
 function createRecordItem(label, value) {
@@ -842,9 +660,9 @@ function createExerciseHistoryWorkout(record) {
     const series = document.createElement("div");
     series.className = "workout-summary-history-series";
 
-    record.entries.forEach(entry => {
+    groupEntriesBySeries(record.entries).forEach(entries => {
         const line = document.createElement("div");
-        line.textContent = formatHistoryEntry(entry);
+        line.textContent = entries.map(formatSeriesEntry).join(" | ");
         series.appendChild(line);
     });
 
@@ -932,11 +750,6 @@ function restoreWorkoutSummaryState(state) {
         );
 
     if (row) {
-        const card =
-            row.closest(
-                ".workout-summary-exercise-card"
-            );
-
         const item =
             row.closest(
                 ".workout-summary-log-item"
@@ -946,13 +759,6 @@ function restoreWorkoutSummaryState(state) {
             item?.querySelector(
                 ".workout-summary-edit-log"
             );
-
-        closeOtherDetails(card);
-
-        setDetailsOpen(
-            card,
-            true
-        );
 
         row.classList.add(
             "is-selected"
@@ -1056,11 +862,12 @@ else confetti.replaceChildren();
         `${groups.length} exercice` +
         `${groups.length !== 1 ? "s" : ""}`;
 
+    const seriesCount = groupEntriesBySeries(entries).length;
     page.querySelector(
         "#workout-summary-series-count"
     ).textContent =
-        `${entries.length} série` +
-        `${entries.length !== 1 ? "s" : ""}`;
+        `${seriesCount} série` +
+        `${seriesCount !== 1 ? "s" : ""}`;
 
     groups.forEach(group => {
         exerciseList.appendChild(
@@ -1142,24 +949,9 @@ function setupWorkoutSummary() {
                 return;
             }
 
-            const openCard =
-                page.querySelector(
-                    ".workout-summary-exercise-card.is-details-open"
-                );
-
-            if (
-                !openCard ||
-                openCard.contains(
-                    event.target
-                )
-            ) {
-                return;
-            }
-
-            setDetailsOpen(
-                openCard,
-                false
-            );
+            page.querySelectorAll(".workout-summary-exercise-card").forEach(card => {
+                if (!card.contains(event.target)) clearLogSelection(card);
+            });
         },
         true
     );

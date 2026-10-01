@@ -1,3 +1,4 @@
+import { createProgressionPreferenceSelect } from "../training/progression-preferences.js";
 import { createPlanDragController } from "../plans/plan-drag.js";
 
 import {
@@ -6,6 +7,7 @@ import {
 } from "../exercises/exercise-muscle-map.js";
 
 import {
+    getProgressionId,
     getProgressionName
 } from "../exercises/exercise-search.js";
 
@@ -968,6 +970,13 @@ add.addEventListener(
         progressionName.textContent =
             getProgressionName(exercise) ||
             "—";
+
+        const preference = progression.querySelector(".progression-preference-select");
+        if (preference?.dataset.progressionId !== getProgressionId(exercise)) {
+            preference?.remove();
+            const nextPreference = createProgressionPreferenceSelect(getProgressionId(exercise), getProgressionName(exercise));
+            if (nextPreference) progression.appendChild(nextPreference);
+        }
 
         muscles.textContent =
             families.join(" · ") || "—";

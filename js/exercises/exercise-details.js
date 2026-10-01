@@ -6,6 +6,10 @@ import {
     getExerciseSplitDetailText
 } from "./exercise-split.js";
 
+import {
+    createProgressionPreferenceSelect
+} from "../training/progression-preferences.js";
+
 // ============================================================
 // DÉTAILS DES EXERCICES
 // ============================================================
@@ -14,6 +18,8 @@ import {
 // DÉPENDANCES
 // ------------------------------------------------------------
 
+let getProgressionId = () => "";
+let getProgressionName = () => "";
 let getProgressionDisplay = () => "";
 let updateProgressionNavigation = () => {};
 
@@ -29,32 +35,17 @@ let setCurrentDetailExercise = () => {};
 let setCurrentDetailContext = () => {};
 
 function configureExerciseDetails(dependencies) {
-    getProgressionDisplay =
-        dependencies.getProgressionDisplay;
-
-    updateProgressionNavigation =
-        dependencies.updateProgressionNavigation;
-
-    getSelectedPlanEquipment =
-        dependencies.getSelectedPlanEquipment;
-
-    addExerciseToCurrentPlan =
-        dependencies.addExerciseToCurrentPlan;
-
-    getPagePlans =
-        dependencies.getPagePlans;
-
-    getPlanEditor =
-        dependencies.getPlanEditor;
-
-    getCurrentDetailContext =
-        dependencies.getCurrentDetailContext;
-
-    setCurrentDetailExercise =
-        dependencies.setCurrentDetailExercise;
-
-    setCurrentDetailContext =
-        dependencies.setCurrentDetailContext;
+    getProgressionId = dependencies.getProgressionId;
+    getProgressionName = dependencies.getProgressionName;
+    getProgressionDisplay = dependencies.getProgressionDisplay;
+    updateProgressionNavigation = dependencies.updateProgressionNavigation;
+    getSelectedPlanEquipment = dependencies.getSelectedPlanEquipment;
+    addExerciseToCurrentPlan = dependencies.addExerciseToCurrentPlan;
+    getPagePlans = dependencies.getPagePlans;
+    getPlanEditor = dependencies.getPlanEditor;
+    getCurrentDetailContext = dependencies.getCurrentDetailContext;
+    setCurrentDetailExercise = dependencies.setCurrentDetailExercise;
+    setCurrentDetailContext = dependencies.setCurrentDetailContext;
 }
 
 // ------------------------------------------------------------
@@ -172,10 +163,10 @@ function displayExerciseDetails(
     getExerciseSplitDetailText(exercise);
 
     infoElement.innerHTML = `
-        <p>
-            <strong>Progression :</strong>
-            ${getProgressionDisplay(exercise) || "—"}
-        </p>
+<p class="exercise-detail-progression">
+    <strong>Progression :</strong>
+    <span>${getProgressionDisplay(exercise) || "—"}</span>
+</p>
     
     ${splitDetail
     ? `<p><strong>Type de set :</strong> ${splitDetail}</p>`
@@ -220,6 +211,14 @@ function displayExerciseDetails(
             .map(line => `<p>${line}</p>`)
             .join("")}
     `;
+const progressionPreference = createProgressionPreferenceSelect(
+    getProgressionId(exercise),
+    getProgressionName(exercise)
+);
+
+if (progressionPreference) {
+    infoElement.querySelector(".exercise-detail-progression")?.appendChild(progressionPreference);
+}
 
 renderExerciseMuscleMap(
     infoElement.querySelector(

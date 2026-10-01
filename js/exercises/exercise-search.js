@@ -16,6 +16,10 @@ function getSearchTerms(searchText) {
 }
 
 // Informations de progression
+function getProgressionId(exercise) {
+    return String(exercise.prog_group || "").trim();
+}
+
 function getProgressionName(exercise) {
     return String(exercise.prog_group || "").trim();
 }
@@ -513,6 +517,7 @@ function highlightSearchMatches(text, searchTerms) {
 export {
     normalizeSearchText,
     getSearchTerms,
+    getProgressionId,
     getProgressionName,
     getProgressionDisplay,
     isIsometricExercise,

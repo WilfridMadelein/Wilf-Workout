@@ -295,6 +295,7 @@ import {
 import {
     normalizeSearchText,
     getSearchTerms,
+    getProgressionId,
     getProgressionName,
     getProgressionDisplay,
     isIsometricExercise,
@@ -376,6 +377,11 @@ import {
 import {
     normalizeSplitOrder
 } from "./exercises/exercise-split.js";
+
+import {
+    configureProgressionPreferences,
+    refreshProgressionPreferenceControls
+} from "./training/progression-preferences.js";
 
 import {
     configurePlanRender,
@@ -636,6 +642,7 @@ async function reloadSyncedAppData() {
     applyAppTheme(appSettings.theme);
     refreshSettingsInterface();
     refreshDefaultPlanFilters();
+    refreshProgressionPreferenceControls();
 
     const storedPlans = await loadPlans(exercises);
     plans.splice(0, plans.length, ...storedPlans);
@@ -648,6 +655,11 @@ async function reloadSyncedAppData() {
 // ============================================================
 // CONFIGURATION DES MODULES
 // ============================================================
+
+configureProgressionPreferences({
+    getAppSettings: () => appSettings,
+    scheduleAppSettingsSave
+});
 
 configureSharedSyncFileController({
     panel: settingsSharedSyncFilePanel,
@@ -796,6 +808,7 @@ configurePlanRender({
 
     normalizeCombinationNumbers,
     displayExerciseDetails,
+    getProgressionId,
     getProgressionName,
     getPlanProgressionNeighbor,
     updatePlanExerciseProgression,
@@ -929,6 +942,7 @@ configureExerciseList({
     setCurrentDetailContext,
 
     getSearchTerms,
+    getProgressionId,
     getProgressionName,
     getProgressionDisplay,
 
@@ -952,6 +966,8 @@ configureExerciseList({
 });
 
 configureExerciseDetails({
+    getProgressionId,
+    getProgressionName,
     getProgressionDisplay,
 
     updateProgressionNavigation,
@@ -1263,6 +1279,7 @@ setWorkoutHistory(workoutHistory);
 appSettings = await loadAppSettings();
 refreshSettingsInterface();
 refreshDefaultPlanFilters();
+refreshProgressionPreferenceControls();
 
             closeBackupImportModal();
 

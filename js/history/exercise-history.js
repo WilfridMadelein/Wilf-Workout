@@ -25,6 +25,7 @@ function getExerciseHistory(workoutHistory, exercise) {
                         if (!log?.completedAt) return;
 
                         entries.push({
+                            series,
                             setNumber: set.group,
                             seriesNumber: series.number,
                             sideKey: side.key,
@@ -41,6 +42,16 @@ function getExerciseHistory(workoutHistory, exercise) {
     });
 
     return records.sort((a, b) => b.session.startedAt - a.session.startedAt);
+}
+
+function groupEntriesBySeries(entries) {
+    const groups = new Map();
+    entries.forEach(entry => {
+        if (!groups.has(entry.series)) groups.set(entry.series, []);
+        groups.get(entry.series).push(entry);
+    });
+    const sideOrder = { left: 0, right: 1, main: 2 };
+    return [...groups.values()].map(group => group.sort((a, b) => sideOrder[a.sideKey] - sideOrder[b.sideKey]));
 }
 
 function weightToKg(weight, unit) {
@@ -107,4 +118,4 @@ function getExerciseRecords(historyRecords) {
     return { totalValue, singleValue, singleVolume, totalVolume, maxWeight };
 }
 
-export { getExerciseHistory, getExerciseRecords };
+export { getExerciseHistory, getExerciseRecords, groupEntriesBySeries };

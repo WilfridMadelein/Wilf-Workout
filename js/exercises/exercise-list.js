@@ -1,6 +1,6 @@
-// ============================================================
-// LISTE DES EXERCICES
-// ============================================================
+import {
+    createProgressionPreferenceSelect
+} from "../training/progression-preferences.js";
 
 // ------------------------------------------------------------
 // DÉPENDANCES
@@ -20,6 +20,7 @@ let getCurrentDetailContext = () => "search";
 let setCurrentDetailContext = () => {};
 
 let getSearchTerms = () => [];
+let getProgressionId = () => "";
 let getProgressionName = () => "";
 let getProgressionDisplay = () => "";
 
@@ -57,6 +58,7 @@ function configureExerciseList(dependencies) {
     setCurrentDetailContext = dependencies.setCurrentDetailContext;
 
     getSearchTerms = dependencies.getSearchTerms;
+    getProgressionId = dependencies.getProgressionId;
     getProgressionName = dependencies.getProgressionName;
     getProgressionDisplay = dependencies.getProgressionDisplay;
 
@@ -230,15 +232,21 @@ function displayExercises() {
         progressionElement.textContent =
             getProgressionDisplay(exercise);
 
-        element.appendChild(nameElement);
+element.appendChild(nameElement);
 
-        if (
-            getProgressionDisplay(exercise) !== ""
-        ) {
-            element.appendChild(
-                progressionElement
-            );
-        }
+if (getProgressionDisplay(exercise) !== "") {
+    const progressionWrap = document.createElement("span");
+    progressionWrap.classList.add("exercise-progression-wrap");
+
+    const preference = createProgressionPreferenceSelect(
+        getProgressionId(exercise),
+        getProgressionName(exercise)
+    );
+
+    progressionWrap.appendChild(progressionElement);
+    if (preference) progressionWrap.appendChild(preference);
+    element.appendChild(progressionWrap);
+}
 
         if (isPlanContext) {
     const addButton =

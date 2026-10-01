@@ -17,6 +17,10 @@ import {
     formatPlanDuration
 } from "./plan-timing.js";
 
+import {
+    createProgressionPreferenceSelect
+} from "../training/progression-preferences.js";
+
 // ============================================================
 // DÉPENDANCES
 // ============================================================
@@ -25,6 +29,7 @@ let getCurrentPlan = () => null;
 let getPlanExerciseList = () => null;
 let normalizeCombinationNumbers = () => {};
 let displayExerciseDetails = () => {};
+let getProgressionId = () => "";
 let getProgressionName = () => "";
 let getPlanProgressionNeighbor = () => null;
 let updatePlanExerciseProgression = () => {};
@@ -43,6 +48,7 @@ function configurePlanRender(dependencies) {
     getPlanExerciseList = dependencies.getPlanExerciseList;
     normalizeCombinationNumbers = dependencies.normalizeCombinationNumbers;
     displayExerciseDetails = dependencies.displayExerciseDetails;
+    getProgressionId = dependencies.getProgressionId;
     getProgressionName = dependencies.getProgressionName;
     getPlanProgressionNeighbor = dependencies.getPlanProgressionNeighbor;
     updatePlanExerciseProgression = dependencies.updatePlanExerciseProgression;
@@ -610,6 +616,11 @@ const progressionName = document.createElement("span");
 progressionName.classList.add("plan-progression-name");
 progressionName.textContent = getProgressionName(exercise) || "—";
 
+const progressionPreference = createProgressionPreferenceSelect(
+    getProgressionId(exercise),
+    getProgressionName(exercise)
+);
+
 const progressionButtons = createVerticalArrowButtons({
     containerClass: "plan-progression-buttons",
     buttonClass: "plan-progression-button",
@@ -636,7 +647,9 @@ const progressionButtons = createVerticalArrowButtons({
     }
 });
 
-progression.append(progressionName, progressionButtons);
+progression.appendChild(progressionName);
+if (progressionPreference) progression.appendChild(progressionPreference);
+progression.appendChild(progressionButtons);
 line1.append(identity, progression);
 
                 line1.append(

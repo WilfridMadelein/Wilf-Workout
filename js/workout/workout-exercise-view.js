@@ -1,3 +1,4 @@
+import { createProgressionPreferenceSelect } from "../training/progression-preferences.js";
 import { setupNumberInput } from "../ui/ui.js";
 
 import {
@@ -5,7 +6,7 @@ import {
     destroyExerciseMuscleMapsIn
 } from "../exercises/exercise-muscle-map.js";
 
-import { getProgressionName } from "../exercises/exercise-search.js";
+import { getProgressionId, getProgressionName } from "../exercises/exercise-search.js";
 
 import {
     formatReserveToFailure,
@@ -284,6 +285,9 @@ if (
     const progression = document.createElement("div");
     progression.classList.add("workout-exercise-screen-progression");
     progression.textContent = getProgressionName(exercise) || "—";
+
+    const preference = createProgressionPreferenceSelect(getProgressionId(exercise), getProgressionName(exercise));
+    if (preference) progression.appendChild(preference);
 
     heading.append(name, progression);
     header.append(back, heading);
