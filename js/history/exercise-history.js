@@ -1,5 +1,7 @@
 import { getWorkoutExerciseSides, getWorkoutSeriesLog, getWorkoutSideLabel } from "../workout/workout-session.js";
 
+import { convertWeight} from "../training/weight-estimation.js";
+
 // ============================================================
 // HISTORIQUE D'UN EXERCICE
 // ============================================================
@@ -54,11 +56,6 @@ function groupEntriesBySeries(entries) {
     return [...groups.values()].map(group => group.sort((a, b) => sideOrder[a.sideKey] - sideOrder[b.sideKey]));
 }
 
-function weightToKg(weight, unit) {
-    const value = Math.max(0, Number(weight) || 0);
-    return String(unit).toLowerCase().startsWith("lb") ? value * 0.45359237 : value;
-}
-
 function getEntryMultiplier(entry) {
     return entry.splitType === "alternate" ? 2 : 1;
 }
@@ -89,7 +86,8 @@ function getExerciseRecords(historyRecords) {
 
             if (weight <= 0) return;
 
-            const weightKg = weightToKg(weight, entry.log.weightUnit);
+            const weightKg = convertWeight(weight, entry.log.weightUnit,"kg");
+            if (weightKg === null) return;
             if (!maxWeight || weightKg > maxWeight.compareValue) maxWeight = { compareValue: weightKg, weight, unit: entry.log.weightUnit };
 
             if (isDuration || value <= 0) return;
@@ -110,8 +108,8 @@ function getExerciseRecords(historyRecords) {
         if (sessionValue.value > 0 && (!totalValue || sessionValue.value > totalValue.value)) totalValue = sessionValue;
 
         if (sessionVolumeKg > 0 && (!totalVolume || sessionVolumeKg > totalVolume.compareValue)) {
-            const factor = String(sessionVolumeDisplayUnit).toLowerCase().startsWith("lb") ? 2.2046226218 : 1;
-            totalVolume = { compareValue: sessionVolumeKg, value: sessionVolumeKg * factor, unit: sessionVolumeDisplayUnit };
+            const displayVolume = convertWeight(sessionVolumeKg, "kg", sessionVolumeDisplayUnit) ?? sessionVolumeKg;
+            totalVolume = { compareValue: sessionVolumeKg, value: displayVolume,unit: sessionVolumeDisplayUnit};
         }
     });
 
