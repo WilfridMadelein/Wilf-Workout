@@ -111,10 +111,13 @@
         </section>
 
         <section class="auto-plan-field" data-auto-plan-field="bodyParts">
-            <h3 class="auto-plan-field-title">Partie du corps *</h3>
+            <div class="plan-section-heading auto-plan-field-heading">
+                <h3 class="auto-plan-field-title">Partie du corps *</h3>
+                <button id="auto-plan-body-toggle" class="plan-section-toggle" type="button" aria-expanded="false" aria-controls="auto-plan-body-muscles" aria-label="Afficher les muscles"></button>
+            </div>
             <p class="auto-plan-field-error" hidden></p>
             <div id="auto-plan-body-parts" class="filter-buttons"></div>
-            <div id="auto-plan-body-muscles" class="auto-plan-body-muscles"></div>
+            <div id="auto-plan-body-muscles" class="auto-plan-body-muscles" hidden></div>
         </section>
 
         <section class="auto-plan-field" data-auto-plan-field="goals">
@@ -136,8 +139,13 @@
         </section>
 
         <section class="auto-plan-field">
-            <h3 class="auto-plan-field-title">Équipement</h3>
+            <div class="plan-section-heading auto-plan-field-heading">
+                <h3 class="auto-plan-field-title">Équipement</h3>
+                <button id="auto-plan-equipment-toggle" class="plan-section-toggle" type="button" aria-expanded="false" aria-controls="auto-plan-equipment-content" aria-label="Afficher les équipements"></button>
+            </div>
+            <div id="auto-plan-equipment-summary" class="auto-plan-equipment-summary"></div>
 
+            <div id="auto-plan-equipment-content" hidden>
             <div id="auto-plan-equipment-presets" class="filter-buttons auto-plan-equipment-presets">
                 <button type="button" class="filter-button" data-equipment-preset="none">Aucun</button>
                 <button type="button" class="filter-button" data-equipment-preset="all">Tous</button>
@@ -145,7 +153,134 @@
             </div>
 
             <div id="auto-plan-equipment" class="filter-buttons"></div>
+            </div>
         </section>
+<section class="auto-plan-field">
+    <div class="plan-section-heading">
+        <h3 class="auto-plan-field-title auto-plan-advanced-title">Paramètres avancés</h3>
+        <button id="auto-plan-advanced-toggle" class="plan-section-toggle" type="button" aria-expanded="false" aria-label="Afficher les paramètres avancés"></button>
+    </div>
+
+    <div id="auto-plan-advanced-content" class="plan-section-content" hidden>
+        <div class="auto-plan-advanced-block">
+            <h4>Paramètres du plan à prioriser</h4>
+            <p class="auto-plan-help">Ces paramètres seront privilégiés lors de la création du plan lorsqu'ils restent compatibles avec les autres critères sélectionnés.</p>
+
+            <div class="plan-settings-grid">
+                <div class="plan-settings-column">
+                <div class="plan-parameter">
+                    <label for="auto-plan-priority-sets">Série</label>
+                    <div class="plan-default-number-control">
+                        <input id="auto-plan-priority-sets" class="plan-default-number-input" type="number" min="1" max="999" step="1" value="3">
+                        <div class="plan-default-arrow-stack">
+                            <button type="button" class="plan-number-arrow" data-auto-priority-direction="1">▲</button>
+                            <button type="button" class="plan-number-arrow" data-auto-priority-direction="-1">▼</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="plan-parameter">
+                    <label for="auto-plan-priority-rest">Repos</label>
+                    <div class="plan-default-number-control">
+                        <input id="auto-plan-priority-rest" class="plan-default-number-input" type="number" min="0" max="999" step="15" value="60">
+                        <div class="plan-default-arrow-stack">
+                            <button type="button" class="plan-number-arrow" data-auto-priority-direction="1">▲</button>
+                            <button type="button" class="plan-number-arrow" data-auto-priority-direction="-1">▼</button>
+                        </div>
+                    </div>
+                    <span>sec</span>
+                </div>
+
+                <div class="plan-parameter">
+                    <label>Tempo</label>
+                    <div class="tempo-inputs">
+                        <div class="plan-default-number-control plan-default-tempo-control">
+                            <button type="button" class="plan-number-arrow" data-auto-priority-direction="1">▲</button>
+                            <input id="auto-plan-priority-tempo-1" class="plan-default-number-input" type="number" value="3">
+                            <button type="button" class="plan-number-arrow" data-auto-priority-direction="-1">▼</button>
+                        </div>
+                        <div class="plan-default-number-control plan-default-tempo-control">
+                            <button type="button" class="plan-number-arrow" data-auto-priority-direction="1">▲</button>
+                            <input id="auto-plan-priority-tempo-2" class="plan-default-number-input" type="number" value="0">
+                            <button type="button" class="plan-number-arrow" data-auto-priority-direction="-1">▼</button>
+                        </div>
+                        <div class="plan-default-number-control plan-default-tempo-control">
+                            <button type="button" class="plan-number-arrow" data-auto-priority-direction="1">▲</button>
+                            <input id="auto-plan-priority-tempo-3" class="plan-default-number-input" type="number" value="1">
+                            <button type="button" class="plan-number-arrow" data-auto-priority-direction="-1">▼</button>
+                        </div>
+                        <div class="plan-default-number-control plan-default-tempo-control">
+                            <button type="button" class="plan-number-arrow" data-auto-priority-direction="1">▲</button>
+                            <input id="auto-plan-priority-tempo-4" class="plan-default-number-input" type="number" value="0">
+                            <button type="button" class="plan-number-arrow" data-auto-priority-direction="-1">▼</button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                <div class="plan-volume-column">
+                    <h4>Volume</h4>
+                    <div class="plan-volume-settings">
+                <div class="plan-parameter">
+                    <label for="auto-plan-priority-reps">Répétition</label>
+                    <div class="plan-default-number-control">
+                        <input id="auto-plan-priority-reps" class="plan-default-number-input" type="number" min="1" max="999" step="1" value="10">
+                        <div class="plan-default-arrow-stack">
+                            <button type="button" class="plan-number-arrow" data-auto-priority-direction="1">▲</button>
+                            <button type="button" class="plan-number-arrow" data-auto-priority-direction="-1">▼</button>
+                        </div>
+                    </div>
+                    <span>Rep</span>
+                </div>
+
+                <div class="plan-parameter">
+                    <label for="auto-plan-priority-time">Durée</label>
+                    <div class="plan-default-number-control">
+                        <input id="auto-plan-priority-time" class="plan-default-number-input" type="number" min="1" max="999" step="15" value="30">
+                        <div class="plan-default-arrow-stack">
+                            <button type="button" class="plan-number-arrow" data-auto-priority-direction="1">▲</button>
+                            <button type="button" class="plan-number-arrow" data-auto-priority-direction="-1">▼</button>
+                        </div>
+                    </div>
+                    <span>sec</span>
+                </div>
+                    </div>
+                <div class="plan-weight-row">
+                    <label class="plan-weight-title" for="auto-plan-priority-weight">Poids</label>
+                    <div class="plan-default-number-control">
+                        <input id="auto-plan-priority-weight" class="plan-default-number-input" type="number" min="0" max="9999.9" step="2.5" value="0">
+                        <div class="plan-default-arrow-stack">
+                            <button type="button" class="plan-number-arrow" data-auto-priority-direction="1">▲</button>
+                            <button type="button" class="plan-number-arrow" data-auto-priority-direction="-1">▼</button>
+                        </div>
+                    </div>
+
+                    <div id="auto-plan-priority-weight-unit" class="plan-weight-unit-switch" role="group" aria-label="Unité du poids">
+                        <button type="button" class="plan-weight-unit-button" data-auto-plan-weight-unit="kg">Kg</button>
+                        <button type="button" class="plan-weight-unit-button" data-auto-plan-weight-unit="lbs">Lbs</button>
+                    </div>
+                </div>
+                </div>
+            </div>
+
+            <div class="plan-settings-options">
+                <label class="plan-setting-checkbox">
+                    <input id="auto-plan-priority-include-notes" type="checkbox">
+                    <span>Ajouter des notes de plan</span>
+                </label>
+
+                <label class="plan-setting-checkbox">
+                    <input id="auto-plan-priority-instructions" type="checkbox">
+                    <span>Ajouter les instructions par défaut</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="auto-plan-advanced-block">
+            <h4>Avoir des super-sets?</h4>
+            <div id="auto-plan-supersets" class="filter-buttons"></div>
+        </div>
+    </div>
+</section>
     </div>
 
     <div class="auto-plan-create-bar">

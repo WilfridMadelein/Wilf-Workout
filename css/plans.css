@@ -2335,10 +2335,12 @@ html[data-theme="dark"] .plan-drag-progression { color: #bbb; }
 
 .auto-plan-fields {
     display: grid;
+    grid-template-columns: minmax(0, 1fr);
     gap: 14px;
 }
 
 .auto-plan-field {
+    min-width: 0;
     padding: 16px;
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -2398,9 +2400,6 @@ html[data-theme="dark"] .plan-drag-progression { color: #bbb; }
     bottom: 0;
     z-index: 20;
     margin-top: 18px;
-    padding: 12px 0 max(12px, env(safe-area-inset-bottom));
-    border-top: 1px solid #ddd;
-    background: #fff;
 }
 
 .auto-plan-errors {
@@ -2411,12 +2410,24 @@ html[data-theme="dark"] .plan-drag-progression { color: #bbb; }
 }
 
 #auto-plan-create-button {
+    box-sizing: border-box;
     width: 100%;
+    min-height: 56px;
+    padding: 12px 20px;
+    border: 1px solid #c45c00;
+    border-radius: 9px;
+    background: #d96a00;
+    color: #fff;
+    font: inherit;
+    font-size: 18px;
     font-weight: 700;
 }
 
-html[data-theme="dark"] .auto-plan-field,
-html[data-theme="dark"] .auto-plan-create-bar {
+#auto-plan-create-button:hover {
+    background: #bf5d00;
+}
+
+html[data-theme="dark"] .auto-plan-field {
     background: #242424;
     border-color: #444;
     color: #ededed;
@@ -2446,4 +2457,53 @@ html[data-theme="dark"] .auto-plan-errors {
     .auto-plan-body-muscles {
         grid-template-columns: 1fr;
     }
+}
+
+.auto-plan-advanced-title {
+    margin: 0;
+}
+
+.auto-plan-advanced-block {
+    padding-top: 6px;
+}
+
+.auto-plan-advanced-block + .auto-plan-advanced-block {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid #ddd;
+}
+
+.auto-plan-advanced-block h4 {
+    margin: 0 0 6px;
+}
+
+.auto-plan-help {
+    margin: 0 0 14px;
+    color: #666;
+    font-size: 13px;
+}
+
+.auto-plan-field-heading {
+    margin-bottom: 10px;
+}
+
+.auto-plan-equipment-summary {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.auto-plan-body-muscles[hidden],
+#auto-plan-equipment-content[hidden],
+.auto-plan-equipment-summary[hidden] {
+    display: none;
+}
+
+html[data-theme="dark"] .auto-plan-advanced-block + .auto-plan-advanced-block {
+    border-top-color: #444;
+}
+
+html[data-theme="dark"] .auto-plan-help {
+    color: #aaa;
 }

@@ -391,6 +391,11 @@ import {
 } from "./auto-plan/auto-plan-controller.js";
 
 import {
+    buildAutoPlanInput,
+    getAutoPlanInputSummary
+} from "./auto-plan/auto-plan-input.js";
+
+import {
     configurePlanRender,
     createPlanNumberInput,
     renderPlanExercises,
@@ -477,6 +482,17 @@ let storageTargetConfig =
 
 let workoutHistory = [];
 let historySummaryReturnScrollY = 0;
+
+function inspectWilfAutoPlanData(request = appSettings?.autoPlanLastRequest) {
+    const input = buildAutoPlanInput({ request, exercises, workoutHistory, appSettings });
+
+    console.table([getAutoPlanInputSummary(input)]);
+
+    if (input.diagnostics.errors.length) console.error("Auto-plan — erreurs :", input.diagnostics.errors);
+    if (input.diagnostics.warnings.length) console.warn("Auto-plan — avertissements :", input.diagnostics.warnings);
+
+    return input;
+}
 
 const workoutSummaryStandaloneParent = pageWorkoutSummary.parentElement;
 
@@ -693,9 +709,16 @@ configureAutoPlanController({
         tabSettings
     ],
 
-    onCreatePlan: async () => {
-        alert("Les paramètres sont enregistrés. La génération du plan sera ajoutée à la prochaine étape.");
+onCreatePlan: async request => {
+    const input = inspectWilfAutoPlanData(request);
+
+    if (!input.diagnostics.valid) {
+        alert("Les données nécessaires au plan automatique sont incomplètes. Consultez la console pour les détails.");
+        return;
     }
+
+    alert("Les paramètres sont enregistrés et les données de génération sont prêtes. L'algorithme sera branché à la prochaine étape.");
+}
 });
 
 configureSharedSyncFileController({
@@ -1436,6 +1459,7 @@ async function initializeApp() {
     setupStorageSyncController();
     await setupSyncLifecycle();
     window.inspectWilfStorageSync = inspectStorageSync;
+    window.inspectWilfAutoPlanData = inspectWilfAutoPlanData;
     setupDefaultPlanFilters();
     setupPlanDefaultInputs();
     setupWorkoutSummary();

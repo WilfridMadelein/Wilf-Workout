@@ -3,9 +3,14 @@ import {
     AUTO_PLAN_GOAL_LABELS,
     AUTO_PLAN_TYPES,
     AUTO_PLAN_BODY_PARTS,
+    AUTO_PLAN_SUPERSET_OPTIONS,
+    AUTO_PLAN_SUPERSET_LABELS,
     normalizeAutoPlanDuration,
+    normalizeAutoPlanPriorities,
     normalizeAutoPlanLastRequest
 } from "./auto-plan-settings.js";
+
+import { setupNumberInput, updateNumberInputWidth } from "../ui/ui.js";
 
 let page;
 let openButton;
@@ -65,15 +70,17 @@ function createInitialDraft() {
 
     bodyParts.forEach(key => { muscles[key] = getBodyPartMuscleOptions(key); });
 
-    return {
-        durationMinutes: 30,
-        goals: [],
-        bodyParts,
-        muscles,
-        types: [...AUTO_PLAN_TYPES],
-        categories: [],
-        equipment: uniqueValid(getDefaultPlanEquipment(), getEquipmentOptions())
-    };
+return {
+    durationMinutes: 30,
+    goals: [],
+    bodyParts,
+    muscles,
+    types: [...AUTO_PLAN_TYPES],
+    categories: [],
+    equipment: uniqueValid(getDefaultPlanEquipment(), getEquipmentOptions()),
+    planPriorities: normalizeAutoPlanPriorities(getAppSettings()?.planDefaults),
+    supersetPreference: "indifferent"
+};
 }
 
 function createDraftFromStored(value) {
@@ -96,7 +103,9 @@ function createDraftFromStored(value) {
         muscles,
         types: uniqueValid(stored.types, AUTO_PLAN_TYPES),
         categories: uniqueValid(stored.categories, getCategoryOptions()),
-        equipment: uniqueValid(stored.equipment, getEquipmentOptions())
+        equipment: uniqueValid(stored.equipment, getEquipmentOptions()),
+        planPriorities: normalizeAutoPlanPriorities(stored.planPriorities ?? getAppSettings()?.planDefaults),
+        supersetPreference: stored.supersetPreference
     };
 }
 
@@ -108,7 +117,8 @@ function cloneDraft() {
         muscles: Object.fromEntries(Object.entries(draft.muscles).map(([key, values]) => [key, [...values]])),
         types: [...draft.types],
         categories: [...draft.categories],
-        equipment: [...draft.equipment]
+        equipment: [...draft.equipment],
+        planPriorities: { ...draft.planPriorities, tempo: { ...draft.planPriorities.tempo } }
     };
 }
 
@@ -263,15 +273,26 @@ function getMatchingEquipmentPreset() {
 function renderEquipment() {
     const options = getEquipmentOptions();
     const preset = getMatchingEquipmentPreset();
+    const summary = getElement("auto-plan-equipment-summary");
+    summary.textContent = preset ? { none: "Aucun", all: "Tous", settings: "Paramètres" }[preset] : draft.equipment.join(", ");
+    summary.title = summary.textContent;
 
     getElement("auto-plan-equipment-presets").querySelectorAll("[data-equipment-preset]").forEach(button => {
         button.classList.toggle("active", button.dataset.equipmentPreset === preset);
     });
 
-    renderChoiceGroup("auto-plan-equipment", options, draft.equipment, null, value => {
-        preferredEquipmentPreset = null;
-        toggleListValue("equipment", value);
-        renderEquipment();
+    const container = getElement("auto-plan-equipment");
+    if (!container.childElementCount) {
+        renderChoiceGroup("auto-plan-equipment", options, draft.equipment, null, value => {
+            preferredEquipmentPreset = null;
+            toggleListValue("equipment", value);
+            renderEquipment();
+        });
+    }
+    container.querySelectorAll("button").forEach((button, index) => {
+        const selected = draft.equipment.includes(options[index]);
+        button.classList.toggle("active", selected);
+        button.setAttribute("aria-pressed", String(selected));
     });
 }
 
@@ -309,6 +330,63 @@ function renderCategories() {
     });
 }
 
+function setPriorityInputValue(id, value, { zeroDisplay = null, minChars = 3 } = {}) {
+    const input = getElement(id);
+    input.value = value === 0 && zeroDisplay ? zeroDisplay : value;
+    updateNumberInputWidth(input, minChars);
+}
+
+function renderSupersetPreference() {
+    renderChoiceGroup("auto-plan-supersets", AUTO_PLAN_SUPERSET_OPTIONS, [draft.supersetPreference], AUTO_PLAN_SUPERSET_LABELS, value => {
+        draft.supersetPreference = value;
+        renderSupersetPreference();
+    });
+}
+
+function renderPlanPriorities() {
+    const priorities = draft.planPriorities;
+
+    setPriorityInputValue("auto-plan-priority-sets", priorities.sets);
+    setPriorityInputValue("auto-plan-priority-reps", priorities.reps);
+    setPriorityInputValue("auto-plan-priority-time", priorities.time);
+    setPriorityInputValue("auto-plan-priority-rest", priorities.rest);
+    setPriorityInputValue("auto-plan-priority-weight", priorities.weight);
+    setPriorityInputValue("auto-plan-priority-tempo-1", priorities.tempo.first, { zeroDisplay: "X", minChars: 1 });
+    setPriorityInputValue("auto-plan-priority-tempo-2", priorities.tempo.second, { minChars: 1 });
+    setPriorityInputValue("auto-plan-priority-tempo-3", priorities.tempo.third, { zeroDisplay: "X", minChars: 1 });
+    setPriorityInputValue("auto-plan-priority-tempo-4", priorities.tempo.fourth, { minChars: 1 });
+
+    getElement("auto-plan-priority-include-notes").checked = priorities.includeNotes;
+    getElement("auto-plan-priority-instructions").checked = priorities.autoAddDefaultInstructions;
+
+    page.querySelectorAll("[data-auto-plan-weight-unit]").forEach(button => {
+        const active = button.dataset.autoPlanWeightUnit === priorities.weightUnit;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+    });
+
+    renderSupersetPreference();
+}
+
+function setAutoPlanAdvancedOpen(open) {
+    const toggle = getElement("auto-plan-advanced-toggle");
+    const content = getElement("auto-plan-advanced-content");
+
+    content.hidden = !open;
+    toggle.setAttribute("aria-expanded", String(open));
+    toggle.setAttribute("aria-label", open ? "Masquer les paramètres avancés" : "Afficher les paramètres avancés");
+}
+
+function setAutoPlanSectionOpen(section, open) {
+    const body = section === "body";
+    const content = getElement(body ? "auto-plan-body-muscles" : "auto-plan-equipment-content");
+    const toggle = getElement(`auto-plan-${section}-toggle`);
+    content.hidden = !open;
+    toggle.setAttribute("aria-expanded", String(open));
+    toggle.setAttribute("aria-label", `${open ? "Masquer" : "Afficher"} les ${body ? "muscles" : "équipements"}`);
+    if (!body) getElement("auto-plan-equipment-summary").hidden = open;
+}
+
 function renderForm() {
     getElement("auto-plan-duration").value = draft.durationMinutes ?? "";
     renderGoals();
@@ -316,6 +394,7 @@ function renderForm() {
     renderTypes();
     renderCategories();
     renderEquipment();
+    renderPlanPriorities();
 
     if (validationStarted) renderValidation();
 }
@@ -387,7 +466,10 @@ function openAutoPlanPage() {
     page.hidden = false;
 
     getElement("auto-plan-errors").hidden = true;
-
+    setAutoPlanAdvancedOpen(false);
+    setAutoPlanSectionOpen("body", false);
+    setAutoPlanSectionOpen("equipment", false);
+    getElement("auto-plan-equipment").replaceChildren();
     renderForm();
     window.scrollTo({ top: 0, behavior: "auto" });
 }
@@ -423,7 +505,28 @@ async function createPlanFromDraft() {
 // INITIALISATION
 // ============================================================
 
+function bindPriorityNumber(id, options, save) {
+    const { snap = false, ...numberOptions } = options;
+    const input = getElement(id);
+
+    const control = setupNumberInput(input, {
+        ...numberOptions,
+        onChange: value => {
+            if (!draft) return;
+            save(draft.planPriorities, value);
+        }
+    });
+
+    input.closest(".plan-default-number-control")?.querySelectorAll("[data-auto-priority-direction]").forEach(button => {
+        button.addEventListener("click", () => control.step(Number(button.dataset.autoPriorityDirection), snap));
+    });
+}
+
 function setupAutoPlanController() {
+    ["body", "equipment"].forEach(section => {
+        const toggle = getElement(`auto-plan-${section}-toggle`);
+        toggle.addEventListener("click", () => setAutoPlanSectionOpen(section, toggle.getAttribute("aria-expanded") !== "true"));
+    });
     openButton.addEventListener("click", openAutoPlanPage);
     getElement("back-to-plan-home-button").addEventListener("click", closeAutoPlanPage);
     getElement("auto-plan-create-button").addEventListener("click", createPlanFromDraft);
@@ -433,6 +536,9 @@ function setupAutoPlanController() {
         event.target.value = draft.durationMinutes ?? "";
 
         if (validationStarted) renderValidation();
+    });
+    getElement("auto-plan-advanced-toggle").addEventListener("click", () => {
+    setAutoPlanAdvancedOpen(getElement("auto-plan-advanced-content").hidden);
     });
 
     page.querySelectorAll("[data-duration-direction]").forEach(button => {
@@ -462,7 +568,41 @@ function setupAutoPlanController() {
             page.hidden = true;
         });
     });
+bindPriorityNumber("auto-plan-priority-sets", { min: 1, max: 999, step: 1, minChars: 3 }, (priorities, value) => priorities.sets = value);
+bindPriorityNumber("auto-plan-priority-reps", { min: 1, max: 999, step: 1, minChars: 3 }, (priorities, value) => priorities.reps = value);
+bindPriorityNumber("auto-plan-priority-time", { min: 1, max: 999, step: 15, minChars: 3, snap: true }, (priorities, value) => priorities.time = value);
+bindPriorityNumber("auto-plan-priority-rest", { min: 0, max: 999, step: 15, minChars: 3, snap: true }, (priorities, value) => priorities.rest = value);
+bindPriorityNumber("auto-plan-priority-weight", { min: 0, max: 9999.9, step: 2.5, decimals: 1, minChars: 3, snap: true }, (priorities, value) => priorities.weight = value);
+
+[
+    ["auto-plan-priority-tempo-1", "first", "X"],
+    ["auto-plan-priority-tempo-2", "second", null],
+    ["auto-plan-priority-tempo-3", "third", "X"],
+    ["auto-plan-priority-tempo-4", "fourth", null]
+].forEach(([id, key, zeroDisplay]) => {
+    bindPriorityNumber(id, { min: 0, max: 999, step: 1, minChars: 1, zeroDisplay }, (priorities, value) => priorities.tempo[key] = value);
+});
+
+page.querySelectorAll("[data-auto-plan-weight-unit]").forEach(button => {
+    button.addEventListener("click", () => {
+        if (!draft) return;
+        draft.planPriorities.weightUnit = button.dataset.autoPlanWeightUnit;
+        renderPlanPriorities();
+    });
+});
+
+getElement("auto-plan-priority-include-notes").addEventListener("change", event => {
+    if (draft) draft.planPriorities.includeNotes = event.target.checked;
+});
+
+getElement("auto-plan-priority-instructions").addEventListener("change", event => {
+    if (draft) draft.planPriorities.autoAddDefaultInstructions = event.target.checked;
+});
+
+setAutoPlanAdvancedOpen(false);
+
 }
+
 
 export {
     configureAutoPlanController,
