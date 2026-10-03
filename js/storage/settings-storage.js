@@ -11,12 +11,16 @@ import {
     normalizeSplitOrder
 } from "../exercises/exercise-split.js";
 
+import {
+    normalizeAutoPlanLastRequest
+} from "../auto-plan/auto-plan-settings.js";
+
 // ============================================================
 // PARAMÈTRES GLOBAUX
 // ============================================================
 
 const APP_SETTINGS_ID = "app";
-const SETTINGS_SCHEMA_VERSION = 3;
+const SETTINGS_SCHEMA_VERSION = 4;
 
 let saveTimer = null;
 
@@ -75,6 +79,7 @@ function createDefaultAppSettings() {
         splitOrder: "left-right",
         lastWorkoutCompletionMessageId: null,
         progressionPreferences: {},
+        autoPlanLastRequest: null,
         planDefaults: normalizePlanDefaults()
     };
 }
@@ -94,9 +99,8 @@ lastWorkoutCompletionMessageId:
         ? settings.lastWorkoutCompletionMessageId
         : null,
 
-progressionPreferences:
-    normalizeProgressionPreferences(settings.progressionPreferences),
-
+progressionPreferences: normalizeProgressionPreferences(settings.progressionPreferences),
+autoPlanLastRequest: normalizeAutoPlanLastRequest(settings.autoPlanLastRequest),
 planDefaults: normalizePlanDefaults(settings.planDefaults)
     };
 }

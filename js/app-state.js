@@ -159,6 +159,7 @@ export const settingsSharedSyncFileButton = document.getElementById("settings-sh
 export const settingsSharedSyncFileDisconnect = document.getElementById("settings-shared-sync-file-disconnect");
 export const settingsSharedSyncFileStatus = document.getElementById("settings-shared-sync-file-status");
 
+
 // ------------------------------------------------------------
 // DOM — Paramètres du plan
 // ------------------------------------------------------------
@@ -185,6 +186,8 @@ export const planTempoInputs = [
 // ------------------------------------------------------------
 
 export const newPlanButton = document.getElementById("new-plan-button");
+export const autoPlanButton = document.getElementById("auto-plan-button");
+export const autoPlanPage = document.getElementById("auto-plan-page");
 export const downloadPlansButton = document.getElementById("download-plans-button");
 export const planPdfModal = document.getElementById("plan-pdf-modal");
 export const planPdfSelectionList = document.getElementById("plan-pdf-selection-list");

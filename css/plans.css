@@ -2299,3 +2299,151 @@ html[data-theme="dark"] .plan-drag-progression { color: #bbb; }
 .plan-delete-button {
     grid-column: 2;
 }
+
+/* =========================================================
+   PLAN AUTOMATIQUE
+========================================================= */
+
+.plan-home-actions-left {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+#auto-plan-button,
+#back-to-plan-home-button,
+#auto-plan-create-button {
+    padding: 10px 16px;
+    cursor: pointer;
+}
+
+.auto-plan-page {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    padding-bottom: 12px;
+}
+
+.auto-plan-page[hidden] {
+    display: none;
+}
+
+.auto-plan-page > h2 {
+    margin: 18px 0;
+}
+
+.auto-plan-fields {
+    display: grid;
+    gap: 14px;
+}
+
+.auto-plan-field {
+    padding: 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background: #fff;
+}
+
+.auto-plan-field-title {
+    margin: 0 0 10px;
+}
+
+.auto-plan-field.has-error {
+    border-color: #b94a48;
+}
+
+.auto-plan-field.has-error .auto-plan-field-title {
+    color: #b3261e;
+}
+
+.auto-plan-field-error {
+    margin: -4px 0 10px;
+    color: #b3261e;
+    font-size: 12px;
+}
+
+.auto-plan-field-error[hidden],
+.auto-plan-errors[hidden] {
+    display: none;
+}
+
+.auto-plan-duration-control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#auto-plan-duration {
+    width: 72px;
+}
+
+.auto-plan-body-muscles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.auto-plan-muscle-group {
+    margin: 0;
+}
+
+.auto-plan-equipment-presets {
+    margin-bottom: 10px;
+}
+
+.auto-plan-create-bar {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    margin-top: 18px;
+    padding: 12px 0 max(12px, env(safe-area-inset-bottom));
+    border-top: 1px solid #ddd;
+    background: #fff;
+}
+
+.auto-plan-errors {
+    margin-bottom: 8px;
+    color: #b3261e;
+    font-size: 12px;
+    line-height: 1.45;
+}
+
+#auto-plan-create-button {
+    width: 100%;
+    font-weight: 700;
+}
+
+html[data-theme="dark"] .auto-plan-field,
+html[data-theme="dark"] .auto-plan-create-bar {
+    background: #242424;
+    border-color: #444;
+    color: #ededed;
+}
+
+html[data-theme="dark"] .auto-plan-field.has-error {
+    border-color: #d56a67;
+}
+
+html[data-theme="dark"] .auto-plan-field.has-error .auto-plan-field-title,
+html[data-theme="dark"] .auto-plan-field-error,
+html[data-theme="dark"] .auto-plan-errors {
+    color: #ff8b86;
+}
+
+@media (max-width: 600px) {
+    .plan-home-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .plan-home-actions-left,
+    .plan-home-actions-right {
+        justify-content: flex-start;
+    }
+
+    .auto-plan-body-muscles {
+        grid-template-columns: 1fr;
+    }
+}

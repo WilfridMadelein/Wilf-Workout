@@ -1,17 +1,14 @@
 <!-- ACCUEIL DES PLANS -->
 <div id="plan-home">
 
-    <h2>Mes plans</h2>
 <div class="plan-home-actions">
-    <button id="new-plan-button">
-        + Nouveau plan
-    </button>
+    <div class="plan-home-actions-left">
+        <button id="new-plan-button">+ Nouveau plan</button>
+        <button id="auto-plan-button" type="button">✦ Créer un plan automatique</button>
+    </div>
 
     <div class="plan-home-actions-right">
-        <button id="download-plans-button">
-            Télécharger mes plans
-        </button>
-
+        <button id="download-plans-button">Télécharger mes plans</button>
     </div>
 </div>
 
@@ -89,7 +86,73 @@
 
 </div>
 
+<!-- CRÉATION AUTOMATIQUE -->
+<div id="auto-plan-page" class="auto-plan-page" hidden>
+    <button id="back-to-plan-home-button" type="button">← Retour aux plans</button>
+    <h2>Créer un plan automatique</h2>
 
+    <div class="auto-plan-fields">
+        <section class="auto-plan-field" data-auto-plan-field="duration">
+            <h3 class="auto-plan-field-title">Temps visé *</h3>
+            <p class="auto-plan-field-error" hidden></p>
+
+            <div class="auto-plan-duration-control">
+                <div class="plan-default-number-control">
+                    <input id="auto-plan-duration" class="plan-default-number-input" type="number" min="15" max="120" step="1" value="30">
+
+                    <div class="plan-default-arrow-stack">
+                        <button type="button" class="plan-number-arrow" data-duration-direction="1" aria-label="Ajouter 5 minutes">▲</button>
+                        <button type="button" class="plan-number-arrow" data-duration-direction="-1" aria-label="Retirer 5 minutes">▼</button>
+                    </div>
+                </div>
+
+                <span>min</span>
+            </div>
+        </section>
+
+        <section class="auto-plan-field" data-auto-plan-field="bodyParts">
+            <h3 class="auto-plan-field-title">Partie du corps *</h3>
+            <p class="auto-plan-field-error" hidden></p>
+            <div id="auto-plan-body-parts" class="filter-buttons"></div>
+            <div id="auto-plan-body-muscles" class="auto-plan-body-muscles"></div>
+        </section>
+
+        <section class="auto-plan-field" data-auto-plan-field="goals">
+            <h3 class="auto-plan-field-title">Objectif *</h3>
+            <p class="auto-plan-field-error" hidden></p>
+            <div id="auto-plan-goals" class="filter-buttons"></div>
+        </section>
+
+        <section class="auto-plan-field" data-auto-plan-field="types">
+            <h3 class="auto-plan-field-title">Type *</h3>
+            <p class="auto-plan-field-error" hidden></p>
+            <div id="auto-plan-types" class="filter-buttons"></div>
+        </section>
+
+        <section class="auto-plan-field" data-auto-plan-field="categories">
+            <h3 class="auto-plan-field-title">Catégories *</h3>
+            <p class="auto-plan-field-error" hidden></p>
+            <div id="auto-plan-categories" class="filter-buttons"></div>
+        </section>
+
+        <section class="auto-plan-field">
+            <h3 class="auto-plan-field-title">Équipement</h3>
+
+            <div id="auto-plan-equipment-presets" class="filter-buttons auto-plan-equipment-presets">
+                <button type="button" class="filter-button" data-equipment-preset="none">Aucun</button>
+                <button type="button" class="filter-button" data-equipment-preset="all">Tous</button>
+                <button type="button" class="filter-button" data-equipment-preset="settings">Paramètres</button>
+            </div>
+
+            <div id="auto-plan-equipment" class="filter-buttons"></div>
+        </section>
+    </div>
+
+    <div class="auto-plan-create-bar">
+        <div id="auto-plan-errors" class="auto-plan-errors" hidden></div>
+        <button id="auto-plan-create-button" type="button">Créer mon plan</button>
+    </div>
+</div>
 
 <!-- ÉDITION DU PLAN -->
 <div id="plan-editor" style="display: none;">

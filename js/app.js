@@ -105,8 +105,10 @@ cancelPlanDeleteButton,
 confirmPlanDeleteButton,
 planNotesCounter,
 
-    newPlanButton,
-    downloadPlansButton,
+newPlanButton,
+autoPlanButton,
+autoPlanPage,
+downloadPlansButton,
     planPdfModal,
     planPdfSelectionList,
     cancelPlanPdfButton,
@@ -242,7 +244,7 @@ settingsSyncStatus,
 settingsSharedSyncFilePanel,
 settingsSharedSyncFileButton,
 settingsSharedSyncFileDisconnect,
-settingsSharedSyncFileStatus
+settingsSharedSyncFileStatus,
 } from "./app-state.js";
 
 import {
@@ -382,6 +384,11 @@ import {
     configureProgressionPreferences,
     refreshProgressionPreferenceControls
 } from "./training/progression-preferences.js";
+
+import {
+    configureAutoPlanController,
+    setupAutoPlanController
+} from "./auto-plan/auto-plan-controller.js";
 
 import {
     configurePlanRender,
@@ -659,6 +666,36 @@ async function reloadSyncedAppData() {
 configureProgressionPreferences({
     getAppSettings: () => appSettings,
     scheduleAppSettingsSave
+});
+
+configureAutoPlanController({
+    page: autoPlanPage,
+    openButton: autoPlanButton,
+    planHome,
+    planEditor,
+    getAppSettings: () => appSettings,
+    saveAppSettingsNow,
+    getCategoryOptions,
+    getEquipmentOptions: () => equipmentOptions,
+    getExercises: () => exercises,
+
+    getDefaultPlanEquipment: () => {
+        const value = appSettings?.planDefaults?.filters?.equipment;
+        return Array.isArray(value)
+            ? value.filter(item => equipmentOptions.includes(item))
+            : [...equipmentOptions];
+    },
+
+    navigationButtons: [
+        tabExercises,
+        tabPlans,
+        tabHistory,
+        tabSettings
+    ],
+
+    onCreatePlan: async () => {
+        alert("Les paramètres sont enregistrés. La génération du plan sera ajoutée à la prochaine étape.");
+    }
 });
 
 configureSharedSyncFileController({
@@ -1404,6 +1441,7 @@ async function initializeApp() {
     setupWorkoutSummary();
     setupWorkoutExecution();
     setupHistoryController();
+    setupAutoPlanController();
     setupPlanController();
     setupPlanPdf();
     setupBackupControls();
