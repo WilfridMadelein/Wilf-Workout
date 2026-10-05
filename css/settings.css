@@ -520,14 +520,20 @@ html[data-theme="dark"] select {
     border-color: #555;
 }
 
-html[data-theme="dark"] .main-tab {
+html[data-theme="dark"] .app-header {
     background: #242424;
+    border-color: #444;
+}
+
+html[data-theme="dark"] .main-tab {
+    background: transparent;
     color: #ededed;
-    border-color: #555;
+    border-color: transparent;
 }
 
 html[data-theme="dark"] .main-tab:hover {
     background: #303030;
+    color: #ededed;
 }
 
 html[data-theme="dark"] .main-tab.active {

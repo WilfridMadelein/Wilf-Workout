@@ -168,6 +168,10 @@ export function setupAppController() {
         loadSearchState(searchPageState);
 
         tabExercises.classList.add("active");
+        [tabExercises, tabPlans, tabHistory, tabSettings].forEach(tab => {
+            if (tab === tabExercises) tab.setAttribute("aria-current", "page");
+            else tab.removeAttribute("aria-current");
+        });
         tabPlans.classList.remove("active");
         tabHistory.classList.remove("active");
         tabSettings.classList.remove("active");
@@ -192,6 +196,10 @@ export function setupAppController() {
 
         tabExercises.classList.remove("active");
         tabPlans.classList.add("active");
+        [tabExercises, tabPlans, tabHistory, tabSettings].forEach(tab => {
+            if (tab === tabPlans) tab.setAttribute("aria-current", "page");
+            else tab.removeAttribute("aria-current");
+        });
         tabHistory.classList.remove("active");
         tabSettings.classList.remove("active");
 
@@ -210,6 +218,10 @@ export function setupAppController() {
         tabExercises.classList.remove("active");
         tabPlans.classList.remove("active");
         tabHistory.classList.add("active");
+        [tabExercises, tabPlans, tabHistory, tabSettings].forEach(tab => {
+            if (tab === tabHistory) tab.setAttribute("aria-current", "page");
+            else tab.removeAttribute("aria-current");
+        });
         tabSettings.classList.remove("active");
 
         setCurrentDetailContext("search");
@@ -229,6 +241,10 @@ export function setupAppController() {
         tabPlans.classList.remove("active");
         tabHistory.classList.remove("active");
         tabSettings.classList.add("active");
+        [tabExercises, tabPlans, tabHistory, tabSettings].forEach(tab => {
+            if (tab === tabSettings) tab.setAttribute("aria-current", "page");
+            else tab.removeAttribute("aria-current");
+        });
 
         setCurrentDetailContext("search");
     });
