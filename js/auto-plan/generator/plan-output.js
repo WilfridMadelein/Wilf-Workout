@@ -78,7 +78,7 @@ function createGeneratedPlanExercises(workout, planDefaults, request, defaultSpl
             weightUnit: planDefaults.weightUnit,
             splitOrder: normalizeSplitOrder(defaultSplitOrder),
             details: { instructions: includeInstructions ? getPlanExerciseDetailsLines(exercise).join("\n") : "" },
-            combination: { group: index + 1 }
+            combination: { group: Number.isInteger(item.combinationGroup) ? item.combinationGroup : index + 1 }
         };
     });
 }

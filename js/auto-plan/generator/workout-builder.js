@@ -1,5 +1,6 @@
 import { BODY_PART_ORDER } from "./workout-constraint.js";
 import { compareScoredCandidates } from "./exercise-scoring.js";
+import { composeWorkoutSupersets } from "./superset-builder.js";
 import {
     fitPrescriptionsToTarget,
     getPrescriptionDurationSeconds,
@@ -159,15 +160,18 @@ function getFlexibleFitLimit(targetSeconds) {
     return targetSeconds + Math.max(5 * 60, Math.min(10 * 60, targetSeconds * 0.2));
 }
 
-function finalizeAttempt(selected, bodyParts, input, targetSeconds) {
+function finalizeAttempt(selected, bodyParts, input, targetSeconds, random) {
     const mode = input?.request?.timeFlexibility === "flexible" ? "flexible" : "strict";
     const fitLimit = mode === "strict" ? targetSeconds + 5 * 60 : getFlexibleFitLimit(targetSeconds);
     const fit = fitPrescriptionsToTarget(selected, input, targetSeconds, fitLimit);
-    const exercises = sortWorkoutExercises(selected).map(item => {
+    const orderedExercises = sortWorkoutExercises(selected).map(item => {
         const sourceIndex = selected.indexOf(item);
         const prescription = fit.prescriptions[sourceIndex];
         return { ...item, prescription, estimatedDurationSeconds: getPrescriptionDurationSeconds(prescription) };
     });
+    const supersetComposition = composeWorkoutSupersets(orderedExercises, input?.request?.supersetPreference, { random });
+    const exercises = supersetComposition.exercises;
+    const durationSeconds = exercises.reduce((total, item) => total + item.estimatedDurationSeconds, 0);
     const coverage = Object.fromEntries(bodyParts.map(bodyPart => [bodyPart, getCoverage(exercises, bodyPart)]));
     const coveredBodyParts = Object.values(coverage).filter(item => item.status !== "missing").length;
     const exerciseScore = exercises.reduce((total, item) => total + item.candidate.score, 0);
@@ -177,7 +181,7 @@ function finalizeAttempt(selected, bodyParts, input, targetSeconds) {
     const maxMiss = Number.isFinite(requestedMax) && requestedMax > 0 && exercises.length > requestedMax ? exercises.length - requestedMax : 0;
     const score = coveredBodyParts * 500
         + exerciseScore
-        + getTimePenalty(fit.durationSeconds, targetSeconds, mode)
+        + getTimePenalty(durationSeconds, targetSeconds, mode)
         - minMiss * 120
         - maxMiss * 80;
 
@@ -187,8 +191,15 @@ function finalizeAttempt(selected, bodyParts, input, targetSeconds) {
         coveredBodyParts,
         score,
         timeMode: mode,
-        timeFit: fit,
-        withinTimeTolerance: isWithinTimeTolerance(fit.durationSeconds, targetSeconds, mode)
+        supersetComposition,
+        timeFit: {
+            ...fit,
+            durationSeconds,
+            durationMinutes: Math.round(durationSeconds / 60),
+            deviationSeconds: durationSeconds - targetSeconds,
+            deviationMinutes: Math.abs(durationSeconds - targetSeconds) / 60
+        },
+        withinTimeTolerance: isWithinTimeTolerance(durationSeconds, targetSeconds, mode)
     };
 }
 
@@ -248,7 +259,7 @@ function buildWorkoutFromScoredPool(scoredPool, input, {
         const state = { usedExercises: new Set(), usedProgressions: new Set() };
         selectCoverageCandidates(candidates, bodyParts, selected, state, options);
         fillRemainingCandidates(candidates, bodyParts, selected, state, targetCount, options);
-        if (selected.length) results.push(finalizeAttempt(selected, bodyParts, input, targetSeconds));
+        if (selected.length) results.push(finalizeAttempt(selected, bodyParts, input, targetSeconds, random));
     }
 
     const mode = input?.request?.timeFlexibility === "flexible" ? "flexible" : "strict";
@@ -283,7 +294,8 @@ function buildWorkoutFromScoredPool(scoredPool, input, {
         timeMode: mode,
         withinTimeTolerance: best.withinTimeTolerance,
         attemptedPlans: results.length,
-        planScore: best.score
+        planScore: best.score,
+        supersetComposition: best.supersetComposition
     };
 }
 
