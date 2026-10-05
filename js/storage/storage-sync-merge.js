@@ -5,7 +5,7 @@ import {
     putStoredWorkoutHistory,
     deleteStoredWorkoutHistory
 } from "./storage-provider.js";
-import { STORAGE_DATA_FILE, readSyncFileTarget, writeSyncFileTarget } from "./sync-file-target.js";
+import { SYNC_TARGET_ID, readSyncFileTarget, writeSyncFileTarget } from "./sync-file-target.js";
 import { createStorageSnapshot, parseStorageSnapshot } from "./storage-snapshot.js";
 import { loadSyncMetadata, saveSyncMetadata } from "./sync-metadata.js";
 import { createSyncBaseline, baselinesEqual, compareSyncBaselines } from "./storage-sync-baseline.js";
@@ -300,7 +300,7 @@ async function runStorageSync(conflictPolicy) {
                 policy: conflictPolicy,
                 imported: 0,
                 exported: 0,
-                conflicts: [{ collection: "storage", id: STORAGE_DATA_FILE, reason: verification.reason }]
+                conflicts: [{ collection: "storage", id: SYNC_TARGET_ID, reason: verification.reason }]
             };
         }
     }

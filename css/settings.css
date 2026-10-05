@@ -347,7 +347,7 @@ html[data-theme="dark"]
 }
 
 .settings-local-data .settings-help,
-.settings-sync-folder-text .settings-help,
+.settings-sync-file-text .settings-help,
 .settings-sync-mode-row + .settings-help,
 .settings-sync-pairing .settings-help {
     margin: 4px 0 0;
@@ -358,29 +358,29 @@ html[data-theme="dark"]
     border-top: 1px solid #ddd;
 }
 
-.settings-sync-folder-row {
+.settings-sync-file-row {
     align-items: flex-start;
 }
 
-.settings-sync-folder-text {
+.settings-sync-file-text {
     flex: 1;
 }
 
-.settings-sync-folder-actions,
+.settings-sync-file-actions,
 .settings-sync-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
 }
 
-.settings-sync-folder-actions button,
+.settings-sync-file-actions button,
 .settings-sync-actions button,
 .settings-sync-mode-switch button {
     padding: 8px 12px;
     cursor: pointer;
 }
 
-.settings-sync-folder-actions button:disabled,
+.settings-sync-file-actions button:disabled,
 .settings-sync-actions button:disabled,
 .settings-sync-mode-switch button:disabled {
     cursor: not-allowed;

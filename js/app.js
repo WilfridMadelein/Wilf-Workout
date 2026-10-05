@@ -225,9 +225,11 @@ planCategoryOptions,
 
 settingsPlanAutoAddCategories,
 settingsPlanIncludeNotes,
-settingsSyncFolderButton,
+settingsSyncCreateFileButton,
+settingsSyncOpenFileButton,
+settingsSyncAuthorizeFileButton,
 settingsSyncDisconnectButton,
-settingsSyncFolderStatus,
+settingsSyncFileStatus,
 settingsSyncControls,
 settingsSyncModeAutoButton,
 settingsSyncModeManualButton,
@@ -873,9 +875,11 @@ configureExerciseMuscleMap({
 });
 
 configureStorageSyncController({
-    folderButton: settingsSyncFolderButton,
+    createFileButton: settingsSyncCreateFileButton,
+    openFileButton: settingsSyncOpenFileButton,
+    authorizeButton: settingsSyncAuthorizeFileButton,
     disconnectButton: settingsSyncDisconnectButton,
-    folderStatus: settingsSyncFolderStatus,
+    fileStatus: settingsSyncFileStatus,
     controls: settingsSyncControls,
     modeAutoButton: settingsSyncModeAutoButton,
     modeManualButton: settingsSyncModeManualButton,

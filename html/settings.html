@@ -63,19 +63,21 @@
         </div>
 
         <div class="settings-sync-manager">
-            <div class="settings-row settings-sync-folder-row">
-                <div class="settings-sync-folder-text">
+            <div class="settings-row settings-sync-file-row">
+                <div class="settings-sync-file-text">
                     <strong>Synchronisation externe</strong>
-                    <p class="settings-help">Connectez un dossier local ou cloud pour synchroniser Wilf entre vos appareils.</p>
+                    <p class="settings-help">Tous vos appareils doivent utiliser exactement le même fichier de synchronisation. Le premier appareil crée le fichier; les suivants ouvrent ce fichier existant.</p>
                 </div>
 
-                <div class="settings-sync-folder-actions">
-                    <button id="settings-sync-folder-button" type="button">Choisir un dossier</button>
+                <div class="settings-sync-file-actions">
+                    <button id="settings-sync-create-file" type="button">Créer un fichier</button>
+                    <button id="settings-sync-open-file" type="button">Utiliser un fichier existant</button>
+                    <button id="settings-sync-authorize-file" type="button" hidden>Autoriser l’accès</button>
                     <button id="settings-sync-disconnect-button" type="button" hidden>Déconnecter</button>
                 </div>
             </div>
 
-            <p id="settings-sync-folder-status" class="settings-storage-status" aria-live="polite"></p>
+            <p id="settings-sync-file-status" class="settings-storage-status" aria-live="polite"></p>
 
             <div id="settings-sync-controls" class="settings-sync-controls" hidden>
                 <div class="settings-row settings-sync-mode-row">
@@ -92,14 +94,14 @@
                     <strong>Première synchronisation</strong>
                     <p id="settings-sync-pairing-message" class="settings-help"></p>
                     <div class="settings-sync-actions">
-                        <button id="settings-sync-pairing-push" type="button">Envoyer les données de cet appareil</button>
-                        <button id="settings-sync-pairing-pull" type="button">Récupérer les données du dossier</button>
+                        <button id="settings-sync-pairing-push" type="button">Envoyer et fusionner</button>
+                        <button id="settings-sync-pairing-pull" type="button">Récupérer et fusionner</button>
                     </div>
                 </div>
 
                 <div id="settings-sync-actions" class="settings-sync-actions" hidden>
-                    <button id="settings-sync-push" type="button">Envoyer vers le dossier</button>
-                    <button id="settings-sync-pull" type="button">Récupérer depuis le dossier</button>
+                    <button id="settings-sync-push" type="button">Envoyer vers le fichier</button>
+                    <button id="settings-sync-pull" type="button">Récupérer depuis le fichier</button>
                 </div>
 
                 <p id="settings-sync-status" class="settings-sync-status" aria-live="polite">Vérification...</p>
@@ -427,8 +429,8 @@
     ========================================================== -->
     <div id="sync-disconnect-modal" class="plan-pdf-modal" hidden>
         <div class="plan-pdf-dialog plan-backup-dialog">
-            <h3>Déconnecter le dossier ?</h3>
-            <p>Wilf cessera de synchroniser avec ce dossier. Vos données locales et le fichier déjà présent dans le dossier ne seront pas supprimés.</p>
+            <h3>Déconnecter le fichier ?</h3>
+            <p>Wilf cessera de synchroniser avec ce fichier. Vos données locales et le fichier lui-même ne seront pas supprimés.</p>
             <div class="plan-pdf-actions">
                 <button id="cancel-sync-disconnect-button" type="button">Annuler</button>
                 <button id="confirm-sync-disconnect-button" type="button">Déconnecter</button>

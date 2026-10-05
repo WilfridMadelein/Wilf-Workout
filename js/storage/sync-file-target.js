@@ -1,38 +1,31 @@
-import { loadSyncConfig, updateSyncTarget } from './sync-config.js';
-import { hasSyncDirectoryAccess, readSyncDirectoryFile, writeSyncDirectoryFile } from './sync-directory.js';
+import { loadSyncConfig } from './sync-config.js';
+import { hasSyncFileAccess, readSyncFile, writeSyncFile } from './sync-file-access.js';
 
 // ============================================================
-// CIBLE ACTIVE DE SYNCHRONISATION
+// CIBLE ACTIVE DE SYNCHRONISATION — FICHIER CANONIQUE
 // ============================================================
 
-const STORAGE_DATA_FILE = 'wilf-workout-sync.json';
+const SYNC_TARGET_ID = 'shared-sync-file';
 
 async function getActiveSyncTarget() {
     const config = await loadSyncConfig();
     if (!config.target) return { type: 'none', reason: 'no-target', config };
-    if (!await hasSyncDirectoryAccess(config.target, false)) return { type: 'none', reason: 'permission-required', config };
-    return { type: 'directory', target: config.target, config };
+    if (!await hasSyncFileAccess(config.target, false)) return { type: 'none', reason: 'permission-required', config, target: config.target };
+    return { type: 'file', target: config.target, config };
 }
 
 async function readSyncFileTarget(active = null) {
     active ??= await getActiveSyncTarget();
     if (active.type === 'none') return { available: false, reason: active.reason, target: active.target ?? null, config: active.config };
-
-    const result = await readSyncDirectoryFile(active.target, STORAGE_DATA_FILE);
-    if (result.target !== active.target) {
-        active.target = result.target;
-        active.config.target = result.target;
-        await updateSyncTarget(result.target);
-    }
-
-    return { available: true, exists: Boolean(result.exists), content: result.content ?? null, target: active.target, config: active.config };
+    const result = await readSyncFile(active.target);
+    const content = typeof result.content === 'string' ? result.content : '';
+    return { available: true, exists: content.trim().length > 0, content, target: active.target, config: active.config };
 }
 
 async function writeSyncFileTarget(target, content) {
-    if (!target) throw new Error('Aucun dossier de synchronisation disponible.');
-    const result = await writeSyncDirectoryFile(target, STORAGE_DATA_FILE, content);
-    if (result.target !== target) await updateSyncTarget(result.target);
-    return result;
+    if (!target) throw new Error('Aucun fichier de synchronisation disponible.');
+    await writeSyncFile(target, content);
+    return { target };
 }
 
-export { STORAGE_DATA_FILE, getActiveSyncTarget, readSyncFileTarget, writeSyncFileTarget };
+export { SYNC_TARGET_ID, getActiveSyncTarget, readSyncFileTarget, writeSyncFileTarget };

@@ -144,9 +144,11 @@ export const settingsAdvancedToggle =
 export const settingsAdvancedPanel =
     document.getElementById("settings-advanced-panel");
 
-export const settingsSyncFolderButton = document.getElementById("settings-sync-folder-button");
+export const settingsSyncCreateFileButton = document.getElementById("settings-sync-create-file");
+export const settingsSyncOpenFileButton = document.getElementById("settings-sync-open-file");
+export const settingsSyncAuthorizeFileButton = document.getElementById("settings-sync-authorize-file");
 export const settingsSyncDisconnectButton = document.getElementById("settings-sync-disconnect-button");
-export const settingsSyncFolderStatus = document.getElementById("settings-sync-folder-status");
+export const settingsSyncFileStatus = document.getElementById("settings-sync-file-status");
 export const settingsSyncControls = document.getElementById("settings-sync-controls");
 export const settingsSyncModeAutoButton = document.getElementById("settings-sync-mode-auto");
 export const settingsSyncModeManualButton = document.getElementById("settings-sync-mode-manual");

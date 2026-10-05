@@ -1,10 +1,10 @@
 import { getStoredSetting, putStoredSetting } from './storage-provider.js';
 
 // ============================================================
-// CONFIGURATION DE SYNCHRONISATION V2
+// CONFIGURATION DE SYNCHRONISATION V3 — FICHIER CANONIQUE
 // ============================================================
 
-const SYNC_CONFIG_ID = 'sync-config-v2';
+const SYNC_CONFIG_ID = 'sync-config-v3';
 const SYNC_CONFIG_SCHEMA_VERSION = 1;
 
 function createDefaultSyncConfig() {
@@ -13,24 +13,12 @@ function createDefaultSyncConfig() {
 
 function normalizeTarget(target) {
     if (!target || typeof target !== 'object') return null;
-
-    if (target.kind === 'android-directory' && typeof target.directoryUri === 'string' && target.directoryUri) {
-        return {
-            kind: 'android-directory',
-            directoryUri: target.directoryUri,
-            dataFileUri: typeof target.dataFileUri === 'string' && target.dataFileUri ? target.dataFileUri : null,
-            name: typeof target.name === 'string' && target.name.trim() ? target.name.trim() : 'Dossier sélectionné'
-        };
+    if (target.kind === 'android-file' && typeof target.fileUri === 'string' && target.fileUri) {
+        return { kind: 'android-file', fileUri: target.fileUri, name: typeof target.name === 'string' && target.name.trim() ? target.name.trim() : 'Fichier de synchronisation' };
     }
-
-    if (target.kind === 'web-directory' && target.directoryHandle?.kind === 'directory') {
-        return {
-            kind: 'web-directory',
-            directoryHandle: target.directoryHandle,
-            name: typeof target.name === 'string' && target.name.trim() ? target.name.trim() : target.directoryHandle.name || 'Dossier sélectionné'
-        };
+    if (target.kind === 'web-file' && target.fileHandle?.kind === 'file') {
+        return { kind: 'web-file', fileHandle: target.fileHandle, name: typeof target.name === 'string' && target.name.trim() ? target.name.trim() : target.fileHandle.name || 'Fichier de synchronisation' };
     }
-
     return null;
 }
 
@@ -67,12 +55,6 @@ async function setSyncTarget(target) {
     return saveSyncConfig(config);
 }
 
-async function updateSyncTarget(target) {
-    const config = await loadSyncConfig();
-    config.target = normalizeTarget(target);
-    return saveSyncConfig(config);
-}
-
 async function clearSyncTarget() {
     const config = await loadSyncConfig();
     config.target = null;
@@ -99,7 +81,6 @@ export {
     loadSyncConfig,
     saveSyncConfig,
     setSyncTarget,
-    updateSyncTarget,
     clearSyncTarget,
     setSyncMode,
     markSyncInitialized

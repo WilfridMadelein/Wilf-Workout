@@ -215,6 +215,180 @@ public class WilfStoragePlugin extends Plugin {
         call.resolve();
     }
 
+    // ============================================================
+    // FICHIER DE SYNCHRONISATION — URI EXACTE ET PERSISTANTE
+    // ============================================================
+
+    @PluginMethod
+    public void openSyncFile(PluginCall call) {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("*/*");
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        startActivityForResult(call, intent, "openSyncFileResult");
+    }
+
+    @ActivityCallback
+    private void openSyncFileResult(PluginCall call, ActivityResult result) {
+        resolvePersistentFileSelection(call, result);
+    }
+
+    @PluginMethod
+    public void createSyncFile(PluginCall call) {
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/json");
+        intent.putExtra(Intent.EXTRA_TITLE, call.getString("fileName", "wilf-workout-sync.json"));
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        startActivityForResult(call, intent, "createSyncFileResult");
+    }
+
+    @ActivityCallback
+    private void createSyncFileResult(PluginCall call, ActivityResult result) {
+        resolvePersistentFileSelection(call, result);
+    }
+
+    private void resolvePersistentFileSelection(PluginCall call, ActivityResult result) {
+        if (call == null) return;
+        Intent data = result.getData();
+        if (result.getResultCode() != Activity.RESULT_OK || data == null || data.getData() == null) {
+            JSObject response = new JSObject();
+            response.put("cancelled", true);
+            call.resolve(response);
+            return;
+        }
+
+        Uri uri = data.getData();
+        int takeFlags = data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+        if ((takeFlags & Intent.FLAG_GRANT_READ_URI_PERMISSION) == 0 || (takeFlags & Intent.FLAG_GRANT_WRITE_URI_PERMISSION) == 0) {
+            call.reject("Le fichier sélectionné doit autoriser la lecture et l'écriture.");
+            return;
+        }
+
+        try {
+            getContext().getContentResolver().takePersistableUriPermission(uri, takeFlags);
+        } catch (SecurityException error) {
+            call.reject("Impossible de conserver l'autorisation du fichier.", error);
+            return;
+        }
+
+        JSObject response = new JSObject();
+        response.put("cancelled", false);
+        response.put("uri", uri.toString());
+        response.put("name", getDocumentDisplayName(uri));
+        call.resolve(response);
+    }
+
+    @PluginMethod
+    public void hasFileAccess(PluginCall call) {
+        String uriValue = call.getString("uri");
+        if (uriValue == null || uriValue.isBlank()) {
+            call.reject("URI du fichier manquante.");
+            return;
+        }
+
+        Uri uri = Uri.parse(uriValue);
+        boolean granted = false;
+        for (UriPermission permission : getContext().getContentResolver().getPersistedUriPermissions()) {
+            if (permission.getUri().equals(uri) && permission.isReadPermission() && permission.isWritePermission()) {
+                granted = true;
+                break;
+            }
+        }
+
+        JSObject response = new JSObject();
+        response.put("granted", granted);
+        call.resolve(response);
+    }
+
+    @PluginMethod
+    public void releaseFile(PluginCall call) {
+        String uriValue = call.getString("uri");
+        if (uriValue == null || uriValue.isBlank()) {
+            call.resolve();
+            return;
+        }
+
+        Uri uri = Uri.parse(uriValue);
+        int flags = 0;
+        for (UriPermission permission : getContext().getContentResolver().getPersistedUriPermissions()) {
+            if (!permission.getUri().equals(uri)) continue;
+            if (permission.isReadPermission()) flags |= Intent.FLAG_GRANT_READ_URI_PERMISSION;
+            if (permission.isWritePermission()) flags |= Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+        }
+
+        if (flags != 0) {
+            try {
+                getContext().getContentResolver().releasePersistableUriPermission(uri, flags);
+            } catch (SecurityException error) {
+                call.reject("Impossible de libérer l'autorisation du fichier.", error);
+                return;
+            }
+        }
+        call.resolve();
+    }
+
+    @PluginMethod
+    public void readTextFile(PluginCall call) {
+        String uriValue = call.getString("uri");
+        if (uriValue == null || uriValue.isBlank()) {
+            call.reject("URI du fichier manquante.");
+            return;
+        }
+
+        Uri uri = Uri.parse(uriValue);
+        try {
+            JSObject response = new JSObject();
+            response.put("content", readTextFromUri(getContext().getContentResolver(), uri));
+            response.put("name", getDocumentDisplayName(uri));
+            call.resolve(response);
+        } catch (IOException | SecurityException error) {
+            call.reject("Impossible de lire le fichier de synchronisation.", error);
+        }
+    }
+
+    @PluginMethod
+    public void writeTextFile(PluginCall call) {
+        String uriValue = call.getString("uri");
+        if (uriValue == null || uriValue.isBlank()) {
+            call.reject("URI du fichier manquante.");
+            return;
+        }
+
+        try {
+            writeTextToUri(getContext().getContentResolver(), Uri.parse(uriValue), call.getString("content", ""));
+            call.resolve();
+        } catch (IOException | SecurityException error) {
+            call.reject("Impossible d'écrire le fichier de synchronisation.", error);
+        }
+    }
+
+    private String getDocumentDisplayName(Uri uri) {
+        ContentResolver resolver = getContext().getContentResolver();
+        try (Cursor cursor = resolver.query(uri, new String[]{ DocumentsContract.Document.COLUMN_DISPLAY_NAME }, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int index = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME);
+                if (index >= 0) {
+                    String name = cursor.getString(index);
+                    if (name != null && !name.isBlank()) return name;
+                }
+            }
+        } catch (Exception ignored) {}
+        return "Fichier de synchronisation";
+    }
+
+    private String readTextFromUri(ContentResolver resolver, Uri uri) throws IOException {
+        StringBuilder content = new StringBuilder();
+        try (InputStream input = resolver.openInputStream(uri)) {
+            if (input == null) throw new IOException("Impossible d'ouvrir le fichier en lecture.");
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) content.append(line).append('\n');
+            }
+        }
+        return content.toString();
+    }
+
     @PluginMethod
     public void saveTextFile(PluginCall call) {
         String fileName = call.getString("fileName");
