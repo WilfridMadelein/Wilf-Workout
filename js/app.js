@@ -396,6 +396,18 @@ import {
 } from "./auto-plan/auto-plan-input.js";
 
 import {
+    buildExerciseCandidatePool
+} from "./auto-plan/generator/workout-constraint.js";
+
+import {
+    scoreCandidatePool
+} from "./auto-plan/generator/exercise-scoring.js";
+
+import {
+    buildWorkoutFromScoredPool
+} from "./auto-plan/generator/workout-builder.js";
+
+import {
     configurePlanRender,
     createPlanNumberInput,
     renderPlanExercises,
@@ -492,6 +504,96 @@ function inspectWilfAutoPlanData(request = appSettings?.autoPlanLastRequest) {
     if (input.diagnostics.warnings.length) console.warn("Auto-plan — avertissements :", input.diagnostics.warnings);
 
     return input;
+}
+
+function inspectWilfAutoPlanCandidates(request = appSettings?.autoPlanLastRequest) {
+    const input = inspectWilfAutoPlanData(request);
+    const pool = buildExerciseCandidatePool(exercises, input);
+
+    console.table([{
+        total: pool.summary.total,
+        eligible: pool.summary.eligible,
+        rejected: pool.summary.rejected
+    }]);
+
+    console.table([pool.summary.rejectedByReason]);
+
+    console.table(
+        Object.entries(pool.summary.bodyParts).map(([bodyPart, counts]) => ({
+            bodyPart,
+            matchingCandidates: counts.matching,
+            primaryCandidates: counts.primary
+        }))
+    );
+
+    return { input, ...pool };
+}
+
+function inspectWilfAutoPlanScores(request = appSettings?.autoPlanLastRequest) {
+    const candidateResult = inspectWilfAutoPlanCandidates(request);
+    const scored = scoreCandidatePool(candidateResult);
+
+    console.table(
+        scored.candidates.slice(0, 30).map(candidate => ({
+            exercise: candidate.exerciseName,
+            score: candidate.score,
+            bodyPart: candidate.primaryBodyPart,
+            progression: candidate.progressionIndex,
+            latest: candidate.latestProgressionIndex,
+            offset: candidate.progressionOffset,
+            preference: candidate.progressionPreference,
+            primaryTarget: candidate.primaryTargeted,
+            preferenceScore: candidate.scoreBreakdown.preference,
+            progressionScore: candidate.scoreBreakdown.progressionDistance,
+            primaryScore: candidate.scoreBreakdown.primaryTarget
+        }))
+    );
+
+    console.table([scored.scoring.overall]);
+
+    console.table(
+        Object.entries(scored.scoring.bodyParts).map(([bodyPart, stats]) => ({
+            bodyPart,
+            ...stats
+        }))
+    );
+
+    return { input: candidateResult.input, ...scored };
+}
+
+function inspectWilfAutoPlanWorkout(request = appSettings?.autoPlanLastRequest) {
+    const scored = inspectWilfAutoPlanScores(request);
+    const workout = buildWorkoutFromScoredPool(scored, scored.input);
+
+    console.table(
+        workout.exercises.map((item, index) => ({
+            order: index + 1,
+            exercise: item.candidate.exerciseName,
+            bodyPart: item.compositionBodyPart,
+            coverage: item.selectionReason,
+            score: item.candidate.score,
+            progression: item.candidate.progressionIndex,
+            latest: item.candidate.latestProgressionIndex,
+            recent28Days: item.candidate.recentProgressionWorkoutCount,
+            durationSeconds: item.estimatedDurationSeconds
+        }))
+    );
+
+    console.table(
+        Object.entries(workout.coverage).map(([bodyPart, coverage]) => ({
+            bodyPart,
+            status: coverage.status,
+            exercise: coverage.exerciseName
+        }))
+    );
+
+    console.table([{
+        targetMinutes: Math.round(workout.targetDurationSeconds / 60),
+        estimatedMinutes: workout.estimatedDurationMinutes,
+        unusedMinutes: Math.round(workout.unusedDurationSeconds / 60)
+    }]);
+
+    return { ...scored, workout };
 }
 
 const workoutSummaryStandaloneParent = pageWorkoutSummary.parentElement;
@@ -710,14 +812,24 @@ configureAutoPlanController({
     ],
 
 onCreatePlan: async request => {
-    const input = inspectWilfAutoPlanData(request);
+    const result = inspectWilfAutoPlanWorkout(request);
 
-    if (!input.diagnostics.valid) {
+    if (!result.input.diagnostics.valid) {
         alert("Les données nécessaires au plan automatique sont incomplètes. Consultez la console pour les détails.");
         return;
     }
 
-    alert("Les paramètres sont enregistrés et les données de génération sont prêtes. L'algorithme sera branché à la prochaine étape.");
+    if (!result.candidates.length) {
+        alert("Aucun exercice ne correspond aux paramètres sélectionnés.");
+        return;
+    }
+
+    if (!result.workout.exercises.length) {
+        alert("Des exercices correspondent aux paramètres, mais aucun ne peut entrer dans le temps visé avec les paramètres actuels.");
+        return;
+    }
+
+    alert(`${result.workout.exercises.length} exercices sélectionnés pour environ ${result.workout.estimatedDurationMinutes} minutes.`);
 }
 });
 
@@ -1460,6 +1572,9 @@ async function initializeApp() {
     await setupSyncLifecycle();
     window.inspectWilfStorageSync = inspectStorageSync;
     window.inspectWilfAutoPlanData = inspectWilfAutoPlanData;
+    window.inspectWilfAutoPlanCandidates = inspectWilfAutoPlanCandidates;
+    window.inspectWilfAutoPlanScores = inspectWilfAutoPlanScores;
+    window.inspectWilfAutoPlanWorkout = inspectWilfAutoPlanWorkout;
     setupDefaultPlanFilters();
     setupPlanDefaultInputs();
     setupWorkoutSummary();

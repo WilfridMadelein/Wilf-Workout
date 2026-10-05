@@ -2507,3 +2507,62 @@ html[data-theme="dark"] .auto-plan-advanced-block + .auto-plan-advanced-block {
 html[data-theme="dark"] .auto-plan-help {
     color: #aaa;
 }
+
+
+.auto-plan-priority-presets {
+    margin-bottom: 7px;
+}
+
+.auto-plan-priority-reset {
+    flex: 0 0 auto;
+    padding: 2px 4px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 16px;
+    cursor: pointer;
+    opacity: 0.65;
+}
+
+.auto-plan-priority-reset:hover {
+    opacity: 1;
+}
+
+.auto-plan-priority-value-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.auto-plan-priority-value-row > span {
+    flex: 0 0 auto;
+    white-space: nowrap;
+}
+
+.auto-plan-priority-tempo-row {
+    align-items: center;
+}
+
+.auto-plan-priority-tempo-row .tempo-inputs {
+    min-width: 0;
+}
+
+.auto-plan-exercise-count-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+#auto-plan-advanced-content {
+    container: auto-plan-advanced / inline-size;
+}
+
+@container auto-plan-advanced (max-width: 430px) {
+    .plan-settings-grid,
+    .auto-plan-exercise-count-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}

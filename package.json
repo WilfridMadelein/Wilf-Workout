@@ -3,11 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
+"scripts": {
     "build:mobile": "node tools/build-mobile.mjs",
     "sync:android": "npm run build:mobile && npx cap sync android",
-    "open:android": "npx cap open android"
-  },
+    "open:android": "npx cap open android",
+    "test:auto-plan": "node --experimental-vm-modules tools/auto-plan-simulator.mjs --runs=1000"
+},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/WilfridMadelein/Wilf-Workout.git"

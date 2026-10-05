@@ -5,12 +5,14 @@ import {
     AUTO_PLAN_BODY_PARTS,
     AUTO_PLAN_SUPERSET_OPTIONS,
     AUTO_PLAN_SUPERSET_LABELS,
+    AUTO_PLAN_PRIORITY_PRESETS,
+    normalizeAutoPlanExerciseCount,
     normalizeAutoPlanDuration,
     normalizeAutoPlanPriorities,
     normalizeAutoPlanLastRequest
 } from "./auto-plan-settings.js";
 
-import { setupNumberInput, updateNumberInputWidth } from "../ui/ui.js";
+import { updateNumberInputWidth } from "../ui/ui.js";
 
 let page;
 let openButton;
@@ -64,6 +66,33 @@ function getBodyPartMuscleOptions(key) {
     return config.mode === "submuscles" ? getSubmuscleOptions(config.family) : [...config.values];
 }
 
+function createPriorityPreset(preset) {
+    const defaults = getAppSettings()?.planDefaults ?? {};
+    const weightUnit = ["kg", "lbs"].includes(defaults.weightUnit) ? defaults.weightUnit : "lbs";
+
+    if (preset === "settings") {
+        return normalizeAutoPlanPriorities({
+            preset: "settings",
+            sets: defaults.sets,
+            reps: defaults.reps,
+            time: defaults.time,
+            rest: defaults.rest,
+            weight: defaults.weight,
+            weightUnit,
+            tempo: { ...defaults.tempo },
+            includeNotes: defaults.includeNotes,
+            autoAddDefaultInstructions: defaults.autoAddDefaultInstructions
+        });
+    }
+
+    return normalizeAutoPlanPriorities({
+        preset: "empty",
+        weightUnit,
+        includeNotes: false,
+        autoAddDefaultInstructions: false
+    });
+}
+
 function createInitialDraft() {
     const bodyParts = Object.keys(AUTO_PLAN_BODY_PARTS);
     const muscles = {};
@@ -78,7 +107,8 @@ return {
     types: [...AUTO_PLAN_TYPES],
     categories: [],
     equipment: uniqueValid(getDefaultPlanEquipment(), getEquipmentOptions()),
-    planPriorities: normalizeAutoPlanPriorities(getAppSettings()?.planDefaults),
+    exerciseCount: { min: null, max: null },
+    planPriorities: createPriorityPreset("empty"),
     supersetPreference: "indifferent"
 };
 }
@@ -104,7 +134,8 @@ function createDraftFromStored(value) {
         types: uniqueValid(stored.types, AUTO_PLAN_TYPES),
         categories: uniqueValid(stored.categories, getCategoryOptions()),
         equipment: uniqueValid(stored.equipment, getEquipmentOptions()),
-        planPriorities: normalizeAutoPlanPriorities(stored.planPriorities ?? getAppSettings()?.planDefaults),
+        exerciseCount: normalizeAutoPlanExerciseCount(stored.exerciseCount),
+        planPriorities: stored.planPriorities ? normalizeAutoPlanPriorities(stored.planPriorities) : createPriorityPreset("empty"),
         supersetPreference: stored.supersetPreference
     };
 }
@@ -118,6 +149,7 @@ function cloneDraft() {
         types: [...draft.types],
         categories: [...draft.categories],
         equipment: [...draft.equipment],
+        exerciseCount: { ...draft.exerciseCount },
         planPriorities: { ...draft.planPriorities, tempo: { ...draft.planPriorities.tempo } }
     };
 }
@@ -343,18 +375,47 @@ function renderSupersetPreference() {
     });
 }
 
+function renderPriorityPreset() {
+    page.querySelectorAll("[data-auto-priority-preset]").forEach(button => {
+        const active = button.dataset.autoPriorityPreset === draft.planPriorities.preset;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+    });
+}
+
+function applyPriorityPreset(preset) {
+    if (!AUTO_PLAN_PRIORITY_PRESETS.includes(preset)) return;
+
+    draft.planPriorities = createPriorityPreset(preset);
+    renderPlanPriorities();
+}
+
+function resetPriorityField(field) {
+    const source = createPriorityPreset(draft.planPriorities.preset);
+
+    if (field === "tempo") draft.planPriorities.tempo = { ...source.tempo };
+    else {
+        draft.planPriorities[field] = source[field];
+        if (field === "weight") draft.planPriorities.weightUnit = source.weightUnit;
+    }
+
+    renderPlanPriorities();
+}
+
 function renderPlanPriorities() {
+    renderPriorityPreset();
     const priorities = draft.planPriorities;
 
-    setPriorityInputValue("auto-plan-priority-sets", priorities.sets);
-    setPriorityInputValue("auto-plan-priority-reps", priorities.reps);
-    setPriorityInputValue("auto-plan-priority-time", priorities.time);
-    setPriorityInputValue("auto-plan-priority-rest", priorities.rest);
-    setPriorityInputValue("auto-plan-priority-weight", priorities.weight);
-    setPriorityInputValue("auto-plan-priority-tempo-1", priorities.tempo.first, { zeroDisplay: "X", minChars: 1 });
-    setPriorityInputValue("auto-plan-priority-tempo-2", priorities.tempo.second, { minChars: 1 });
-    setPriorityInputValue("auto-plan-priority-tempo-3", priorities.tempo.third, { zeroDisplay: "X", minChars: 1 });
-    setPriorityInputValue("auto-plan-priority-tempo-4", priorities.tempo.fourth, { minChars: 1 });
+    setOptionalInputValue(getElement("auto-plan-priority-sets"), priorities.sets);
+    setOptionalInputValue(getElement("auto-plan-priority-reps"), priorities.reps);
+    setOptionalInputValue(getElement("auto-plan-priority-time"), priorities.time);
+    setOptionalInputValue(getElement("auto-plan-priority-rest"), priorities.rest);
+    setOptionalInputValue(getElement("auto-plan-priority-weight"), priorities.weight);
+
+    setOptionalInputValue(getElement("auto-plan-priority-tempo-1"), priorities.tempo.first, { zeroDisplay: "X", minChars: 1 });
+    setOptionalInputValue(getElement("auto-plan-priority-tempo-2"), priorities.tempo.second, { minChars: 1 });
+    setOptionalInputValue(getElement("auto-plan-priority-tempo-3"), priorities.tempo.third, { zeroDisplay: "X", minChars: 1 });
+    setOptionalInputValue(getElement("auto-plan-priority-tempo-4"), priorities.tempo.fourth, { minChars: 1 });
 
     getElement("auto-plan-priority-include-notes").checked = priorities.includeNotes;
     getElement("auto-plan-priority-instructions").checked = priorities.autoAddDefaultInstructions;
@@ -366,6 +427,11 @@ function renderPlanPriorities() {
     });
 
     renderSupersetPreference();
+}
+
+function renderExerciseCount() {
+    setOptionalInputValue(getElement("auto-plan-exercise-min"), draft.exerciseCount.min);
+    setOptionalInputValue(getElement("auto-plan-exercise-max"), draft.exerciseCount.max);
 }
 
 function setAutoPlanAdvancedOpen(open) {
@@ -388,6 +454,7 @@ function setAutoPlanSectionOpen(section, open) {
 }
 
 function renderForm() {
+    renderExerciseCount();
     getElement("auto-plan-duration").value = draft.durationMinutes ?? "";
     renderGoals();
     renderBodyParts();
@@ -505,21 +572,61 @@ async function createPlanFromDraft() {
 // INITIALISATION
 // ============================================================
 
-function bindPriorityNumber(id, options, save) {
-    const { snap = false, ...numberOptions } = options;
+function normalizeOptionalInput(value, { min = 0, max = 999, decimals = 0, zeroDisplay = null } = {}) {
+    const text = String(value ?? "").trim();
+
+    if (!text) return null;
+    if (zeroDisplay && text.toUpperCase() === String(zeroDisplay).toUpperCase()) return 0;
+
+    const number = Number(text.replace(",", "."));
+    if (!Number.isFinite(number)) return null;
+
+    const factor = 10 ** decimals;
+    return Math.min(max, Math.max(min, Math.round(number * factor) / factor));
+}
+
+function setOptionalInputValue(input, value, { zeroDisplay = null, minChars = 3 } = {}) {
+    input.value = value === null || value === undefined ? "" : value === 0 && zeroDisplay ? zeroDisplay : value;
+    updateNumberInputWidth(input, minChars);
+}
+
+function bindOptionalNumber(id, options, save, arrowSelector) {
     const input = getElement(id);
+    const { min = 0, max = 999, step = 1, decimals = 0, minChars = 3, zeroDisplay = null, snap = false } = options;
 
-    const control = setupNumberInput(input, {
-        ...numberOptions,
-        onChange: value => {
-            if (!draft) return;
-            save(draft.planPriorities, value);
-        }
+    if (zeroDisplay) {
+        input.type = "text";
+        input.inputMode = "numeric";
+    }
+
+    const commit = value => {
+        const normalized = normalizeOptionalInput(value, { min, max, decimals, zeroDisplay });
+        setOptionalInputValue(input, normalized, { zeroDisplay, minChars });
+        save(normalized);
+    };
+
+    input.addEventListener("input", () => updateNumberInputWidth(input, minChars));
+    input.addEventListener("change", () => commit(input.value));
+
+    input.closest(".plan-default-number-control")?.querySelectorAll(arrowSelector).forEach(button => {
+        button.addEventListener("click", () => {
+            const direction = Number(button.dataset.autoPriorityDirection ?? button.dataset.autoCountDirection);
+            const current = normalizeOptionalInput(input.value, { min, max, decimals, zeroDisplay });
+            const stepValue = Number(step);
+            let next = current === null ? direction > 0 ? Math.max(min, stepValue) : min : current + direction * stepValue;
+
+            if (snap && current !== null && stepValue > 1) {
+                const ratio = current / stepValue;
+                next = direction > 0 ? (Math.floor(ratio) + 1) * stepValue : (Math.ceil(ratio) - 1) * stepValue;
+            }
+
+            commit(next);
+        });
     });
 
-    input.closest(".plan-default-number-control")?.querySelectorAll("[data-auto-priority-direction]").forEach(button => {
-        button.addEventListener("click", () => control.step(Number(button.dataset.autoPriorityDirection), snap));
-    });
+    return {
+        render: value => setOptionalInputValue(input, value, { zeroDisplay, minChars })
+    };
 }
 
 function setupAutoPlanController() {
@@ -568,11 +675,11 @@ function setupAutoPlanController() {
             page.hidden = true;
         });
     });
-bindPriorityNumber("auto-plan-priority-sets", { min: 1, max: 999, step: 1, minChars: 3 }, (priorities, value) => priorities.sets = value);
-bindPriorityNumber("auto-plan-priority-reps", { min: 1, max: 999, step: 1, minChars: 3 }, (priorities, value) => priorities.reps = value);
-bindPriorityNumber("auto-plan-priority-time", { min: 1, max: 999, step: 15, minChars: 3, snap: true }, (priorities, value) => priorities.time = value);
-bindPriorityNumber("auto-plan-priority-rest", { min: 0, max: 999, step: 15, minChars: 3, snap: true }, (priorities, value) => priorities.rest = value);
-bindPriorityNumber("auto-plan-priority-weight", { min: 0, max: 9999.9, step: 2.5, decimals: 1, minChars: 3, snap: true }, (priorities, value) => priorities.weight = value);
+bindOptionalNumber("auto-plan-priority-sets", { min: 1, max: 999, step: 1 }, value => draft.planPriorities.sets = value, "[data-auto-priority-direction]");
+bindOptionalNumber("auto-plan-priority-reps", { min: 1, max: 999, step: 1 }, value => draft.planPriorities.reps = value, "[data-auto-priority-direction]");
+bindOptionalNumber("auto-plan-priority-time", { min: 1, max: 999, step: 15, snap: true }, value => draft.planPriorities.time = value, "[data-auto-priority-direction]");
+bindOptionalNumber("auto-plan-priority-rest", { min: 0, max: 999, step: 15, snap: true }, value => draft.planPriorities.rest = value, "[data-auto-priority-direction]");
+bindOptionalNumber("auto-plan-priority-weight", { min: 0, max: 9999.9, step: 2.5, decimals: 1, snap: true }, value => draft.planPriorities.weight = value, "[data-auto-priority-direction]");
 
 [
     ["auto-plan-priority-tempo-1", "first", "X"],
@@ -580,7 +687,18 @@ bindPriorityNumber("auto-plan-priority-weight", { min: 0, max: 9999.9, step: 2.5
     ["auto-plan-priority-tempo-3", "third", "X"],
     ["auto-plan-priority-tempo-4", "fourth", null]
 ].forEach(([id, key, zeroDisplay]) => {
-    bindPriorityNumber(id, { min: 0, max: 999, step: 1, minChars: 1, zeroDisplay }, (priorities, value) => priorities.tempo[key] = value);
+    bindOptionalNumber(id, { min: 0, max: 999, step: 1, minChars: 1, zeroDisplay }, value => draft.planPriorities.tempo[key] = value, "[data-auto-priority-direction]");
+});
+
+bindOptionalNumber("auto-plan-exercise-min", { min: 1, max: 25, step: 1 }, value => draft.exerciseCount.min = value, "[data-auto-count-direction]");
+bindOptionalNumber("auto-plan-exercise-max", { min: 1, max: 40, step: 1 }, value => draft.exerciseCount.max = value, "[data-auto-count-direction]");
+
+page.querySelectorAll("[data-auto-priority-preset]").forEach(button => {
+    button.addEventListener("click", () => applyPriorityPreset(button.dataset.autoPriorityPreset));
+});
+
+page.querySelectorAll("[data-auto-priority-reset]").forEach(button => {
+    button.addEventListener("click", () => resetPriorityField(button.dataset.autoPriorityReset));
 });
 
 page.querySelectorAll("[data-auto-plan-weight-unit]").forEach(button => {

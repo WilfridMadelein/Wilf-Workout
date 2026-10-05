@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Wilf Auto-plan Test Lab</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/filters.css">
+    <link rel="stylesheet" href="../css/plans.css">
+    <link rel="stylesheet" href="../css/layout.css">
+    <link rel="stylesheet" href="./auto-plan-test-lab.css">
+</head>
+
+<body>
+
+<main class="test-lab-shell">
+
+    <header class="test-lab-header">
+        <div>
+            <p class="test-lab-kicker">
+                Outil développeur
+            </p>
+
+            <h1>
+                Auto-plan Test Lab
+            </h1>
+
+            <p>
+                Teste le vrai générateur Wilf sans modifier les plans sauvegardés.
+            </p>
+        </div>
+
+        <div
+            id="test-lab-data-status"
+            class="test-lab-status"
+        >
+            Chargement…
+        </div>
+    </header>
+
+    <!-- =====================================================
+         STRATÉGIE
+    ====================================================== -->
+
+    <section class="test-lab-panel">
+
+        <h2>
+            Stratégie de test
+        </h2>
+
+        <div class="test-lab-grid test-lab-grid-3">
+
+            <label class="test-lab-field">
+                <span>Mode</span>
+
+                <select id="test-lab-mode">
+                    <option value="repeat">
+                        Répéter un scénario
+                    </option>
+
+                    <option value="pairwise">
+                        Pairwise (2-way)
+                    </option>
+
+                    <option value="threeway">
+                        3-way
+                    </option>
+
+                    <option value="boundaries">
+                        Valeurs limites
+                    </option>
+                </select>
+            </label>
+
+            <label class="test-lab-field">
+                <span>
+                    Nombre / maximum de tests
+                </span>
+
+                <input
+                    id="test-lab-runs"
+                    type="number"
+                    min="1"
+                    max="5000"
+                    step="1"
+                    value="500"
+                >
+            </label>
+
+            <label class="test-lab-field">
+                <span>Seed</span>
+
+                <input
+                    id="test-lab-seed"
+                    type="number"
+                    step="1"
+                    value="12345"
+                >
+            </label>
+
+        </div>
+
+        <label class="test-lab-checkbox">
+            <input
+                id="test-lab-use-user-data"
+                type="checkbox"
+                checked
+            >
+
+            <span>
+                Utiliser mon historique et mes préférences de progression actuels
+            </span>
+        </label>
+
+        <p class="test-lab-help">
+            Répéter : les champs non fixés sont résolus une fois,
+            puis le même scénario est généré plusieurs fois.
+            Pairwise/3-way : les champs non fixés varient pour couvrir
+            leurs interactions. Limites : teste les extrêmes des domaines définis.
+        </p>
+
+    </section>
+
+    <!-- =====================================================
+         CONTRAINTES
+    ====================================================== -->
+
+    <section class="test-lab-panel">
+
+        <h2>
+            Contraintes fixes
+        </h2>
+
+        <p class="test-lab-help">
+            Laisse « Fixer » décoché pour que le Test Lab fasse varier
+            ce paramètre. Pour l’équipement, « Fixer » coché avec aucun
+            équipement sélectionné signifie réellement « Aucun équipement ».
+        </p>
+
+        <!-- TEMPS -->
+
+        <div class="test-lab-constraint">
+
+            <label class="test-lab-checkbox">
+                <input
+                    id="test-lab-fix-duration"
+                    type="checkbox"
+                >
+
+                <span>
+                    Fixer le temps
+                </span>
+            </label>
+
+            <div class="test-lab-inline">
+                <input
+                    id="test-lab-duration"
+                    type="number"
+                    min="15"
+                    max="120"
+                    step="1"
+                    value="30"
+                >
+
+                <span>min</span>
+            </div>
+
+        </div>
+
+        <!-- OBJECTIF -->
+
+        <div class="test-lab-constraint">
+
+            <label class="test-lab-checkbox">
+                <input
+                    id="test-lab-fix-goals"
+                    type="checkbox"
+                >
+
+                <span>
+                    Fixer l’objectif
+                </span>
+            </label>
+
+            <div
+                id="test-lab-goals"
+                class="filter-buttons"
+            ></div>
+
+        </div>
+
+        <!-- BODY PART -->
+
+        <div class="test-lab-constraint">
+
+            <label class="test-lab-checkbox">
+                <input
+                    id="test-lab-fix-bodyparts"
+                    type="checkbox"
+                >
+
+                <span>
+                    Fixer les parties du corps
+                </span>
+            </label>
+
+            <div
+                id="test-lab-bodyparts"
+                class="filter-buttons"
+            ></div>
+
+        </div>
+
+        <!-- CATÉGORIES -->
+
+        <div class="test-lab-constraint">
+
+            <label class="test-lab-checkbox">
+                <input
+                    id="test-lab-fix-categories"
+                    type="checkbox"
+                >
+
+                <span>
+                    Fixer les catégories
+                </span>
+            </label>
+
+            <div
+                id="test-lab-categories"
+                class="filter-buttons"
+            ></div>
+
+        </div>
+
+        <!-- TYPES -->
+
+        <div class="test-lab-constraint">
+
+            <label class="test-lab-checkbox">
+                <input
+                    id="test-lab-fix-types"
+                    type="checkbox"
+                >
+
+                <span>
+                    Fixer Push / Pull / Iso
+                </span>
+            </label>
+
+            <div
+                id="test-lab-types"
+                class="filter-buttons"
+            ></div>
+
+        </div>
+
+        <!-- ÉQUIPEMENT -->
+
+        <div class="test-lab-constraint">
+
+            <label class="test-lab-checkbox">
+                <input
+                    id="test-lab-fix-equipment"
+                    type="checkbox"
+                >
+
+                <span>
+                    Fixer l’équipement
+                </span>
+            </label>
+
+            <div class="filter-buttons test-lab-presets">
+
+                <button
+                    id="test-lab-equipment-none"
+                    type="button"
+                    class="filter-button"
+                >
+                    Aucun
+                </button>
+
+                <button
+                    id="test-lab-equipment-all"
+                    type="button"
+                    class="filter-button"
+                >
+                    Tous
+                </button>
+
+            </div>
+
+            <div
+                id="test-lab-equipment"
+                class="filter-buttons"
+            ></div>
+
+        </div>
+
+        <!-- NOMBRE D'EXERCICES -->
+
+        <div class="test-lab-constraint">
+
+            <label class="test-lab-checkbox">
+                <input
+                    id="test-lab-fix-count"
+                    type="checkbox"
+                >
+
+                <span>
+                    Fixer le nombre d’exercices souhaité
+                </span>
+            </label>
+
+            <div class="test-lab-count-row">
+
+                <label class="test-lab-field">
+                    <span>Minimum</span>
+
+                    <input
+                        id="test-lab-count-min"
+                        type="number"
+                        min="1"
+                        max="25"
+                        step="1"
+                    >
+                </label>
+
+                <label class="test-lab-field">
+                    <span>Maximum</span>
+
+                    <input
+                        id="test-lab-count-max"
+                        type="number"
+                        min="1"
+                        max="40"
+                        step="1"
+                    >
+                </label>
+
+            </div>
+
+            <p class="test-lab-help">
+                Vide = N/A.
+            </p>
+
+        </div>
+
+        <!-- PARAMÈTRES AVANCÉS -->
+
+        <div class="test-lab-constraint">
+
+            <label class="test-lab-field">
+
+                <span>
+                    Paramètres avancés du plan
+                </span>
+
+                <select id="test-lab-advanced-profile">
+                    <option value="vary">
+                        Varier
+                    </option>
+
+                    <option value="empty">
+                        Vide
+                    </option>
+
+                    <option value="settings">
+                        Paramètres
+                    </option>
+                </select>
+
+            </label>
+
+        </div>
+
+        <!-- SUPERSETS -->
+
+        <div class="test-lab-constraint">
+
+            <label class="test-lab-checkbox">
+                <input
+                    id="test-lab-fix-superset"
+                    type="checkbox"
+                >
+
+                <span>
+                    Fixer les super-sets
+                </span>
+            </label>
+
+            <div
+                id="test-lab-superset"
+                class="filter-buttons"
+            ></div>
+
+        </div>
+
+    </section>
+
+    <!-- =====================================================
+         LANCER
+    ====================================================== -->
+
+    <div class="test-lab-run-bar">
+
+        <button
+            id="test-lab-run"
+            type="button"
+        >
+            Lancer les tests
+        </button>
+
+        <span id="test-lab-run-status"></span>
+
+    </div>
+
+    <!-- =====================================================
+         RAPPORT
+    ====================================================== -->
+
+    <section
+        id="test-lab-results"
+        class="test-lab-panel"
+        hidden
+    >
+
+        <h2>
+            Rapport
+        </h2>
+
+        <div
+            id="test-lab-summary"
+            class="test-lab-summary"
+        ></div>
+
+        <div
+            id="test-lab-coverage"
+            class="test-lab-report-block"
+        ></div>
+
+        <div class="test-lab-report-block">
+
+            <h3>
+                Anomalies et avertissements
+            </h3>
+
+            <div class="test-lab-table-wrap">
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Niveau</th>
+                            <th>Test</th>
+                            <th>Détail</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="test-lab-anomalies"></tbody>
+                </table>
+
+            </div>
+
+        </div>
+
+        <div class="test-lab-report-block">
+
+            <h3>
+                Exercices les plus sélectionnés
+            </h3>
+
+            <div class="test-lab-table-wrap">
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Exercice</th>
+                            <th>Sélections</th>
+                            <th>% des workouts</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="test-lab-top-exercises"></tbody>
+                </table>
+
+            </div>
+
+        </div>
+
+        <div class="test-lab-report-block">
+
+            <h3>
+                Détail d’un scénario
+            </h3>
+
+            <pre id="test-lab-detail">Clique « Voir » sur une anomalie pour afficher le scénario.</pre>
+
+        </div>
+
+    </section>
+
+</main>
+
+<script src="../data/exercises.js"></script>
+
+<script>
+    window.__WILF_TEST_EXERCISES__ = exercises;
+</script>
+
+<script
+    type="module"
+    src="./auto-plan-test-lab.js"
+></script>
+
+</body>
+
+</html>

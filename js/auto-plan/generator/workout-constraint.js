@@ -1,0 +1,182 @@
+import { AUTO_PLAN_BODY_PARTS } from "../auto-plan-settings.js";
+
+// ============================================================
+// CONTRAINTES DU PLAN AUTOMATIQUE
+// ============================================================
+
+const BODY_PART_ORDER = { legs: 0, chest: 1, back: 1, arms: 2, core: 3 };
+const REJECTION_REASONS = ["category", "equipment", "type", "muscle", "never"];
+const RECENT_HISTORY_DAYS = 28;
+
+function getExerciseProgressionId(exercise) {
+    return String(exercise?.prog_group || "").trim();
+}
+
+function getExerciseProgressionIndex(exercise) {
+    const index = Number(exercise?.prog_ordre);
+    return Number.isFinite(index) ? index : null;
+}
+
+function getExerciseMainMuscles(exercise) {
+    return Array.isArray(exercise?.muscles_principaux)
+        ? exercise.muscles_principaux.filter(muscle => Array.isArray(muscle) && muscle[0])
+        : [];
+}
+
+function getBodyPartForMuscleFamily(family) {
+    const name = String(family || "").trim();
+    if (!name) return null;
+
+    for (const [bodyPart, config] of Object.entries(AUTO_PLAN_BODY_PARTS)) {
+        if (config.mode === "submuscles" && config.family === name) return bodyPart;
+        if (config.mode !== "submuscles" && config.values?.includes(name)) return bodyPart;
+    }
+
+    return null;
+}
+
+function getExercisePrimaryBodyPart(exercise) {
+    return getBodyPartForMuscleFamily(getExerciseMainMuscles(exercise)[0]?.[0]);
+}
+
+function exerciseMatchesCategories(exercise, request) {
+    const selected = new Set(request?.categories ?? []);
+    return selected.size > 0 && (exercise?.catégorie ?? []).some(category => selected.has(category));
+}
+
+function exerciseMatchesEquipment(exercise, request) {
+    const selected = new Set(request?.equipment ?? []);
+    const groups = Array.isArray(exercise?.equipement) ? exercise.equipement : [];
+    if (!groups.length) return true;
+
+    return groups.every(group => Array.isArray(group) && group.some(equipment => equipment === "Aucun" || selected.has(equipment)));
+}
+
+function exerciseMatchesType(exercise, request) {
+    return (request?.types ?? []).includes(exercise?.type);
+}
+
+function muscleMatchesTarget(muscle, target) {
+    if (!Array.isArray(muscle) || !target || muscle[0] !== target.family) return false;
+    return target.submuscle ? muscle[1] === target.submuscle : true;
+}
+
+function getExerciseMuscleMatches(exercise, input) {
+    const mainMuscles = getExerciseMainMuscles(exercise);
+    return (input?.muscleTargets ?? []).filter(target => mainMuscles.some(muscle => muscleMatchesTarget(muscle, target)));
+}
+
+function getRecentProgressionWorkoutCount(progression, referenceAt = Date.now(), days = RECENT_HISTORY_DAYS) {
+    const cutoff = referenceAt - days * 24 * 60 * 60 * 1000;
+    const sessionIds = new Set();
+
+    progression?.state?.occurrences?.forEach(occurrence => {
+        const startedAt = Number(occurrence?.startedAt) || 0;
+        if (startedAt >= cutoff && startedAt <= referenceAt && occurrence?.sessionId != null) sessionIds.add(occurrence.sessionId);
+    });
+
+    return sessionIds.size;
+}
+
+function getProgressionContext(exercise, input) {
+    const progressionId = getExerciseProgressionId(exercise);
+    const progression = input?.progressions?.find(item => item.id === progressionId) ?? null;
+const progressionIndex = getExerciseProgressionIndex(exercise);
+const latestProgressionIndex = progression?.state?.latestProgressionIndex ?? null;
+const progressionOffset = progressionIndex !== null && latestProgressionIndex !== null ? progressionIndex - latestProgressionIndex : null;
+const progressionDistance = progressionOffset === null ? null : Math.abs(progressionOffset);
+const referenceAt = Number(input?.referenceAt) || Date.now();
+
+return {
+    progressionId,
+    progressionIndex,
+    progressionPreference: progression?.preference ?? "neutral",
+    latestProgressionIndex,
+    progressionOffset,
+    progressionDistance,
+    progressionKnown: latestProgressionIndex !== null,
+    progressionOccurrenceCount: progression?.state?.occurrenceCount ?? 0,
+    recentProgressionWorkoutCount: getRecentProgressionWorkoutCount(progression, referenceAt)
+};
+}
+
+function evaluateExerciseConstraints(exercise, input) {
+    const progression = getProgressionContext(exercise, input);
+    const mainMuscles = getExerciseMainMuscles(exercise);
+    const primaryMuscle = mainMuscles[0] ?? null;
+    const muscleMatches = getExerciseMuscleMatches(exercise, input);
+    const primaryBodyPart = getExercisePrimaryBodyPart(exercise);
+    const reasons = [];
+
+    if (!exerciseMatchesCategories(exercise, input?.request)) reasons.push("category");
+    if (!exerciseMatchesEquipment(exercise, input?.request)) reasons.push("equipment");
+    if (!exerciseMatchesType(exercise, input?.request)) reasons.push("type");
+    if (!muscleMatches.length) reasons.push("muscle");
+    if (progression.progressionPreference === "never") reasons.push("never");
+
+    return {
+        eligible: reasons.length === 0,
+        reasons,
+        exercise,
+        exerciseId: exercise?.ID ?? null,
+        exerciseName: String(exercise?.nom ?? ""),
+        primaryBodyPart,
+        bodyPartOrder: BODY_PART_ORDER[primaryBodyPart] ?? null,
+        matchingBodyParts: [...new Set(muscleMatches.map(match => match.bodyPart))],
+        matchingMuscleTargets: muscleMatches,
+        primaryTargeted: muscleMatches.some(target => target.bodyPart === primaryBodyPart && muscleMatchesTarget(primaryMuscle, target)),
+        ...progression
+    };
+}
+
+function getCandidatePoolSummary(candidates, rejected, request) {
+    const rejectedByReason = Object.fromEntries(REJECTION_REASONS.map(reason => [reason, 0]));
+    rejected.forEach(item => item.reasons.forEach(reason => { rejectedByReason[reason] = (rejectedByReason[reason] ?? 0) + 1; }));
+
+    const bodyParts = Object.fromEntries((request?.bodyParts ?? []).map(bodyPart => [bodyPart, { matching: 0, primary: 0 }]));
+
+    candidates.forEach(candidate => {
+        candidate.matchingBodyParts.forEach(bodyPart => {
+            if (bodyParts[bodyPart]) bodyParts[bodyPart].matching += 1;
+        });
+
+        if (bodyParts[candidate.primaryBodyPart]) bodyParts[candidate.primaryBodyPart].primary += 1;
+    });
+
+    return { total: candidates.length + rejected.length, eligible: candidates.length, rejected: rejected.length, rejectedByReason, bodyParts };
+}
+
+function buildExerciseCandidatePool(exercises = [], input = {}) {
+    const candidates = [];
+    const rejected = [];
+
+    exercises.forEach(exercise => {
+        const result = evaluateExerciseConstraints(exercise, input);
+        if (result.eligible) candidates.push(result);
+        else rejected.push(result);
+    });
+
+    return { candidates, rejected, summary: getCandidatePoolSummary(candidates, rejected, input?.request) };
+}
+
+function getCandidatesForBodyPart(pool, bodyPart, { primaryOnly = false } = {}) {
+    const candidates = pool?.candidates ?? [];
+    return candidates.filter(candidate => primaryOnly ? candidate.primaryBodyPart === bodyPart : candidate.matchingBodyParts.includes(bodyPart));
+}
+
+export {
+    BODY_PART_ORDER,
+    REJECTION_REASONS,
+    RECENT_HISTORY_DAYS,
+    getBodyPartForMuscleFamily,
+    getExercisePrimaryBodyPart,
+    exerciseMatchesCategories,
+    exerciseMatchesEquipment,
+    exerciseMatchesType,
+    getExerciseMuscleMatches,
+    getProgressionContext,
+    evaluateExerciseConstraints,
+    buildExerciseCandidatePool,
+    getCandidatesForBodyPart,
+    getRecentProgressionWorkoutCount,
+};

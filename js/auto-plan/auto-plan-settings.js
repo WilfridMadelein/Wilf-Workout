@@ -7,6 +7,8 @@ const AUTO_PLAN_GOAL_LABELS = { strength: "Force", hypertrophy: "Masse", enduran
 const AUTO_PLAN_TYPES = ["Push", "Pull", "Iso"];
 const AUTO_PLAN_SUPERSET_OPTIONS = ["indifferent", "none", "sometimes", "always"];
 const AUTO_PLAN_SUPERSET_LABELS = { indifferent: "Indifférent", none: "Aucun", sometimes: "Parfois", always: "Toujours" };
+const AUTO_PLAN_PRIORITY_PRESETS = ["empty", "settings"];
+const AUTO_PLAN_PRIORITY_PRESET_LABELS = { empty: "Vide", settings: "Paramètres" };
 const AUTO_PLAN_BODY_PARTS = {
     legs: { label: "Jambes", mode: "families", values: ["Quadriceps", "Ischio-jambiers", "Fessier", "Mollets"] },
     arms: { label: "Bras", mode: "families", values: ["Biceps", "Triceps", "Avant-bras"] },
@@ -25,9 +27,12 @@ function normalizeAutoPlanDuration(value) {
     const minutes = Math.round(Number(value));
     return Number.isFinite(minutes) ? Math.min(120, Math.max(15, minutes)) : null;
 }
-function normalizePriorityNumber(value, fallback, min, max, decimals = 0) {
+
+function normalizeOptionalPriorityNumber(value, min, max, decimals = 0) {
+    if (value === null || value === undefined || String(value).trim() === "") return null;
+
     const number = Number(value);
-    if (!Number.isFinite(number)) return fallback;
+    if (!Number.isFinite(number)) return null;
 
     const factor = 10 ** decimals;
     return Math.min(max, Math.max(min, Math.round(number * factor) / factor));
@@ -35,22 +40,31 @@ function normalizePriorityNumber(value, fallback, min, max, decimals = 0) {
 
 function normalizeAutoPlanPriorities(value = {}) {
     const tempo = value?.tempo ?? {};
+    const hasStoredValues = [value?.sets, value?.reps, value?.time, value?.rest, value?.weight, tempo.first, tempo.second, tempo.third, tempo.fourth].some(item => item !== null && item !== undefined && item !== "");
 
     return {
-        sets: normalizePriorityNumber(value?.sets, 3, 1, 999),
-        reps: normalizePriorityNumber(value?.reps, 10, 1, 999),
-        time: normalizePriorityNumber(value?.time, 30, 1, 999),
-        rest: normalizePriorityNumber(value?.rest, 60, 0, 999),
-        weight: normalizePriorityNumber(value?.weight, 0, 0, 9999.9, 1),
+        preset: AUTO_PLAN_PRIORITY_PRESETS.includes(value?.preset) ? value.preset : hasStoredValues ? "settings" : "empty",
+        sets: normalizeOptionalPriorityNumber(value?.sets, 1, 999),
+        reps: normalizeOptionalPriorityNumber(value?.reps, 1, 999),
+        time: normalizeOptionalPriorityNumber(value?.time, 1, 999),
+        rest: normalizeOptionalPriorityNumber(value?.rest, 0, 999),
+        weight: normalizeOptionalPriorityNumber(value?.weight, 0, 9999.9, 1),
         weightUnit: ["kg", "lbs"].includes(value?.weightUnit) ? value.weightUnit : "lbs",
         tempo: {
-            first: normalizePriorityNumber(tempo.first, 3, 0, 999),
-            second: normalizePriorityNumber(tempo.second, 0, 0, 999),
-            third: normalizePriorityNumber(tempo.third, 1, 0, 999),
-            fourth: normalizePriorityNumber(tempo.fourth, 0, 0, 999)
+            first: normalizeOptionalPriorityNumber(tempo.first, 0, 999),
+            second: normalizeOptionalPriorityNumber(tempo.second, 0, 999),
+            third: normalizeOptionalPriorityNumber(tempo.third, 0, 999),
+            fourth: normalizeOptionalPriorityNumber(tempo.fourth, 0, 999)
         },
         includeNotes: value?.includeNotes === true,
-        autoAddDefaultInstructions: value?.autoAddDefaultInstructions !== false
+        autoAddDefaultInstructions: value?.autoAddDefaultInstructions === true
+    };
+}
+
+function normalizeAutoPlanExerciseCount(value = {}) {
+    return {
+        min: normalizeOptionalPriorityNumber(value?.min, 1, 25),
+        max: normalizeOptionalPriorityNumber(value?.max, 1, 40)
     };
 }
 
@@ -72,6 +86,7 @@ return {
     types: normalizeStringList(value.types),
     categories: normalizeStringList(value.categories),
     equipment: normalizeStringList(value.equipment),
+    exerciseCount: normalizeAutoPlanExerciseCount(value.exerciseCount),
     planPriorities: value.planPriorities && typeof value.planPriorities === "object" && !Array.isArray(value.planPriorities)
         ? normalizeAutoPlanPriorities(value.planPriorities)
         : null,
@@ -86,6 +101,10 @@ export {
     AUTO_PLAN_BODY_PARTS,
     AUTO_PLAN_SUPERSET_OPTIONS,
     AUTO_PLAN_SUPERSET_LABELS,
+    AUTO_PLAN_PRIORITY_PRESETS,
+    AUTO_PLAN_PRIORITY_PRESET_LABELS,
+    normalizeOptionalPriorityNumber,
+    normalizeAutoPlanExerciseCount,
     normalizeAutoPlanPriorities,
     normalizeAutoPlanDuration,
     normalizeAutoPlanLastRequest

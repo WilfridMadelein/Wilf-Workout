@@ -109,13 +109,15 @@ function getInputDiagnostics(request, muscleTargets, progressions, history, pref
     return { valid: errors.length === 0, errors, warnings };
 }
 
-function buildAutoPlanInput({ request, exercises = [], workoutHistory = [], appSettings = {} } = {}) {
+function buildAutoPlanInput({ request, exercises = [], workoutHistory = [], appSettings = {}, referenceAt = Date.now() } = {}) {
     const normalizedRequest = normalizeAutoPlanLastRequest(request);
     const preferences = normalizeProgressionPreferences(appSettings?.progressionPreferences);
     const definitions = getProgressionDefinitions(exercises);
     const progressionIds = new Set(definitions.map(definition => definition.id));
     const muscleTargets = normalizedRequest ? getAutoPlanMuscleTargets(normalizedRequest) : [];
     const history = getHistoryStats(workoutHistory);
+    const referenceTime = Number(referenceAt);
+    const resolvedReferenceAt = Number.isFinite(referenceTime) ? referenceTime : Date.now();
 
     const progressions = definitions.map(definition => ({
         ...definition,
@@ -127,6 +129,7 @@ function buildAutoPlanInput({ request, exercises = [], workoutHistory = [], appS
 
     return {
         schemaVersion: AUTO_PLAN_INPUT_SCHEMA_VERSION,
+        referenceAt: resolvedReferenceAt,
         request: normalizedRequest,
         defaults: { weightUnit: ["kg", "lbs"].includes(appSettings?.planDefaults?.weightUnit) ? appSettings.planDefaults.weightUnit : "lbs" },
         muscleTargets,
