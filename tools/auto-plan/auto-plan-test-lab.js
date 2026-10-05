@@ -21,6 +21,7 @@ const state = {
     appSettings: null,
     workoutHistory: [],
     anomalies: [],
+    reportText: "",
     selections: {
         goals: new Set(), bodyParts: new Set(), categories: new Set(), types: new Set(), equipment: new Set(),
         superset: new Set(["indifferent"]), timeFlexibility: new Set(["strict"])
@@ -134,6 +135,42 @@ function createSettingsPriorities(settings) {
     };
 }
 
+function getCustomPriorities() {
+    return {
+        preset: "settings",
+        sets: optionalNumber("test-lab-custom-sets"),
+        reps: optionalNumber("test-lab-custom-reps"),
+        time: optionalNumber("test-lab-custom-time"),
+        rest: optionalNumber("test-lab-custom-rest"),
+        weight: optionalNumber("test-lab-custom-weight"),
+        weightUnit: element("test-lab-custom-weight-unit").value,
+        tempo: {
+            first: optionalNumber("test-lab-custom-tempo-1"),
+            second: optionalNumber("test-lab-custom-tempo-2"),
+            third: optionalNumber("test-lab-custom-tempo-3"),
+            fourth: optionalNumber("test-lab-custom-tempo-4")
+        },
+        includeNotes: element("test-lab-custom-notes").checked,
+        autoAddDefaultInstructions: element("test-lab-custom-instructions").checked
+    };
+}
+
+function formatPriorityValue(value, suffix = "") {
+    return value === null || value === undefined ? "N/A" : `${value}${suffix}`;
+}
+
+function formatPriorities(priorities) {
+    const tempo = priorities?.tempo ?? {};
+    return [
+        `${formatPriorityValue(priorities?.sets)} séries`,
+        `${formatPriorityValue(priorities?.reps)} reps`,
+        `${formatPriorityValue(priorities?.time, " sec")} durée`,
+        `${formatPriorityValue(priorities?.rest, " sec")} repos`,
+        `tempo ${[tempo.first, tempo.second, tempo.third, tempo.fourth].map(value => formatPriorityValue(value)).join("-")}`,
+        `${formatPriorityValue(priorities?.weight)} ${priorities?.weightUnit ?? "lbs"}`
+    ].join(" · ");
+}
+
 // ============================================================
 // INTERFACE
 // ============================================================
@@ -205,12 +242,68 @@ function setupInterface() {
         renderToggleGroup("test-lab-equipment", "equipment");
     });
 
+    element("test-lab-advanced-profile").addEventListener("change", renderAdvancedProfileEditor);
     element("test-lab-run").addEventListener("click", runTests);
-    element("test-lab-anomalies").addEventListener("click", event => {
+    element("test-lab-copy-report").addEventListener("click", copyReportToClipboard);
+    element("test-lab-results").addEventListener("click", event => {
         const button = event.target.closest("[data-anomaly-index]");
         if (!button) return;
-        element("test-lab-detail").textContent = JSON.stringify(state.anomalies[Number(button.dataset.anomalyIndex)], null, 2);
+
+        const anomaly = state.anomalies[Number(button.dataset.anomalyIndex)];
+        if (!anomaly) return;
+
+        element("test-lab-detail").textContent = formatScenarioDetail(anomaly);
+        element("test-lab-detail-block").scrollIntoView({ behavior: "smooth", block: "start" });
     });
+
+    renderAdvancedProfileEditor();
+}
+
+function renderAdvancedProfileEditor() {
+    const profile = element("test-lab-advanced-profile").value;
+    const panel = element("test-lab-custom-priorities");
+    const summary = element("test-lab-advanced-summary");
+    panel.hidden = profile !== "custom";
+
+    if (profile === "empty") {
+        summary.textContent = "Tous les paramètres du plan sont N/A.";
+        return;
+    }
+
+    if (profile === "settings") {
+        summary.textContent = `Paramètres Settings actuels : ${formatPriorities(createSettingsPriorities(state.appSettings ?? createDefaultAppSettings()))}.`;
+        return;
+    }
+
+    if (profile === "custom") {
+        summary.textContent = "Les valeurs personnalisées ci-dessous seront utilisées. Chaque case vide reste N/A.";
+        return;
+    }
+
+    summary.textContent = `Varier teste Vide et Paramètres. Valeurs Settings actuelles : ${formatPriorities(createSettingsPriorities(state.appSettings ?? createDefaultAppSettings()))}.`;
+}
+
+async function copyReportToClipboard() {
+    if (!state.reportText) return;
+
+    const button = element("test-lab-copy-report");
+
+    try {
+        await navigator.clipboard.writeText(state.reportText);
+    } catch {
+        const textarea = document.createElement("textarea");
+        textarea.value = state.reportText;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        textarea.remove();
+    }
+
+    const previous = button.textContent;
+    button.textContent = "Rapport copié ✓";
+    setTimeout(() => { button.textContent = previous; }, 1600);
 }
 
 function optionalNumber(id) {
@@ -231,6 +324,7 @@ function getFixedConstraints() {
         equipment: element("test-lab-fix-equipment").checked ? [...state.selections.equipment] : null,
         exerciseCount: element("test-lab-fix-count").checked ? { min: optionalNumber("test-lab-count-min"), max: optionalNumber("test-lab-count-max") } : null,
         advancedProfile: element("test-lab-advanced-profile").value,
+        customPriorities: element("test-lab-advanced-profile").value === "custom" ? getCustomPriorities() : null,
         supersetPreference: element("test-lab-fix-superset").checked ? [...state.selections.superset][0] ?? "indifferent" : null
     };
 }
@@ -242,7 +336,11 @@ function getFixedConstraints() {
 function createDimensions(constraints) {
     const categories = getCategoryOptions();
     const equipment = getEquipmentOptions();
-    const advancedValues = constraints.advancedProfile === "vary" ? ["empty", "settings"] : [constraints.advancedProfile];
+    const advancedValues = constraints.advancedProfile === "vary"
+        ? [{ type: "empty" }, { type: "settings" }]
+        : constraints.advancedProfile === "custom"
+            ? [{ type: "custom", priorities: constraints.customPriorities }]
+            : [{ type: constraints.advancedProfile }];
 
     return [
         { name: "durationMinutes", values: constraints.duration !== null ? [constraints.duration] : [15, 20, 30, 45, 60, 90, 120] },
@@ -275,6 +373,11 @@ function createScenarioRequest(scenario, settings) {
     const muscles = {};
     scenario.bodyParts.forEach(bodyPart => { muscles[bodyPart] = getAllMusclesForBodyPart(bodyPart); });
     const weightUnit = ["kg", "lbs"].includes(settings?.planDefaults?.weightUnit) ? settings.planDefaults.weightUnit : "lbs";
+    const profile = scenario.advancedProfile ?? { type: "empty" };
+
+    let planPriorities = createEmptyPriorities(weightUnit);
+    if (profile.type === "settings") planPriorities = createSettingsPriorities(settings);
+    if (profile.type === "custom") planPriorities = structuredClone(profile.priorities ?? createEmptyPriorities(weightUnit));
 
     return {
         durationMinutes: scenario.durationMinutes,
@@ -286,7 +389,7 @@ function createScenarioRequest(scenario, settings) {
         categories: [...scenario.categories],
         equipment: [...scenario.equipment],
         exerciseCount: { ...scenario.exerciseCount },
-        planPriorities: scenario.advancedProfile === "settings" ? createSettingsPriorities(settings) : createEmptyPriorities(weightUnit),
+        planPriorities,
         supersetPreference: scenario.supersetPreference
     };
 }
@@ -317,9 +420,31 @@ function createStats() {
     };
 }
 
+const ANOMALY_PRIORITY = {
+    "never-selected": 1000,
+    "non-candidate-selected": 950,
+    "candidates-but-empty": 900,
+    "duplicate-exercise": 850,
+    "duplicate-progression": 800,
+    "bodypart-order": 750,
+    "strict-time-outside-5": 600,
+    "missing-coverage-with-candidate": 500
+};
+
+function getAnomalySeverity(anomaly) {
+    return (ANOMALY_PRIORITY[anomaly.type] ?? 100) + (Number(anomaly.severityScore) || 0);
+}
+
+function keepWorstAnomalies() {
+    const errors = state.anomalies.filter(item => item.level === "error").sort((a, b) => getAnomalySeverity(b) - getAnomalySeverity(a)).slice(0, 10);
+    const warnings = state.anomalies.filter(item => item.level === "warning").sort((a, b) => getAnomalySeverity(b) - getAnomalySeverity(a)).slice(0, 10);
+    state.anomalies = [...errors, ...warnings];
+}
+
 function addAnomaly(stats, anomaly) {
     stats.anomalyCounts[anomaly.type] = (stats.anomalyCounts[anomaly.type] ?? 0) + 1;
-    if (state.anomalies.length < 250) state.anomalies.push(anomaly);
+    state.anomalies.push(anomaly);
+    keepWorstAnomalies();
 }
 
 function planSignature(workout) {
@@ -336,8 +461,20 @@ function validateWorkout({ scenarioIndex, generationIndex, request, pool, workou
     const progressionIds = selected.map(item => item.candidate.progressionId).filter(Boolean);
     const candidateKeys = new Set(pool.candidates.map(candidate => candidate.exerciseId ?? candidate.exerciseName));
     const base = {
-        scenarioIndex, generationIndex, request, candidateCount: pool.candidates.length,
-        workout: selected.map(item => ({ name: item.candidate.exerciseName, bodyPart: item.compositionBodyPart, score: item.candidate.score, reason: item.selectionReason, prescription: item.prescription }))
+        scenarioIndex,
+        generationIndex,
+        request,
+        candidateCount: pool.candidates.length,
+        targetDurationMinutes: Math.round((workout.targetDurationSeconds ?? 0) / 60 * 10) / 10,
+        estimatedDurationMinutes: Math.round((workout.estimatedDurationSeconds ?? 0) / 60 * 10) / 10,
+        coverage: workout.coverage ?? {},
+        workout: selected.map(item => ({
+            name: item.candidate.exerciseName,
+            bodyPart: item.compositionBodyPart,
+            score: item.candidate.score,
+            reason: item.selectionReason,
+            prescription: item.prescription
+        }))
     };
 
     if (new Set(exerciseKeys).size !== exerciseKeys.length) addAnomaly(stats, { ...base, level: "error", type: "duplicate-exercise", detail: "Le workout contient deux fois le même exercice." });
@@ -351,7 +488,7 @@ function validateWorkout({ scenarioIndex, generationIndex, request, pool, workou
     Object.entries(workout.coverage ?? {}).forEach(([bodyPart, coverage]) => {
         if (coverage.status !== "missing") return;
         const available = pool.summary?.bodyParts?.[bodyPart]?.matching ?? 0;
-        if (available > 0) addAnomaly(stats, { ...base, level: "warning", type: "missing-coverage-with-candidate", detail: `${bodyPart} n'est pas couvert malgré ${available} candidat(s) compatible(s).` });
+        if (available > 0) addAnomaly(stats, { ...base, level: "warning", type: "missing-coverage-with-candidate", severityScore: available, detail: `${bodyPart} n'est pas couvert malgré ${available} candidat(s) compatible(s).` });
     });
 
     const requestedMin = Number(request.exerciseCount?.min);
@@ -363,8 +500,9 @@ function validateWorkout({ scenarioIndex, generationIndex, request, pool, workou
     if (request.timeFlexibility === "strict") {
         stats.strictWorkouts += 1;
         if (Math.abs(workout.estimatedDurationSeconds - workout.targetDurationSeconds) > 5 * 60) {
+            const deviationMinutes = Math.round(Math.abs(workout.estimatedDurationSeconds - workout.targetDurationSeconds) / 60 * 10) / 10;
             stats.strictOutsideFiveMinutes += 1;
-            addAnomaly(stats, { ...base, level: "warning", type: "strict-time-outside-5", detail: `Mode Sévère : écart de ${Math.round(Math.abs(workout.estimatedDurationSeconds - workout.targetDurationSeconds) / 60 * 10) / 10} min.` });
+            addAnomaly(stats, { ...base, level: "warning", type: "strict-time-outside-5", severityScore: deviationMinutes, detail: `Mode Sévère : écart de ${deviationMinutes} min.` });
         }
     } else stats.flexibleWorkouts += 1;
 }
@@ -375,16 +513,22 @@ function validateWorkout({ scenarioIndex, generationIndex, request, pool, workou
 
 async function runTests() {
     const runButton = element("test-lab-run");
+    const copyButton = element("test-lab-copy-report");
     const status = element("test-lab-run-status");
+    const startedAt = performance.now();
+
     runButton.disabled = true;
-    status.textContent = "Tests en cours…";
+    copyButton.disabled = true;
+    state.reportText = "";
     state.anomalies = [];
+    status.textContent = "Tests en cours…";
 
     try {
         const mode = element("test-lab-mode").value;
         const runs = Math.min(5000, Math.max(1, Number(element("test-lab-runs").value) || 1));
         const seed = Number(element("test-lab-seed").value) || 12345;
-        const dimensions = createDimensions(getFixedConstraints());
+        const constraints = getFixedConstraints();
+        const dimensions = createDimensions(constraints);
         const generated = getScenarios(mode, dimensions, runs, seed);
         const useUserData = element("test-lab-use-user-data").checked;
         const settings = useUserData ? state.appSettings : createDefaultAppSettings();
@@ -411,7 +555,19 @@ async function runTests() {
 
                 if (!workout.exercises?.length) {
                     stats.candidatesButEmpty += 1;
-                    addAnomaly(stats, { scenarioIndex, generationIndex: repetition, request, level: "error", type: "candidates-but-empty", detail: `${pool.candidates.length} candidat(s) existaient mais aucun exercice n'a été sélectionné.` });
+                    addAnomaly(stats, {
+                        scenarioIndex,
+                        generationIndex: repetition,
+                        request,
+                        candidateCount: pool.candidates.length,
+                        targetDurationMinutes: request.durationMinutes,
+                        estimatedDurationMinutes: 0,
+                        coverage: workout.coverage ?? {},
+                        workout: [],
+                        level: "error",
+                        type: "candidates-but-empty",
+                        detail: `${pool.candidates.length} candidat(s) existaient mais aucun exercice n'a été sélectionné.`
+                    });
                     executionIndex += 1;
                     continue;
                 }
@@ -425,8 +581,13 @@ async function runTests() {
             }
         }
 
-        renderReport(stats, generated, mode, referenceAt);
-        status.textContent = `${stats.executions} test(s) terminés.`;
+        const generationSeconds = Math.round((performance.now() - startedAt) / 10) / 100;
+        const meta = { mode, requestedRuns: runs, seed, useUserData, constraints, referenceAt, generationSeconds };
+
+        renderReport(stats, generated, meta);
+        state.reportText = buildClipboardReport(stats, generated, meta);
+        copyButton.disabled = false;
+        status.textContent = `${stats.executions} test(s) terminés en ${generationSeconds} s.`;
     } catch (error) {
         console.error(error);
         status.textContent = `Erreur : ${error.message}`;
@@ -442,21 +603,198 @@ async function runTests() {
 function summaryCard(label, value, className = "") {
     const card = document.createElement("div");
     card.className = `test-lab-summary-card ${className}`.trim();
+
     const span = document.createElement("span");
     span.textContent = label;
+
     const strong = document.createElement("strong");
     strong.textContent = value;
+
     card.append(span, strong);
     return card;
 }
 
-function renderReport(stats, generated, mode, referenceAt) {
+function getStrictWithinRate(stats) {
+    if (!stats.strictWorkouts) return null;
+    return Math.round((stats.strictWorkouts - stats.strictOutsideFiveMinutes) / stats.strictWorkouts * 1000) / 10;
+}
+
+function getTopExercises(stats) {
+    const denominator = Math.max(1, stats.successfulWorkouts);
+
+    return [...stats.selectedExercises.entries()]
+        .sort((first, second) => second[1] - first[1])
+        .slice(0, 10)
+        .map(([name, count]) => ({
+            name,
+            count,
+            percent: Math.round(count / denominator * 1000) / 10
+        }));
+}
+
+function getWorstAnomalies(level) {
+    return state.anomalies
+        .filter(item => item.level === level)
+        .sort((first, second) => getAnomalySeverity(second) - getAnomalySeverity(first))
+        .slice(0, 10);
+}
+
+function formatList(values, labels = null, empty = "Aucun") {
+    if (!Array.isArray(values) || !values.length) return empty;
+    return values.map(value => labels?.[value] ?? value).join(", ");
+}
+
+function formatRequestSummary(request) {
+    const bodyPartLabels = Object.fromEntries(Object.entries(AUTO_PLAN_BODY_PARTS).map(([key, value]) => [key, value.label]));
+    const timeLabel = AUTO_PLAN_TIME_FLEXIBILITY_LABELS[request?.timeFlexibility] ?? request?.timeFlexibility ?? "N/A";
+    const min = request?.exerciseCount?.min ?? "N/A";
+    const max = request?.exerciseCount?.max ?? "N/A";
+
+    return [
+        `${request?.durationMinutes ?? "N/A"} min (${timeLabel})`,
+        `Bodyparts: ${formatList(request?.bodyParts, bodyPartLabels)}`,
+        `Objectifs: ${formatList(request?.goals, AUTO_PLAN_GOAL_LABELS)}`,
+        `Catégories: ${formatList(request?.categories)}`,
+        `Types: ${formatList(request?.types)}`,
+        `Équipement: ${formatList(request?.equipment)}`,
+        `Exercices min/max: ${min}/${max}`,
+        `Super-set: ${AUTO_PLAN_SUPERSET_LABELS[request?.supersetPreference] ?? request?.supersetPreference ?? "N/A"}`
+    ].join(" | ");
+}
+
+function formatPrescription(prescription) {
+    if (!prescription) return "prescription non disponible";
+
+    const value = prescription.valueUnit === "sec"
+        ? `${prescription.value} sec`
+        : `${prescription.value} reps`;
+
+    const tempo = prescription.tempo
+        ? Object.values(prescription.tempo).join("-")
+        : "N/A";
+
+    return `${prescription.sets} série(s) × ${value} · repos ${prescription.rest} sec · tempo ${tempo}`;
+}
+
+function formatScenarioDetail(anomaly) {
+    const bodyPartLabels = Object.fromEntries(Object.entries(AUTO_PLAN_BODY_PARTS).map(([key, value]) => [key, value.label]));
+    const request = anomaly.request ?? {};
+    const priorities = request.planPriorities ?? {};
+    const coverageLines = Object.entries(anomaly.coverage ?? {}).map(([bodyPart, coverage]) =>
+        `- ${bodyPartLabels[bodyPart] ?? bodyPart}: ${coverage.status}${coverage.exerciseName ? ` — ${coverage.exerciseName}` : ""}`
+    );
+
+    const workoutLines = (anomaly.workout ?? []).map((item, index) => {
+        const bodyPart = bodyPartLabels[item.bodyPart] ?? item.bodyPart ?? "N/A";
+        return `${index + 1}. ${item.name}
+   Zone: ${bodyPart} · score ${item.score ?? "N/A"} · sélection: ${item.reason ?? "N/A"}
+   ${formatPrescription(item.prescription)}`;
+    });
+
+    return [
+        `SCÉNARIO #${(anomaly.scenarioIndex ?? 0) + 1}`,
+        `${anomaly.level === "error" ? "ANOMALIE" : "AVERTISSEMENT"} : ${anomaly.type}`,
+        "",
+        `Problème : ${anomaly.detail}`,
+        "",
+        "PARAMÈTRES",
+        `- Temps : ${request.durationMinutes ?? "N/A"} min — ${AUTO_PLAN_TIME_FLEXIBILITY_LABELS[request.timeFlexibility] ?? request.timeFlexibility ?? "N/A"}`,
+        `- Objectifs : ${formatList(request.goals, AUTO_PLAN_GOAL_LABELS)}`,
+        `- Parties du corps : ${formatList(request.bodyParts, bodyPartLabels)}`,
+        `- Catégories : ${formatList(request.categories)}`,
+        `- Types : ${formatList(request.types)}`,
+        `- Équipement : ${formatList(request.equipment)}`,
+        `- Nombre d'exercices souhaité : min ${request.exerciseCount?.min ?? "N/A"} / max ${request.exerciseCount?.max ?? "N/A"}`,
+        `- Super-sets : ${AUTO_PLAN_SUPERSET_LABELS[request.supersetPreference] ?? request.supersetPreference ?? "N/A"}`,
+        `- Paramètres du plan : ${formatPriorities(priorities)}`,
+        "",
+        "RÉSULTAT",
+        `- Candidats admissibles : ${anomaly.candidateCount ?? "N/A"}`,
+        `- Durée cible : ${anomaly.targetDurationMinutes ?? request.durationMinutes ?? "N/A"} min`,
+        `- Durée estimée : ${anomaly.estimatedDurationMinutes ?? "N/A"} min`,
+        "",
+        "COUVERTURE",
+        ...(coverageLines.length ? coverageLines : ["- Non disponible"]),
+        "",
+        "WORKOUT",
+        ...(workoutLines.length ? workoutLines : ["Aucun exercice sélectionné."])
+    ].join("\n");
+}
+
+function formatConstraintsForReport(constraints) {
+    const parts = [];
+
+    if (constraints.duration !== null) parts.push(`temps=${constraints.duration}`);
+    if (constraints.timeFlexibility !== null) parts.push(`tolérance=${constraints.timeFlexibility}`);
+    if (constraints.goals !== null) parts.push(`objectifs=${formatList(constraints.goals, AUTO_PLAN_GOAL_LABELS)}`);
+    if (constraints.bodyParts !== null) parts.push(`bodyparts=${formatList(constraints.bodyParts)}`);
+    if (constraints.categories !== null) parts.push(`catégories=${formatList(constraints.categories)}`);
+    if (constraints.types !== null) parts.push(`types=${formatList(constraints.types)}`);
+    if (constraints.equipment !== null) parts.push(`équipement=${formatList(constraints.equipment)}`);
+    if (constraints.exerciseCount !== null) parts.push(`exercices=${constraints.exerciseCount.min ?? "N/A"}/${constraints.exerciseCount.max ?? "N/A"}`);
+
+    parts.push(`paramètres=${constraints.advancedProfile}`);
+
+    if (constraints.advancedProfile === "custom") {
+        parts.push(`personnalisé=[${formatPriorities(constraints.customPriorities)}]`);
+    }
+
+    if (constraints.supersetPreference !== null) parts.push(`superset=${constraints.supersetPreference}`);
+    return parts.length ? parts.join(" | ") : "Aucune contrainte fixe";
+}
+
+function buildClipboardReport(stats, generated, meta) {
+    const strictWithinRate = getStrictWithinRate(stats);
+    const averageCandidates = stats.executions ? Math.round(stats.totalCandidates / stats.executions * 10) / 10 : 0;
+    const averageExercises = stats.successfulWorkouts ? Math.round(stats.totalExercises / stats.successfulWorkouts * 10) / 10 : 0;
+    const errors = getWorstAnomalies("error");
+    const warnings = getWorstAnomalies("warning");
+    const topExercises = getTopExercises(stats);
+
+    const lines = [
+        "WILF AUTO-PLAN — RAPPORT TEST LAB",
+        `Mode: ${meta.mode} | demandés: ${meta.requestedRuns} | exécutés: ${stats.executions} | seed: ${meta.seed}`,
+        `Rapport généré en: ${meta.generationSeconds} s | données utilisateur: ${meta.useUserData ? "oui" : "non"}`,
+        `Contraintes fixes: ${formatConstraintsForReport(meta.constraints)}`,
+        generated.coverage
+            ? `Couverture ${generated.coverage.strength}-way: ${generated.coverage.percent}% (${generated.coverage.covered}/${generated.coverage.total}; ${generated.coverage.uncovered ?? 0} non couvertes)`
+            : "Couverture combinatoire: N/A",
+        "",
+        "RÉSULTATS",
+        `Workouts produits: ${stats.successfulWorkouts}/${stats.executions}`,
+        `Sans candidat: ${stats.noCandidates}`,
+        `Candidats mais workout vide: ${stats.candidatesButEmpty}`,
+        `Plans uniques: ${stats.planSignatures.size}`,
+        `Candidats moyens: ${averageCandidates}`,
+        `Exercices moyens: ${averageExercises}`,
+        `Mode sévère dans ±5 min: ${strictWithinRate === null ? "N/A" : `${strictWithinRate}%`} (${stats.strictOutsideFiveMinutes} hors tolérance)`,
+        `Minimum souple non atteint: ${stats.softMinimumMisses}`,
+        `Maximum souple dépassé: ${stats.softMaximumMisses}`,
+        ""
+    ];
+
+    lines.push("TOP 10 ANOMALIES");
+    if (!errors.length) lines.push("Aucune.");
+    errors.forEach((item, index) => lines.push(`${index + 1}. ${item.type} — scénario #${item.scenarioIndex + 1} — ${item.detail} — ${formatRequestSummary(item.request)}`));
+
+    lines.push("", "TOP 10 AVERTISSEMENTS");
+    if (!warnings.length) lines.push("Aucun.");
+    warnings.forEach((item, index) => lines.push(`${index + 1}. ${item.type} — scénario #${item.scenarioIndex + 1} — ${item.detail} — ${formatRequestSummary(item.request)}`));
+
+    lines.push("", "TOP 10 EXERCICES");
+    if (!topExercises.length) lines.push("Aucun.");
+    topExercises.forEach((item, index) => lines.push(`${index + 1}. ${item.name} — ${item.count} sélection(s) — ${item.percent}% des workouts`));
+
+    return lines.join("\n");
+}
+
+function renderReport(stats, generated, meta) {
     element("test-lab-results").hidden = false;
+
     const summary = element("test-lab-summary");
     summary.replaceChildren();
-    const strictWithinRate = stats.strictWorkouts
-        ? Math.round((stats.strictWorkouts - stats.strictOutsideFiveMinutes) / stats.strictWorkouts * 1000) / 10
-        : null;
+
+    const strictWithinRate = getStrictWithinRate(stats);
     const averageCandidates = stats.executions ? Math.round(stats.totalCandidates / stats.executions * 10) / 10 : 0;
     const averageExercises = stats.successfulWorkouts ? Math.round(stats.totalExercises / stats.successfulWorkouts * 10) / 10 : 0;
 
@@ -471,45 +809,59 @@ function renderReport(stats, generated, mode, referenceAt) {
         summaryCard("Sévère dans ±5 min", strictWithinRate === null ? "N/A" : `${strictWithinRate}%`, strictWithinRate !== null && strictWithinRate < 97 ? "warning" : "ok"),
         summaryCard("Sévère hors ±5 min", stats.strictOutsideFiveMinutes, stats.strictOutsideFiveMinutes ? "warning" : "ok"),
         summaryCard("Minimum souple non atteint", stats.softMinimumMisses),
-        summaryCard("Maximum souple dépassé", stats.softMaximumMisses)
+        summaryCard("Maximum souple dépassé", stats.softMaximumMisses),
+        summaryCard("Rapport généré en", `${meta.generationSeconds} s`)
     );
 
     const coverage = element("test-lab-coverage");
     coverage.innerHTML = generated.coverage
         ? `<h3>Couverture combinatoire</h3><p>${generated.coverage.strength}-way : <strong>${generated.coverage.percent}%</strong> (${generated.coverage.covered}/${generated.coverage.total}). ${generated.coverage.uncovered ? `${generated.coverage.uncovered} interaction(s) non couvertes.` : ""}</p>`
-        : `<h3>Mode</h3><p><strong>${mode}</strong> — référence historique figée au ${new Date(referenceAt).toLocaleString("fr-CA")}.</p>`;
+        : `<h3>Mode</h3><p><strong>${meta.mode}</strong> — référence historique figée au ${new Date(meta.referenceAt).toLocaleString("fr-CA")}.</p>`;
 
-    renderAnomalies();
+    renderAnomalyTable("test-lab-errors", "error");
+    renderAnomalyTable("test-lab-warnings", "warning");
     renderTopExercises(stats);
+
+    element("test-lab-detail").textContent = "Clique « Voir » sur une anomalie ou un avertissement pour afficher le scénario.";
     element("test-lab-results").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-function renderAnomalies() {
-    const body = element("test-lab-anomalies");
+function renderEmptyTable(body, columns, text) {
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = columns;
+    cell.textContent = text;
+    row.appendChild(cell);
+    body.appendChild(row);
+}
+
+function renderAnomalyTable(id, level) {
+    const body = element(id);
     body.replaceChildren();
 
-    if (!state.anomalies.length) {
-        const row = document.createElement("tr");
-        const cell = document.createElement("td");
-        cell.colSpan = 5;
-        cell.textContent = "Aucune anomalie enregistrée.";
-        row.appendChild(cell);
-        body.appendChild(row);
+    const anomalies = getWorstAnomalies(level);
+
+    if (!anomalies.length) {
+        renderEmptyTable(body, 5, level === "error" ? "Aucune anomalie." : "Aucun avertissement.");
         return;
     }
 
-    state.anomalies.forEach((anomaly, index) => {
+    anomalies.forEach((anomaly, index) => {
+        const stateIndex = state.anomalies.indexOf(anomaly);
         const row = document.createElement("tr");
-        [anomaly.type, anomaly.level, String(anomaly.scenarioIndex + 1), anomaly.detail].forEach(value => {
+
+        [index + 1, anomaly.type, String(anomaly.scenarioIndex + 1), anomaly.detail].forEach(value => {
             const cell = document.createElement("td");
             cell.textContent = value;
             row.appendChild(cell);
         });
+
         const action = document.createElement("td");
         const button = document.createElement("button");
         button.type = "button";
         button.textContent = "Voir";
-        button.dataset.anomalyIndex = index;
+        button.dataset.anomalyIndex = stateIndex;
+
         action.appendChild(button);
         row.appendChild(action);
         body.appendChild(row);
@@ -519,20 +871,25 @@ function renderAnomalies() {
 function renderTopExercises(stats) {
     const body = element("test-lab-top-exercises");
     body.replaceChildren();
-    const denominator = Math.max(1, stats.successfulWorkouts);
 
-    [...stats.selectedExercises.entries()]
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 20)
-        .forEach(([name, count]) => {
-            const row = document.createElement("tr");
-            [name, count, `${Math.round(count / denominator * 1000) / 10}%`].forEach(value => {
-                const cell = document.createElement("td");
-                cell.textContent = value;
-                row.appendChild(cell);
-            });
-            body.appendChild(row);
+    const topExercises = getTopExercises(stats);
+
+    if (!topExercises.length) {
+        renderEmptyTable(body, 4, "Aucun exercice sélectionné.");
+        return;
+    }
+
+    topExercises.forEach((item, index) => {
+        const row = document.createElement("tr");
+
+        [index + 1, item.name, item.count, `${item.percent}%`].forEach(value => {
+            const cell = document.createElement("td");
+            cell.textContent = value;
+            row.appendChild(cell);
         });
+
+        body.appendChild(row);
+    });
 }
 
 // ============================================================
@@ -547,12 +904,14 @@ async function initialize() {
         const [settings, history] = await Promise.all([loadAppSettings(), loadWorkoutHistory()]);
         state.appSettings = settings;
         state.workoutHistory = history;
+        renderAdvancedProfileEditor();
         status.textContent = `${exercises.length} exercices · ${history.length} workout(s) historiques`;
         status.classList.add("ok");
     } catch (error) {
         console.error(error);
         state.appSettings = createDefaultAppSettings();
         state.workoutHistory = [];
+        renderAdvancedProfileEditor();
         status.textContent = "Données utilisateur indisponibles — mode vierge";
         status.classList.add("error");
     }

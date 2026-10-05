@@ -45,3 +45,24 @@ html[data-theme="dark"] .test-lab-panel, html[data-theme="dark"] .test-lab-run-b
 html[data-theme="dark"] #test-lab-detail { background: #181818; }
 html[data-theme="dark"] .test-lab-help { color: #aaa; }
 @media (max-width: 700px) { .test-lab-header { flex-direction: column; } .test-lab-grid-3, .test-lab-count-row { grid-template-columns: 1fr; } .test-lab-status { white-space: normal; } }
+
+.test-lab-inline-no-margin { margin-top: 0; }
+.test-lab-custom-priorities { margin-top: 12px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
+.test-lab-custom-priorities[hidden] { display: none; }
+.test-lab-priority-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.test-lab-tempo-block { margin-top: 12px; }
+.test-lab-field-title { display: block; margin-bottom: 5px; font-size: 13px; font-weight: 600; }
+.test-lab-tempo-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; max-width: 360px; }
+.test-lab-tempo-grid input { min-width: 0; width: 100%; padding: 8px; border: 1px solid #bbb; border-radius: 6px; background: inherit; color: inherit; }
+.test-lab-custom-options { display: grid; gap: 8px; margin-top: 12px; }
+#test-lab-copy-report { padding: 11px 18px; cursor: pointer; }
+#test-lab-copy-report:disabled { cursor: default; opacity: 0.5; }
+.test-lab-explanations p { margin: 10px 0; line-height: 1.5; }
+.test-lab-table-wrap th:first-child, .test-lab-table-wrap td:first-child { width: 42px; text-align: right; }
+.test-lab-report-block:target { scroll-margin-top: 12px; }
+
+@media (max-width: 700px) {
+    .test-lab-priority-grid { grid-template-columns: 1fr; }
+    .test-lab-tempo-grid { grid-template-columns: repeat(4, minmax(46px, 1fr)); }
+    .test-lab-run-bar { flex-wrap: wrap; }
+}

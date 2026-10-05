@@ -379,26 +379,85 @@
         <div class="test-lab-constraint">
 
             <label class="test-lab-field">
-
-                <span>
-                    Paramètres avancés du plan
-                </span>
+                <span>Paramètres avancés du plan</span>
 
                 <select id="test-lab-advanced-profile">
-                    <option value="vary">
-                        Varier
-                    </option>
-
-                    <option value="empty">
-                        Vide
-                    </option>
-
-                    <option value="settings">
-                        Paramètres
-                    </option>
+                    <option value="vary">Varier</option>
+                    <option value="empty">Vide</option>
+                    <option value="settings">Paramètres</option>
+                    <option value="custom">Personnalisé</option>
                 </select>
-
             </label>
+
+            <p id="test-lab-advanced-summary" class="test-lab-help"></p>
+
+            <div id="test-lab-custom-priorities" class="test-lab-custom-priorities" hidden>
+                <div class="test-lab-priority-grid">
+                    <label class="test-lab-field">
+                        <span>Séries</span>
+                        <input id="test-lab-custom-sets" type="number" min="1" max="999" step="1">
+                    </label>
+
+                    <label class="test-lab-field">
+                        <span>Répétitions</span>
+                        <input id="test-lab-custom-reps" type="number" min="1" max="999" step="1">
+                    </label>
+
+                    <label class="test-lab-field">
+                        <span>Durée</span>
+                        <div class="test-lab-inline test-lab-inline-no-margin">
+                            <input id="test-lab-custom-time" type="number" min="1" max="999" step="1">
+                            <span>sec</span>
+                        </div>
+                    </label>
+
+                    <label class="test-lab-field">
+                        <span>Repos</span>
+                        <div class="test-lab-inline test-lab-inline-no-margin">
+                            <input id="test-lab-custom-rest" type="number" min="0" max="999" step="1">
+                            <span>sec</span>
+                        </div>
+                    </label>
+
+                    <label class="test-lab-field">
+                        <span>Poids</span>
+                        <input id="test-lab-custom-weight" type="number" min="0" max="9999.9" step="0.1">
+                    </label>
+
+                    <label class="test-lab-field">
+                        <span>Unité</span>
+                        <select id="test-lab-custom-weight-unit">
+                            <option value="lbs">lbs</option>
+                            <option value="kg">kg</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div class="test-lab-tempo-block">
+                    <span class="test-lab-field-title">Tempo</span>
+
+                    <div class="test-lab-tempo-grid">
+                        <input id="test-lab-custom-tempo-1" type="number" min="0" max="999" step="1" aria-label="Tempo 1">
+                        <input id="test-lab-custom-tempo-2" type="number" min="0" max="999" step="1" aria-label="Tempo 2">
+                        <input id="test-lab-custom-tempo-3" type="number" min="0" max="999" step="1" aria-label="Tempo 3">
+                        <input id="test-lab-custom-tempo-4" type="number" min="0" max="999" step="1" aria-label="Tempo 4">
+                    </div>
+                </div>
+
+                <div class="test-lab-custom-options">
+                    <label class="test-lab-checkbox">
+                        <input id="test-lab-custom-notes" type="checkbox">
+                        <span>Ajouter des notes de plan</span>
+                    </label>
+
+                    <label class="test-lab-checkbox">
+                        <input id="test-lab-custom-instructions" type="checkbox">
+                        <span>Ajouter les instructions par défaut</span>
+                    </label>
+                </div>
+
+                <p class="test-lab-help">Chaque champ laissé vide reste N/A.</p>
+            </div>
 
         </div>
 
@@ -432,11 +491,12 @@
 
     <div class="test-lab-run-bar">
 
-        <button
-            id="test-lab-run"
-            type="button"
-        >
+        <button id="test-lab-run" type="button">
             Lancer les tests
+        </button>
+
+        <button id="test-lab-copy-report" type="button" disabled>
+            Copier le rapport
         </button>
 
         <span id="test-lab-run-status"></span>
@@ -469,41 +529,57 @@
 
         <div class="test-lab-report-block">
 
-            <h3>
-                Anomalies et avertissements
-            </h3>
+            <h3>10 pires anomalies</h3>
 
             <div class="test-lab-table-wrap">
-
                 <table>
                     <thead>
                         <tr>
+                            <th>#</th>
                             <th>Type</th>
-                            <th>Niveau</th>
                             <th>Test</th>
                             <th>Détail</th>
                             <th></th>
                         </tr>
                     </thead>
 
-                    <tbody id="test-lab-anomalies"></tbody>
+                    <tbody id="test-lab-errors"></tbody>
                 </table>
-
             </div>
 
         </div>
 
         <div class="test-lab-report-block">
 
-            <h3>
-                Exercices les plus sélectionnés
-            </h3>
+            <h3>10 pires avertissements</h3>
 
             <div class="test-lab-table-wrap">
-
                 <table>
                     <thead>
                         <tr>
+                            <th>#</th>
+                            <th>Type</th>
+                            <th>Test</th>
+                            <th>Détail</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="test-lab-warnings"></tbody>
+                </table>
+            </div>
+
+        </div>
+
+        <div class="test-lab-report-block">
+
+            <h3>10 exercices les plus sélectionnés</h3>
+
+            <div class="test-lab-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
                             <th>Exercice</th>
                             <th>Sélections</th>
                             <th>% des workouts</th>
@@ -512,21 +588,32 @@
 
                     <tbody id="test-lab-top-exercises"></tbody>
                 </table>
-
             </div>
 
         </div>
 
-        <div class="test-lab-report-block">
+        <div id="test-lab-detail-block" class="test-lab-report-block">
 
-            <h3>
-                Détail d’un scénario
-            </h3>
+            <h3>Détail d’un scénario</h3>
 
-            <pre id="test-lab-detail">Clique « Voir » sur une anomalie pour afficher le scénario.</pre>
+            <pre id="test-lab-detail">Clique « Voir » sur une anomalie ou un avertissement pour afficher le scénario.</pre>
 
         </div>
 
+    </section>
+
+    <section class="test-lab-panel test-lab-explanations">
+        <h2>Comment lire les modes de test</h2>
+
+        <p><strong>Répéter un scénario :</strong> garde exactement la même configuration et régénère plusieurs fois. Sert surtout à mesurer la variété et repérer un exercice qui domine anormalement.</p>
+
+        <p><strong>Pairwise (2-way) :</strong> cherche à faire apparaître au moins une fois chaque combinaison de deux valeurs appartenant à deux paramètres différents. Exemple : « 15 min + aucun équipement », puis « 15 min + Gym A ». C’est une couverture efficace des interactions courantes avec relativement peu de tests.</p>
+
+        <p><strong>3-way :</strong> fait la même chose avec chaque combinaison de trois valeurs provenant de trois paramètres différents. C’est plus exhaustif que Pairwise et peut détecter des problèmes qui n’apparaissent que lorsque trois contraintes interagissent, mais le nombre de tests requis augmente fortement.</p>
+
+        <p><strong>Valeurs limites :</strong> cible surtout les extrêmes et les frontières importantes, par exemple 15/120 minutes ou des minimums/maximums d’exercices inhabituels.</p>
+
+        <p class="test-lab-help">Pour Pairwise et 3-way, le rapport affiche le pourcentage réel d’interactions couvertes. Si la limite de tests est trop basse, le Test Lab indique explicitement qu’il reste des interactions non couvertes.</p>
     </section>
 
 </main>
