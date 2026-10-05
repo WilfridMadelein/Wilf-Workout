@@ -16,8 +16,35 @@ import {
 // STOCKAGE DES PLANS
 // ============================================================
 
-const PLAN_SCHEMA_VERSION = 3;
+const PLAN_SCHEMA_VERSION = 4;
 const saveTimers = new Map();
+
+function normalizeAutoPlanGeneration(value) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+
+    const muscles = {};
+    if (value.muscles && typeof value.muscles === "object" && !Array.isArray(value.muscles)) {
+        Object.entries(value.muscles).forEach(([key, items]) => {
+            if (["__proto__", "prototype", "constructor"].includes(key)) return;
+            muscles[key] = Array.isArray(items) ? items.filter(item => typeof item === "string") : [];
+        });
+    }
+
+    const optionalNumber = number => Number.isFinite(Number(number)) ? Number(number) : null;
+    return {
+        version: 1,
+        createdAt: optionalNumber(value.createdAt) ?? Date.now(),
+        targetDurationMinutes: optionalNumber(value.targetDurationMinutes),
+        estimatedDurationSeconds: optionalNumber(value.estimatedDurationSeconds),
+        timeFlexibility: value.timeFlexibility === "flexible" ? "flexible" : "strict",
+        goals: Array.isArray(value.goals) ? value.goals.filter(item => typeof item === "string") : [],
+        bodyParts: Array.isArray(value.bodyParts) ? value.bodyParts.filter(item => typeof item === "string") : [],
+        muscles,
+        types: Array.isArray(value.types) ? value.types.filter(item => typeof item === "string") : [],
+        exerciseCount: { min: optionalNumber(value.exerciseCount?.min), max: optionalNumber(value.exerciseCount?.max) },
+        supersetPreference: typeof value.supersetPreference === "string" ? value.supersetPreference : "indifferent"
+    };
+}
 
 // ------------------------------------------------------------
 // Filtres
@@ -180,6 +207,7 @@ function migratePlanRecord(record) {
     plan.includeEquipment = plan.includeEquipment === true;
     plan.includeNotes = typeof plan.includeNotes === "boolean" ? plan.includeNotes : plan.notes.trim().length > 0;
     plan.autoAddDefaultInstructions = plan.autoAddDefaultInstructions !== false;
+    plan.autoPlanGeneration = normalizeAutoPlanGeneration(plan.autoPlanGeneration);
 
     plan.defaults ??= {};
     plan.defaults.weight ??= 0;
@@ -223,6 +251,7 @@ function serializePlan(plan) {
         includeEquipment: plan.includeEquipment === true,
         includeNotes: plan.includeNotes === true,
         autoAddDefaultInstructions: plan.autoAddDefaultInstructions !== false,
+        autoPlanGeneration: normalizeAutoPlanGeneration(plan.autoPlanGeneration),
 
         defaults: {
             sets: plan.defaults?.sets ?? 3,
@@ -291,6 +320,7 @@ function hydratePlan(record, exercises) {
         includeEquipment: savedPlan.includeEquipment === true,
         includeNotes: savedPlan.includeNotes === true,
         autoAddDefaultInstructions: savedPlan.autoAddDefaultInstructions !== false,
+        autoPlanGeneration: normalizeAutoPlanGeneration(savedPlan.autoPlanGeneration),
         
         defaults: {
             sets: savedPlan.defaults?.sets ?? 3,

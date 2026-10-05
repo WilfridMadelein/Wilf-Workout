@@ -2574,3 +2574,40 @@ html[data-theme="dark"] .auto-plan-help {
         gap: 16px;
     }
 }
+
+/* =========================================================
+   PARAMÈTRES DE CRÉATION AUTOMATIQUE DU PLAN
+========================================================= */
+
+.plan-auto-generation-box {
+    grid-column: 1 / -1;
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.plan-auto-generation-box[hidden] {
+    display: none;
+}
+
+.plan-auto-generation-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 18px;
+}
+
+.plan-auto-generation-row {
+    min-width: 0;
+    font-size: 14px;
+}
+
+.plan-auto-generation-row strong {
+    margin-right: 4px;
+}
+
+@media (max-width: 600px) {
+    .plan-auto-generation-grid {
+        grid-template-columns: 1fr;
+    }
+}

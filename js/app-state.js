@@ -211,6 +211,9 @@ export const planIncludeNotes = document.getElementById("plan-include-notes");
 export const planAutoAddInstructions = document.getElementById("plan-auto-add-instructions");
 export const planNotesCounter = document.getElementById("plan-notes-counter");
 
+export const planAutoGenerationSection = document.getElementById("plan-auto-generation-section");
+export const planAutoGenerationToggle = document.getElementById("plan-auto-generation-toggle");
+export const planAutoGenerationContent = document.getElementById("plan-auto-generation-content");
 export const planFiltersToggle = document.getElementById("plan-filters-toggle");
 export const planFiltersContent = document.getElementById("plan-filters-content");
 export const planSettingsToggle = document.getElementById("plan-settings-toggle");

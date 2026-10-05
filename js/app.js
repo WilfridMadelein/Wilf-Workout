@@ -222,6 +222,9 @@ confirmHistoryDeleteButton,
 
 planAutoAddCategories,
 planIncludeNotes,
+planAutoGenerationSection,
+planAutoGenerationToggle,
+planAutoGenerationContent,
 planFiltersToggle,
 planFiltersContent,
 planSettingsToggle,
@@ -408,6 +411,10 @@ import {
 } from "./auto-plan/generator/workout-builder.js";
 
 import {
+    buildGeneratedPlan
+} from "./auto-plan/generator/plan-output.js";
+
+import {
     configurePlanRender,
     createPlanNumberInput,
     renderPlanExercises,
@@ -455,7 +462,8 @@ import {
     renderPlansList,
     setupPlanController,
     addCategoriesToCurrentPlan,
-    addEquipmentToCurrentPlan
+    addEquipmentToCurrentPlan,
+    addAndOpenPlan
 } from "./plans/plan-controller.js";
 
 import {
@@ -812,24 +820,36 @@ configureAutoPlanController({
     ],
 
 onCreatePlan: async request => {
-    const result = inspectWilfAutoPlanWorkout(request);
+    const input = buildAutoPlanInput({ request, exercises, workoutHistory, appSettings });
 
-    if (!result.input.diagnostics.valid) {
-        alert("Les données nécessaires au plan automatique sont incomplètes. Consultez la console pour les détails.");
+    if (!input.diagnostics.valid) {
+        alert("Les données nécessaires au plan automatique sont incomplètes.");
         return;
     }
 
-    if (!result.candidates.length) {
+    const pool = buildExerciseCandidatePool(exercises, input);
+    if (!pool.candidates.length) {
         alert("Aucun exercice ne correspond aux paramètres sélectionnés.");
         return;
     }
 
-    if (!result.workout.exercises.length) {
-        alert("Des exercices correspondent aux paramètres, mais aucun ne peut entrer dans le temps visé avec les paramètres actuels.");
+    const scored = scoreCandidatePool(pool);
+    const workout = buildWorkoutFromScoredPool(scored, input);
+    if (!workout.exercises.length) {
+        alert("Des exercices correspondent aux paramètres, mais aucun plan cohérent n'a pu être construit.");
         return;
     }
 
-    alert(`${result.workout.exercises.length} exercices sélectionnés pour environ ${result.workout.estimatedDurationMinutes} minutes.`);
+    const plan = buildGeneratedPlan({
+        request,
+        workout,
+        planNumber: plans.length + 1,
+        defaultPlanSettings: appSettings.planDefaults,
+        defaultSplitOrder: appSettings.splitOrder
+    });
+
+    await addAndOpenPlan(plan);
+    autoPlanPage.hidden = true;
 }
 });
 
@@ -1282,6 +1302,9 @@ getSelectedPlanEquipment: () => selectedPlanEquipment,
 planAutoAddCategories,
 planIncludeNotes,
 
+planAutoGenerationSection,
+planAutoGenerationToggle,
+planAutoGenerationContent,
 planFiltersToggle,
 planFiltersContent,
 planSettingsToggle,

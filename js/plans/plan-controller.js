@@ -7,6 +7,13 @@ import {
     formatPlanDuration
 } from "./plan-timing.js";
 
+import {
+    AUTO_PLAN_GOAL_LABELS,
+    AUTO_PLAN_BODY_PARTS,
+    AUTO_PLAN_SUPERSET_LABELS,
+    AUTO_PLAN_TIME_FLEXIBILITY_LABELS
+} from "../auto-plan/auto-plan-settings.js";
+
 let getCurrentPlan;
 let setCurrentPlan;
 
@@ -27,6 +34,9 @@ let planAutoAddEquipment;
 let planIncludeNotes;
 let planAutoAddInstructions;
 
+let planAutoGenerationSection;
+let planAutoGenerationToggle;
+let planAutoGenerationContent;
 let planFiltersToggle;
 let planFiltersContent;
 let planSettingsToggle;
@@ -157,6 +167,9 @@ planAutoAddEquipment,
 planIncludeNotes,
 planAutoAddInstructions,
 
+planAutoGenerationSection,
+planAutoGenerationToggle,
+planAutoGenerationContent,
 planFiltersToggle,
 planFiltersContent,
 planSettingsToggle,
@@ -712,6 +725,67 @@ renderPlanCategoryEditor();
 renderPlanEquipmentEditor();
 }
 
+function setPlanSectionCollapsed(button, content, collapsed, labels) {
+    if (!button || !content) return;
+    content.hidden = collapsed;
+    button.setAttribute("aria-expanded", String(!collapsed));
+    button.setAttribute("aria-label", collapsed ? labels.show : labels.hide);
+}
+
+function formatGeneratedBodyParts(generation) {
+    return (generation.bodyParts ?? []).map(bodyPart => {
+        const config = AUTO_PLAN_BODY_PARTS[bodyPart];
+        const label = config?.label ?? bodyPart;
+        const muscles = generation.muscles?.[bodyPart] ?? [];
+        return muscles.length ? `${label} (${muscles.join(", ")})` : label;
+    }).join(" · ");
+}
+
+function formatRequestedExerciseCount(exerciseCount = {}) {
+    const minimum = exerciseCount.min ?? "N/A";
+    const maximum = exerciseCount.max ?? "N/A";
+    return `Minimum ${minimum} · Maximum ${maximum}`;
+}
+
+function renderAutoPlanGeneration(plan) {
+    if (!planAutoGenerationSection || !planAutoGenerationContent || !planAutoGenerationToggle) return;
+
+    const generation = plan?.autoPlanGeneration;
+    planAutoGenerationSection.hidden = !generation;
+    planAutoGenerationContent.replaceChildren();
+    if (!generation) return;
+
+    const rows = [
+        ["Temps visé", generation.targetDurationMinutes != null ? `${generation.targetDurationMinutes} min` : "N/A"],
+        ["Temps estimé", generation.estimatedDurationSeconds != null ? formatPlanDuration(generation.estimatedDurationSeconds) : "N/A"],
+        ["Tolérance du temps", AUTO_PLAN_TIME_FLEXIBILITY_LABELS[generation.timeFlexibility] ?? generation.timeFlexibility],
+        ["Parties du corps", formatGeneratedBodyParts(generation) || "N/A"],
+        ["Objectif", (generation.goals ?? []).map(goal => AUTO_PLAN_GOAL_LABELS[goal] ?? goal).join(", ") || "N/A"],
+        ["Type", (generation.types ?? []).join(", ") || "N/A"],
+        ["Nombre d'exercices souhaité", formatRequestedExerciseCount(generation.exerciseCount)],
+        ["Super-set", AUTO_PLAN_SUPERSET_LABELS[generation.supersetPreference] ?? generation.supersetPreference]
+    ];
+
+    const grid = document.createElement("div");
+    grid.className = "plan-auto-generation-grid";
+
+    rows.forEach(([label, value]) => {
+        const row = document.createElement("div");
+        row.className = "plan-auto-generation-row";
+        const strong = document.createElement("strong");
+        strong.textContent = `${label} :`;
+        const text = document.createTextNode(` ${value}`);
+        row.append(strong, text);
+        grid.appendChild(row);
+    });
+
+    planAutoGenerationContent.appendChild(grid);
+    setPlanSectionCollapsed(planAutoGenerationToggle, planAutoGenerationContent, true, {
+        show: "Afficher les paramètres utilisés pour la création",
+        hide: "Masquer les paramètres utilisés pour la création"
+    });
+}
+
 // ------------------------------------------------------------
 // Ouvrir un plan
 // ------------------------------------------------------------
@@ -728,6 +802,7 @@ function openPlan(plan) {
 
     ensurePlanDefaults(plan);
     ensurePlanMetadata(plan);
+    renderAutoPlanGeneration(plan);
 
     planHome.style.display = "none";
     planEditor.style.display = "block";
@@ -1028,20 +1103,38 @@ function createNewPlanDefaults(defaults = {}) {
     };
 }
 
-function setupPlanSectionToggle(button, content, labels) {
+function setupPlanSectionToggle(button, content, labels, collapsed = false) {
     if (!button || !content) return;
+    button.addEventListener("click", () => setPlanSectionCollapsed(button, content, !content.hidden, labels));
+    setPlanSectionCollapsed(button, content, collapsed, labels);
+}
 
-    const setCollapsed = collapsed => {
-        content.hidden = collapsed;
-        button.setAttribute("aria-expanded", String(!collapsed));
-        button.setAttribute("aria-label", collapsed ? labels.show : labels.hide);
-    };
+export async function addAndOpenPlan(plan) {
+    ensurePlanDefaults(plan);
+    ensurePlanMetadata(plan);
+    plans.push(plan);
 
-    button.addEventListener("click", () => setCollapsed(!content.hidden));
-    setCollapsed(false);
+    try {
+        await savePlanNow(plan);
+    } catch (error) {
+        console.error("Impossible de sauvegarder le nouveau plan :", error);
+    }
+
+    requestPersistentStorage().catch(error => {
+        console.warn("Impossible de demander le stockage persistant :", error);
+    });
+
+    renderPlansList();
+    openPlan(plan);
+    return plan;
 }
 
 export function setupPlanController() {
+
+setupPlanSectionToggle(planAutoGenerationToggle, planAutoGenerationContent, {
+    show: "Afficher les paramètres utilisés pour la création",
+    hide: "Masquer les paramètres utilisés pour la création"
+}, true);
 
 setupPlanSectionToggle(planFiltersToggle, planFiltersContent, {
     show: "Afficher le filtre du plan",
@@ -1169,22 +1262,7 @@ includeEquipment: defaults.includeEquipment === true,
 includeNotes: defaults.includeNotes === true,
 autoAddDefaultInstructions: defaults.autoAddDefaultInstructions !== false,
     };
-            ensurePlanDefaults(plan);
-
-            plans.push(plan);
-
-            try {
-                await savePlanNow(plan);
-            } catch (error) {
-                console.error("Impossible de sauvegarder le nouveau plan :", error);
-            }
-
-            requestPersistentStorage().catch(error => {
-                console.warn("Impossible de demander le stockage persistant :", error);
-            });
-
-            renderPlansList();
-            openPlan(plan);
+            await addAndOpenPlan(plan);
         }
     );
 
