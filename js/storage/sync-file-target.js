@@ -16,6 +16,7 @@ async function getActiveSyncTarget() {
 
 async function readSyncFileTarget(active = null) {
     active ??= await getActiveSyncTarget();
+    if (active?.kind) active = { type: 'file', target: active, config: null };
     if (active.type === 'none') return { available: false, reason: active.reason, target: active.target ?? null, config: active.config };
     const result = await readSyncFile(active.target);
     const content = typeof result.content === 'string' ? result.content : '';

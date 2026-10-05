@@ -181,7 +181,7 @@ function resolveCollectionConflict({ conflictPolicy, collection, item, localSnap
 }
 
 async function verifyExternalUnchanged(file, expectedState) {
-    const latestFile = await readSyncFileTarget(file.target);
+    const latestFile = await readSyncFileTarget({ type: 'file', target: file.target, config: file.config });
     if (!latestFile.available || !latestFile.exists) return { ok: false, reason: "file-disappeared" };
     const latestExternal = parseStorageSnapshot(latestFile.content);
     const latestExternalState = await createSyncBaseline(latestExternal);
