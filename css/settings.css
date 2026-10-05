@@ -341,39 +341,48 @@ html[data-theme="dark"]
    DONNÉES
 ========================================================= */
 
-.settings-storage-target {
+.settings-local-data,
+.settings-sync-manager {
     margin-bottom: 18px;
 }
 
-.settings-storage-target-row {
-    align-items: flex-start;
-}
-
-.settings-storage-target-text {
-    flex: 1;
-}
-
-.settings-storage-target-text .settings-help {
+.settings-local-data .settings-help,
+.settings-sync-folder-text .settings-help,
+.settings-sync-mode-row + .settings-help,
+.settings-sync-pairing .settings-help {
     margin: 4px 0 0;
 }
 
-.settings-storage-target-actions {
+.settings-sync-manager {
+    padding-top: 14px;
+    border-top: 1px solid #ddd;
+}
+
+.settings-sync-folder-row {
+    align-items: flex-start;
+}
+
+.settings-sync-folder-text {
+    flex: 1;
+}
+
+.settings-sync-folder-actions,
+.settings-sync-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
 }
 
-.settings-storage-target-actions button {
+.settings-sync-folder-actions button,
+.settings-sync-actions button,
+.settings-sync-mode-switch button {
     padding: 8px 12px;
     cursor: pointer;
 }
 
-.settings-storage-target-actions button.active {
-    background: #111;
-    color: #fff;
-}
-
-.settings-storage-target-actions button:disabled {
+.settings-sync-folder-actions button:disabled,
+.settings-sync-actions button:disabled,
+.settings-sync-mode-switch button:disabled {
     cursor: not-allowed;
     opacity: 0.55;
 }
@@ -384,25 +393,43 @@ html[data-theme="dark"]
     font-size: 14px;
 }
 
-.settings-sync {
+.settings-sync-controls {
     margin-top: 14px;
     padding-top: 14px;
     border-top: 1px solid #ddd;
 }
 
-.settings-sync-row {
+.settings-sync-mode-row {
     align-items: center;
 }
 
-.settings-sync-row > div {
-    flex: 1;
+.settings-sync-mode-switch {
+    display: flex;
+    gap: 6px;
+}
+
+.settings-sync-mode-switch button.active {
+    background: #111;
+    color: #fff;
+}
+
+.settings-sync-pairing {
+    margin-top: 14px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+}
+
+.settings-sync-pairing .settings-sync-actions,
+.settings-sync-controls > .settings-sync-actions {
+    margin-top: 10px;
 }
 
 .settings-sync-status {
     display: flex;
     align-items: center;
     gap: 7px;
-    margin: 4px 0 0;
+    margin: 14px 0 0;
     color: #666;
     font-size: 14px;
 }
@@ -436,38 +463,16 @@ html[data-theme="dark"]
     animation: settings-sync-pulse 1s ease-in-out infinite alternate;
 }
 
+.settings-sync-detail {
+    margin: 6px 0 0 15px;
+    color: #666;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
 @keyframes settings-sync-pulse {
     from { opacity: 0.3; }
     to { opacity: 1; }
-}
-
-.settings-shared-sync-file {
-    margin-top: 14px;
-    padding-top: 14px;
-    border-top: 1px solid #ddd;
-}
-
-.settings-shared-sync-file-row {
-    align-items: flex-start;
-}
-
-.settings-shared-sync-file-text {
-    flex: 1;
-}
-
-.settings-shared-sync-file-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.settings-shared-sync-file-actions button {
-    padding: 8px 12px;
-    cursor: pointer;
-}
-
-html[data-theme="dark"] .settings-shared-sync-file {
-    border-color: #444;
 }
 
 .settings-data-actions {
@@ -715,21 +720,21 @@ html[data-theme="dark"] .plan-workout-duration {
 
 /*storage*/
 
-html[data-theme="dark"] .settings-storage-target-actions button.active {
-    background: #ededed;
-    color: #181818;
-}
-
-html[data-theme="dark"] .settings-storage-status {
-    color: #aaa;
-}
-
-html[data-theme="dark"] .settings-sync {
+html[data-theme="dark"] .settings-sync-manager,
+html[data-theme="dark"] .settings-sync-controls,
+html[data-theme="dark"] .settings-sync-pairing {
     border-color: #444;
 }
 
+html[data-theme="dark"] .settings-storage-status,
+html[data-theme="dark"] .settings-sync-detail,
 html[data-theme="dark"] .settings-sync-status {
     color: #aaa;
+}
+
+html[data-theme="dark"] .settings-sync-mode-switch button.active {
+    background: #ededed;
+    color: #181818;
 }
 
 html[data-theme="dark"] .settings-sync-status[data-state="ok"] {
@@ -747,3 +752,4 @@ html[data-theme="dark"] .settings-sync-status[data-state="error"] {
 html[data-theme="dark"] .settings-sync-status[data-state="syncing"] {
     color: #aaa;
 }
+

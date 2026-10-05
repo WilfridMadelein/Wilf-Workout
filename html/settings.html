@@ -57,89 +57,62 @@
     <section class="settings-section">
         <h3>Données</h3>
 
-<div class="settings-storage-target">
-    <div class="settings-row settings-storage-target-row">
-        <div class="settings-storage-target-text">
-            <strong>Emplacement des données</strong>
-
-            <p class="settings-help">
-                Wilf conserve toujours une copie locale pour fonctionner hors connexion.
-            </p>
+        <div class="settings-local-data">
+            <strong>Données locales</strong>
+            <p class="settings-help">Wilf sauvegarde toujours vos plans, paramètres et entraînements sur cet appareil pour rester utilisable hors connexion.</p>
         </div>
 
-        <div
-            class="settings-storage-target-actions"
-            role="group"
-            aria-label="Emplacement des données"
-        >
-            <button
-                id="settings-storage-device"
-                type="button"
-                class="active"
-                aria-pressed="true"
-            >
-                Cet appareil
-            </button>
+        <div class="settings-sync-manager">
+            <div class="settings-row settings-sync-folder-row">
+                <div class="settings-sync-folder-text">
+                    <strong>Synchronisation externe</strong>
+                    <p class="settings-help">Connectez un dossier local ou cloud pour synchroniser Wilf entre vos appareils.</p>
+                </div>
 
-            <button
-                id="settings-storage-directory"
-                type="button"
-                aria-pressed="false"
-            >
-                Choisir un dossier
-            </button>
+                <div class="settings-sync-folder-actions">
+                    <button id="settings-sync-folder-button" type="button">Choisir un dossier</button>
+                    <button id="settings-sync-disconnect-button" type="button" hidden>Déconnecter</button>
+                </div>
+            </div>
+
+            <p id="settings-sync-folder-status" class="settings-storage-status" aria-live="polite"></p>
+
+            <div id="settings-sync-controls" class="settings-sync-controls" hidden>
+                <div class="settings-row settings-sync-mode-row">
+                    <span>Mode de synchronisation</span>
+                    <div class="settings-sync-mode-switch" role="group" aria-label="Mode de synchronisation">
+                        <button id="settings-sync-mode-auto" type="button" aria-pressed="true">Automatique</button>
+                        <button id="settings-sync-mode-manual" type="button" aria-pressed="false">Manuel</button>
+                    </div>
+                </div>
+
+                <p id="settings-sync-mode-help" class="settings-help"></p>
+
+                <div id="settings-sync-pairing" class="settings-sync-pairing" hidden>
+                    <strong>Première synchronisation</strong>
+                    <p id="settings-sync-pairing-message" class="settings-help"></p>
+                    <div class="settings-sync-actions">
+                        <button id="settings-sync-pairing-push" type="button">Envoyer les données de cet appareil</button>
+                        <button id="settings-sync-pairing-pull" type="button">Récupérer les données du dossier</button>
+                    </div>
+                </div>
+
+                <div id="settings-sync-actions" class="settings-sync-actions" hidden>
+                    <button id="settings-sync-push" type="button">Envoyer vers le dossier</button>
+                    <button id="settings-sync-pull" type="button">Récupérer depuis le dossier</button>
+                </div>
+
+                <p id="settings-sync-status" class="settings-sync-status" aria-live="polite">Vérification...</p>
+                <p id="settings-sync-detail" class="settings-sync-detail" hidden></p>
+            </div>
         </div>
-    </div>
-
-    <p
-        id="settings-storage-status"
-        class="settings-storage-status"
-        aria-live="polite"
-    ></p>
-<div class="settings-sync">
-    <div class="settings-row settings-sync-row">
-        <div>
-            <strong>Synchronisation</strong>
-            <p id="settings-sync-status" class="settings-sync-status" aria-live="polite">Vérification...</p>
-        </div>
-
-    </div>
-</div>  
-<div id="settings-shared-sync-file" class="settings-shared-sync-file" hidden>
-    <div class="settings-row settings-shared-sync-file-row">
-        <div class="settings-shared-sync-file-text">
-            <strong>Fichier de synchronisation partagé</strong>
-            <p class="settings-help">
-                Sur ordinateur, sélectionne le fichier Wilf partagé par Google Drive.
-            </p>
-        </div>
-
-        <div class="settings-shared-sync-file-actions">
-            <button id="settings-shared-sync-file-button" type="button">Choisir le fichier partagé</button>
-            <button id="settings-shared-sync-file-disconnect" type="button" hidden>Déconnecter</button>
-        </div>
-    </div>
-
-    <p id="settings-shared-sync-file-status" class="settings-storage-status" aria-live="polite"></p>
-</div>  
-</div>
 
         <div class="settings-data-actions">
-            <button id="export-backup-button" type="button">
-                Créer une sauvegarde
-            </button>
-
-            <button id="import-backup-button" type="button">
-                Importer une sauvegarde
-            </button>
+            <button id="export-backup-button" type="button">Créer une sauvegarde</button>
+            <button id="import-backup-button" type="button">Importer une sauvegarde</button>
         </div>
 
-        <input
-            id="backup-file-input"
-            type="file"
-            accept=".wilf,.json,application/json"
-            hidden
-        >
+        <input id="backup-file-input" type="file" accept=".wilf,.json,application/json" hidden>
     </section>
 
     <!-- =========================================================
@@ -448,6 +421,20 @@
     </div>
 </section>
 </div>
+
+    <!-- =========================================================
+         CONFIRMATION DÉCONNEXION SYNCHRO
+    ========================================================== -->
+    <div id="sync-disconnect-modal" class="plan-pdf-modal" hidden>
+        <div class="plan-pdf-dialog plan-backup-dialog">
+            <h3>Déconnecter le dossier ?</h3>
+            <p>Wilf cessera de synchroniser avec ce dossier. Vos données locales et le fichier déjà présent dans le dossier ne seront pas supprimés.</p>
+            <div class="plan-pdf-actions">
+                <button id="cancel-sync-disconnect-button" type="button">Annuler</button>
+                <button id="confirm-sync-disconnect-button" type="button">Déconnecter</button>
+            </div>
+        </div>
+    </div>
 
     <!-- =========================================================
          CONFIRMATION IMPORT

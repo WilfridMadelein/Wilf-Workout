@@ -5,7 +5,6 @@ import {
     putStoredWorkoutHistory,
     deleteStoredWorkoutHistory
 } from "./storage-provider.js";
-
 import { STORAGE_DATA_FILE, readSyncFileTarget, writeSyncFileTarget } from "./sync-file-target.js";
 import { createStorageSnapshot, parseStorageSnapshot } from "./storage-snapshot.js";
 import { loadSyncMetadata, saveSyncMetadata } from "./sync-metadata.js";
@@ -17,6 +16,9 @@ import { migrateWorkoutHistoryRecord } from "./workout-history-storage.js";
 // ============================================================
 // FUSION BIDIRECTIONNELLE LOCAL ↔ EXTERNE
 // ============================================================
+
+const CONFLICT_POLICIES = new Set(["preserve", "local", "external"]);
+let syncQueue = Promise.resolve();
 
 function getRecordTimestamp(record) {
     const value = Number(record?.updatedAt ?? record?.createdAt ?? 0);
@@ -32,7 +34,6 @@ function getCollectionState(snapshot, collection, id) {
     const tombstone = findById(snapshot?.tombstones?.[collection], id);
     const recordTime = getRecordTimestamp(record);
     const deletedAt = Number(tombstone?.deletedAt) || 0;
-
     if (tombstone && deletedAt >= recordTime) return { type: "deleted", value: structuredClone(tombstone) };
     if (record) return { type: "record", value: structuredClone(record) };
     return null;
@@ -42,10 +43,8 @@ function setCollectionState(snapshot, collection, id, state) {
     snapshot[collection] ??= [];
     snapshot.tombstones ??= {};
     snapshot.tombstones[collection] ??= [];
-
     snapshot[collection] = snapshot[collection].filter(record => String(record?.id) !== String(id));
     snapshot.tombstones[collection] = snapshot.tombstones[collection].filter(record => String(record?.id) !== String(id));
-
     if (state?.type === "record") snapshot[collection].push(structuredClone(state.value));
     if (state?.type === "deleted") snapshot.tombstones[collection].push(structuredClone(state.value));
 }
@@ -75,10 +74,8 @@ async function applyLocalCollectionState(collection, id, state, metadata) {
             setMetadataTombstone(metadata, "plans", state.value);
             return;
         }
-
         const record = migratePlanRecord(state.value);
         if (record?.id == null) throw new Error("Plan externe sans identifiant.");
-
         await putStoredPlan(record);
         removeMetadataTombstone(metadata, "plans", id);
         return;
@@ -90,7 +87,6 @@ async function applyLocalCollectionState(collection, id, state, metadata) {
             setMetadataTombstone(metadata, "workoutHistory", state.value);
             return;
         }
-
         await putStoredWorkoutHistory(migrateWorkoutHistoryRecord(state.value));
         removeMetadataTombstone(metadata, "workoutHistory", id);
         return;
@@ -105,59 +101,124 @@ function preserveConflictBaseline(nextBaseline, previousBaseline, conflicts) {
             nextBaseline.settings = previousBaseline.settings ?? null;
             return;
         }
-
         if (!["plans", "workoutHistory"].includes(conflict.collection)) return;
-
         const previous = previousBaseline[conflict.collection]?.[conflict.id];
-
-        if (previous) {
-            nextBaseline[conflict.collection][conflict.id] = structuredClone(previous);
-            return;
-        }
-
-        delete nextBaseline[conflict.collection][conflict.id];
+        if (previous) nextBaseline[conflict.collection][conflict.id] = structuredClone(previous);
+        else delete nextBaseline[conflict.collection][conflict.id];
     });
 }
 
-async function syncStorageBidirectionalNow() {
-const file = await readSyncFileTarget();
-
-if (!file.available) {
-    return { status: file.reason, imported: 0, exported: 0, conflicts: [] };
+function createEmptyBaseline() {
+    return { schemaVersion: 1, plans: {}, settings: null, workoutHistory: {} };
 }
 
-if (!file.exists) {
-    return { status: "missing-file", imported: 0, exported: 0, conflicts: [] };
+function normalizeConflictPolicy(value) {
+    return CONFLICT_POLICIES.has(value) ? value : "preserve";
 }
+
+function addConflict(conflicts, collection, id, reason) {
+    conflicts.push({ collection, id, reason });
+}
+
+function resolveSettingsConflict({ conflictPolicy, localSnapshot, externalSnapshot, mergedLocal, mergedExternal, localChanges, conflicts }) {
+    if (conflictPolicy === "local") {
+        mergedExternal.settings = structuredClone(localSnapshot.settings);
+        return { externalDirty: true, exported: 1 };
+    }
+
+    if (conflictPolicy === "external") {
+        if (!externalSnapshot.settings || typeof externalSnapshot.settings !== "object") {
+            addConflict(conflicts, "settings", "app", "missing-external-settings");
+            return { externalDirty: false, exported: 0 };
+        }
+        mergedLocal.settings = normalizeAppSettings(externalSnapshot.settings);
+        localChanges.push({ collection: "settings", id: "app" });
+        return { externalDirty: false, exported: 0 };
+    }
+
+    const localTime = getRecordTimestamp(localSnapshot.settings);
+    const externalTime = getRecordTimestamp(externalSnapshot.settings);
+    if (localTime > externalTime) {
+        mergedExternal.settings = structuredClone(localSnapshot.settings);
+        return { externalDirty: true, exported: 1 };
+    }
+    if (externalTime > localTime) {
+        mergedLocal.settings = normalizeAppSettings(externalSnapshot.settings);
+        localChanges.push({ collection: "settings", id: "app" });
+        return { externalDirty: false, exported: 0 };
+    }
+
+    addConflict(conflicts, "settings", "app", "conflict");
+    return { externalDirty: false, exported: 0 };
+}
+
+function resolveCollectionConflict({ conflictPolicy, collection, item, localSnapshot, externalSnapshot, mergedLocal, mergedExternal, localChanges, conflicts }) {
+    const local = getCollectionState(localSnapshot, collection, item.id);
+    const external = getCollectionState(externalSnapshot, collection, item.id);
+
+    if (conflictPolicy === "local") {
+        if (!local && item.baseline) {
+            addConflict(conflicts, collection, item.id, "missing-local-without-tombstone");
+            return { externalDirty: false, exported: 0 };
+        }
+        setCollectionState(mergedExternal, collection, item.id, local);
+        return { externalDirty: true, exported: 1 };
+    }
+
+    if (conflictPolicy === "external") {
+        if (!external && item.baseline) {
+            addConflict(conflicts, collection, item.id, "missing-external-without-tombstone");
+            return { externalDirty: false, exported: 0 };
+        }
+        const normalizedExternal = normalizeCollectionState(collection, external);
+        setCollectionState(mergedLocal, collection, item.id, normalizedExternal);
+        localChanges.push({ collection, id: item.id, state: normalizedExternal });
+        return { externalDirty: false, exported: 0 };
+    }
+
+    addConflict(conflicts, collection, item.id, item.status);
+    return { externalDirty: false, exported: 0 };
+}
+
+async function verifyExternalUnchanged(file, expectedState) {
+    const latestFile = await readSyncFileTarget(file.target);
+    if (!latestFile.available || !latestFile.exists) return { ok: false, reason: "file-disappeared" };
+    const latestExternal = parseStorageSnapshot(latestFile.content);
+    const latestExternalState = await createSyncBaseline(latestExternal);
+    return { ok: baselinesEqual(latestExternalState, expectedState), reason: "concurrent-change" };
+}
+
+async function runStorageSync(conflictPolicy) {
+    const file = await readSyncFileTarget();
+    if (!file.available) return { status: file.reason, policy: conflictPolicy, imported: 0, exported: 0, conflicts: [] };
 
     const localSnapshot = await createStorageSnapshot();
+    if (!file.exists) {
+        if (conflictPolicy === "external") return { status: "missing-file", policy: conflictPolicy, imported: 0, exported: 0, conflicts: [] };
+        await writeSyncFileTarget(file.target, JSON.stringify(localSnapshot, null, 2));
+        const metadata = await loadSyncMetadata();
+        metadata.baseline = await createSyncBaseline(localSnapshot);
+        await saveSyncMetadata(metadata);
+        return { status: "created", policy: conflictPolicy, imported: 0, exported: 1, conflicts: [] };
+    }
+
     const externalSnapshot = parseStorageSnapshot(file.content);
     const metadata = await loadSyncMetadata();
+    const [localState, externalState] = await Promise.all([createSyncBaseline(localSnapshot), createSyncBaseline(externalSnapshot)]);
 
-    const [localState, externalState] = await Promise.all([
-        createSyncBaseline(localSnapshot),
-        createSyncBaseline(externalSnapshot)
-    ]);
+    if (!metadata.baseline && baselinesEqual(localState, externalState)) {
+        metadata.baseline = localState;
+        await saveSyncMetadata(metadata);
+        return { status: "baseline-initialized", policy: conflictPolicy, imported: 0, exported: 0, conflicts: [] };
+    }
 
-if (!metadata.baseline && baselinesEqual(localState, externalState)) {
-    metadata.baseline = localState;
-    await saveSyncMetadata(metadata);
-    return { status: "baseline-initialized", imported: 0, exported: 0, conflicts: [] };
-}
+    const firstPairing = !metadata.baseline;
+    const baseline = metadata.baseline ?? createEmptyBaseline();
 
-const firstPairing = !metadata.baseline;
-const baseline = metadata.baseline ?? {
-    schemaVersion: 1,
-    plans: {},
-    settings: null,
-    workoutHistory: {}
-};
-
-    // Déjà synchronisé
     if (baselinesEqual(localState, externalState)) {
         metadata.baseline = localState;
         await saveSyncMetadata(metadata);
-        return { status: "same", imported: 0, exported: 0, conflicts: [] };
+        return { status: "same", policy: conflictPolicy, imported: 0, exported: 0, conflicts: [] };
     }
 
     const comparison = compareSyncBaselines(localState, externalState, baseline);
@@ -165,7 +226,6 @@ const baseline = metadata.baseline ?? {
     const mergedExternal = structuredClone(externalSnapshot);
     const localChanges = [];
     const conflicts = [];
-
     let externalDirty = false;
     let exported = 0;
 
@@ -178,27 +238,16 @@ const baseline = metadata.baseline ?? {
         externalDirty = true;
         exported += 1;
     } else if (comparison.settings === "external-changed") {
-        if (!externalSnapshot.settings || typeof externalSnapshot.settings !== "object") {
-            conflicts.push({ collection: "settings", id: "app", reason: "missing-external-settings" });
-        } else {
+        if (!externalSnapshot.settings || typeof externalSnapshot.settings !== "object") addConflict(conflicts, "settings", "app", "missing-external-settings");
+        else {
             mergedLocal.settings = normalizeAppSettings(externalSnapshot.settings);
             localChanges.push({ collection: "settings", id: "app" });
         }
-} else if (["conflict", "different"].includes(comparison.settings)) {
-    const localTime = getRecordTimestamp(localSnapshot.settings);
-    const externalTime = getRecordTimestamp(externalSnapshot.settings);
-
-    if (localTime > externalTime) {
-        mergedExternal.settings = structuredClone(localSnapshot.settings);
-        externalDirty = true;
-        exported += 1;
-    } else if (externalTime > localTime) {
-        mergedLocal.settings = normalizeAppSettings(externalSnapshot.settings);
-        localChanges.push({ collection: "settings", id: "app" });
-    } else {
-        conflicts.push({ collection: "settings", id: "app", reason: comparison.settings });
+    } else if (["conflict", "different"].includes(comparison.settings)) {
+        const resolved = resolveSettingsConflict({ conflictPolicy, localSnapshot, externalSnapshot, mergedLocal, mergedExternal, localChanges, conflicts });
+        externalDirty ||= resolved.externalDirty;
+        exported += resolved.exported;
     }
-}
 
     // --------------------------------------------------------
     // Plans + historique
@@ -211,10 +260,9 @@ const baseline = metadata.baseline ?? {
 
             if (item.status === "local-changed") {
                 if (!local && item.baseline) {
-                    conflicts.push({ collection, id: item.id, reason: "missing-local-without-tombstone" });
+                    addConflict(conflicts, collection, item.id, "missing-local-without-tombstone");
                     return;
                 }
-
                 setCollectionState(mergedExternal, collection, item.id, local);
                 externalDirty = true;
                 exported += 1;
@@ -223,10 +271,9 @@ const baseline = metadata.baseline ?? {
 
             if (item.status === "external-changed") {
                 if (!external && item.baseline) {
-                    conflicts.push({ collection, id: item.id, reason: "missing-external-without-tombstone" });
+                    addConflict(conflicts, collection, item.id, "missing-external-without-tombstone");
                     return;
                 }
-
                 const normalizedExternal = normalizeCollectionState(collection, external);
                 setCollectionState(mergedLocal, collection, item.id, normalizedExternal);
                 localChanges.push({ collection, id: item.id, state: normalizedExternal });
@@ -234,7 +281,9 @@ const baseline = metadata.baseline ?? {
             }
 
             if (["conflict", "different"].includes(item.status)) {
-                conflicts.push({ collection, id: item.id, reason: item.status });
+                const resolved = resolveCollectionConflict({ conflictPolicy, collection, item, localSnapshot, externalSnapshot, mergedLocal, mergedExternal, localChanges, conflicts });
+                externalDirty ||= resolved.externalDirty;
+                exported += resolved.exported;
             }
         });
     }
@@ -243,33 +292,21 @@ const baseline = metadata.baseline ?? {
     // Vérification anti-écrasement concurrent
     // --------------------------------------------------------
 
-    if (externalDirty) {
-        const latestFile = await readSyncFileTarget(file.target);
-
-        if (!latestFile.available || !latestFile.exists) {
+    if (externalDirty || localChanges.length) {
+        const verification = await verifyExternalUnchanged(file, externalState);
+        if (!verification.ok) {
             return {
                 status: "external-changed-during-sync",
+                policy: conflictPolicy,
                 imported: 0,
                 exported: 0,
-                conflicts: [{ collection: "storage", id: STORAGE_DATA_FILE, reason: "file-disappeared" }]
-            };
-        }
-
-        const latestExternal = parseStorageSnapshot(latestFile.content);
-        const latestExternalState = await createSyncBaseline(latestExternal);
-
-        if (!baselinesEqual(latestExternalState, externalState)) {
-            return {
-                status: "external-changed-during-sync",
-                imported: 0,
-                exported: 0,
-                conflicts: [{ collection: "storage", id: STORAGE_DATA_FILE, reason: "concurrent-change" }]
+                conflicts: [{ collection: "storage", id: STORAGE_DATA_FILE, reason: verification.reason }]
             };
         }
     }
 
     // --------------------------------------------------------
-    // Appliquer les changements externes au local
+    // Appliquer les changements
     // --------------------------------------------------------
 
     for (const change of localChanges) {
@@ -277,17 +314,11 @@ const baseline = metadata.baseline ?? {
             await putStoredSetting(mergedLocal.settings);
             continue;
         }
-
         await applyLocalCollectionState(change.collection, change.id, change.state, metadata);
     }
 
-    // --------------------------------------------------------
-    // Appliquer les changements locaux à l'externe
-    // --------------------------------------------------------
-
     if (externalDirty) {
         mergedExternal.savedAt = new Date().toISOString();
-
         await writeSyncFileTarget(file.target, JSON.stringify(mergedExternal, null, 2));
     }
 
@@ -297,18 +328,32 @@ const baseline = metadata.baseline ?? {
 
     const mergedLocalState = await createSyncBaseline(mergedLocal);
     const nextBaseline = structuredClone(mergedLocalState);
-
     preserveConflictBaseline(nextBaseline, baseline, conflicts);
-
     metadata.baseline = nextBaseline;
     await saveSyncMetadata(metadata);
 
-return {
-    status: conflicts.length ? "merged-with-conflicts" : firstPairing ? "paired" : "merged",
-    imported: localChanges.length,
-    exported,
-    conflicts
-};
+    return {
+        status: conflicts.length ? "merged-with-conflicts" : firstPairing ? "paired" : "merged",
+        policy: conflictPolicy,
+        imported: localChanges.length,
+        exported,
+        conflicts
+    };
 }
 
-export { syncStorageBidirectionalNow };
+function syncStorageBidirectionalNow({ conflictPolicy = "preserve" } = {}) {
+    const policy = normalizeConflictPolicy(conflictPolicy);
+    const operation = syncQueue.then(() => runStorageSync(policy), () => runStorageSync(policy));
+    syncQueue = operation.catch(() => undefined);
+    return operation;
+}
+
+function pushStorageNow() {
+    return syncStorageBidirectionalNow({ conflictPolicy: "local" });
+}
+
+function pullStorageNow() {
+    return syncStorageBidirectionalNow({ conflictPolicy: "external" });
+}
+
+export { syncStorageBidirectionalNow, pushStorageNow, pullStorageNow };

@@ -33,9 +33,7 @@ async function chooseStorageDirectory() {
         );
     }
 
-    return {
-        uri: result.uri
-    };
+    return { uri: result.uri, name: result.name || null };
 }
 
 async function hasStorageDirectoryAccess(uri) {

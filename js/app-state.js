@@ -144,20 +144,25 @@ export const settingsAdvancedToggle =
 export const settingsAdvancedPanel =
     document.getElementById("settings-advanced-panel");
 
-export const settingsStorageDeviceButton =
-    document.getElementById("settings-storage-device");
-
-export const settingsStorageDirectoryButton =
-    document.getElementById("settings-storage-directory");
-
-export const settingsStorageStatus =
-    document.getElementById("settings-storage-status");    
-
-export const settingsSyncStatus = document.getElementById("settings-sync-status"); 
-export const settingsSharedSyncFilePanel = document.getElementById("settings-shared-sync-file");
-export const settingsSharedSyncFileButton = document.getElementById("settings-shared-sync-file-button");
-export const settingsSharedSyncFileDisconnect = document.getElementById("settings-shared-sync-file-disconnect");
-export const settingsSharedSyncFileStatus = document.getElementById("settings-shared-sync-file-status");
+export const settingsSyncFolderButton = document.getElementById("settings-sync-folder-button");
+export const settingsSyncDisconnectButton = document.getElementById("settings-sync-disconnect-button");
+export const settingsSyncFolderStatus = document.getElementById("settings-sync-folder-status");
+export const settingsSyncControls = document.getElementById("settings-sync-controls");
+export const settingsSyncModeAutoButton = document.getElementById("settings-sync-mode-auto");
+export const settingsSyncModeManualButton = document.getElementById("settings-sync-mode-manual");
+export const settingsSyncModeHelp = document.getElementById("settings-sync-mode-help");
+export const settingsSyncPairing = document.getElementById("settings-sync-pairing");
+export const settingsSyncPairingMessage = document.getElementById("settings-sync-pairing-message");
+export const settingsSyncPairingPushButton = document.getElementById("settings-sync-pairing-push");
+export const settingsSyncPairingPullButton = document.getElementById("settings-sync-pairing-pull");
+export const settingsSyncActions = document.getElementById("settings-sync-actions");
+export const settingsSyncPushButton = document.getElementById("settings-sync-push");
+export const settingsSyncPullButton = document.getElementById("settings-sync-pull");
+export const settingsSyncStatus = document.getElementById("settings-sync-status");
+export const settingsSyncDetail = document.getElementById("settings-sync-detail");
+export const syncDisconnectModal = document.getElementById("sync-disconnect-modal");
+export const cancelSyncDisconnectButton = document.getElementById("cancel-sync-disconnect-button");
+export const confirmSyncDisconnectButton = document.getElementById("confirm-sync-disconnect-button");
 
 
 // ------------------------------------------------------------

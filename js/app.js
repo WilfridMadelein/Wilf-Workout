@@ -3,10 +3,6 @@
 // ============================================================
 
 import {
-    syncStorageBidirectionalNow
-} from "./storage/storage-sync-merge.js";
-
-import {
     configureSyncLifecycle,
     setupSyncLifecycle
 } from "./storage/sync-lifecycle.js";
@@ -16,21 +12,10 @@ import {
 } from "./storage/storage-sync-inspection.js";
 
 import {
-    setupStorageTargetSync
+    configureStorageTargetSync,
+    setupStorageTargetSync,
+    syncStorageTargetNow
 } from "./storage/storage-target-sync.js";
-
-import {
-    createDefaultStorageTargetConfig,
-    loadStorageTargetConfig,
-    saveStorageTargetConfig
-} from "./storage/storage-target-config.js";
-
-import {
-    isStorageDirectoryAvailable,
-    chooseStorageDirectory,
-    hasStorageDirectoryAccess,
-    releaseStorageDirectory
-} from "./storage/storage-target.js";
 
 import {
     loadWorkoutHistory,
@@ -240,14 +225,25 @@ planCategoryOptions,
 
 settingsPlanAutoAddCategories,
 settingsPlanIncludeNotes,
-settingsStorageDeviceButton,
-settingsStorageDirectoryButton,
-settingsStorageStatus,
+settingsSyncFolderButton,
+settingsSyncDisconnectButton,
+settingsSyncFolderStatus,
+settingsSyncControls,
+settingsSyncModeAutoButton,
+settingsSyncModeManualButton,
+settingsSyncModeHelp,
+settingsSyncPairing,
+settingsSyncPairingMessage,
+settingsSyncPairingPushButton,
+settingsSyncPairingPullButton,
+settingsSyncActions,
+settingsSyncPushButton,
+settingsSyncPullButton,
 settingsSyncStatus,
-settingsSharedSyncFilePanel,
-settingsSharedSyncFileButton,
-settingsSharedSyncFileDisconnect,
-settingsSharedSyncFileStatus,
+settingsSyncDetail,
+syncDisconnectModal,
+cancelSyncDisconnectButton,
+confirmSyncDisconnectButton,
 } from "./app-state.js";
 
 import {
@@ -267,16 +263,6 @@ import {
     showHistorySummary,
     getHistorySummaryHost
 } from "./history/history-controller.js";
-
-import {
-    configureStorageTargetController,
-    setupStorageTargetController
-} from "./settings/storage-target-controller.js";
-
-import {
-    configureSharedSyncFileController,
-    setupSharedSyncFileController
-} from "./settings/shared-sync-file-controller.js";
 
 import {
     configureStorageSyncController,
@@ -496,9 +482,6 @@ import {
 } from "./workout/workout-overview.js";
 
 let appSettings = createDefaultAppSettings();
-
-let storageTargetConfig =
-    createDefaultStorageTargetConfig();
 
 let workoutHistory = [];
 let historySummaryReturnScrollY = 0;
@@ -853,16 +836,8 @@ onCreatePlan: async request => {
 }
 });
 
-configureSharedSyncFileController({
-    panel: settingsSharedSyncFilePanel,
-    chooseButton: settingsSharedSyncFileButton,
-    disconnectButton: settingsSharedSyncFileDisconnect,
-    statusElement: settingsSharedSyncFileStatus
-});
-
 configureSyncLifecycle({
-    syncNow: syncStorageBidirectionalNow,
-    onDataImported: reloadSyncedAppData,
+    syncNow: syncStorageTargetNow,
     refreshSyncInterface: refreshStorageSyncInterface
 });
 
@@ -897,30 +872,32 @@ configureExerciseMuscleMap({
     getAppSettings: () => appSettings
 });
 
-configureStorageTargetController({
-    getStorageTargetConfig: () => storageTargetConfig,
-
-    saveStorageTargetConfig: async config => {
-            storageTargetConfig =
-                await saveStorageTargetConfig(
-                    config
-                );
-            return storageTargetConfig;
-        },
-    deviceButton: settingsStorageDeviceButton,
-    directoryButton: settingsStorageDirectoryButton,
-    statusElement: settingsStorageStatus,
-    isDirectoryAvailable: isStorageDirectoryAvailable,
-    chooseDirectory: chooseStorageDirectory,
-    hasDirectoryAccess: hasStorageDirectoryAccess,
-    releaseDirectory: releaseStorageDirectory
+configureStorageSyncController({
+    folderButton: settingsSyncFolderButton,
+    disconnectButton: settingsSyncDisconnectButton,
+    folderStatus: settingsSyncFolderStatus,
+    controls: settingsSyncControls,
+    modeAutoButton: settingsSyncModeAutoButton,
+    modeManualButton: settingsSyncModeManualButton,
+    modeHelp: settingsSyncModeHelp,
+    pairingPanel: settingsSyncPairing,
+    pairingMessage: settingsSyncPairingMessage,
+    pairingPushButton: settingsSyncPairingPushButton,
+    pairingPullButton: settingsSyncPairingPullButton,
+    actions: settingsSyncActions,
+    pushButton: settingsSyncPushButton,
+    pullButton: settingsSyncPullButton,
+    status: settingsSyncStatus,
+    detail: settingsSyncDetail,
+    disconnectModal: syncDisconnectModal,
+    disconnectCancelButton: cancelSyncDisconnectButton,
+    disconnectConfirmButton: confirmSyncDisconnectButton,
+    onDataImported: reloadSyncedAppData
 });
 
-configureStorageSyncController({
-    statusElement: settingsSyncStatus,
-    inspectSync: inspectStorageSync,
-    syncNow: syncStorageBidirectionalNow,
-    onDataImported: reloadSyncedAppData
+configureStorageTargetSync({
+    onDataImported: reloadSyncedAppData,
+    onSyncComplete: refreshStorageSyncInterface
 });
 
 configureSettingsController({
@@ -1512,22 +1489,10 @@ alert(
 // ============================================================
 
 async function initializeApp() {
+    // Synchronisation automatique avant le chargement de l’interface.
     try {
-        storageTargetConfig = await loadStorageTargetConfig();
-    } catch (error) {
-        console.error("Impossible de charger la destination des données :", error);
-        storageTargetConfig = createDefaultStorageTargetConfig();
-    }
-
-    // Synchronisation avant le chargement des données dans l'interface.
-    try {
-        const syncResult = await syncStorageBidirectionalNow();
-
-        if (!["device-only", "same"].includes(syncResult.status)) {
-            console.info("Synchronisation Wilf :", syncResult);
-        }
-
-        storageTargetConfig = await loadStorageTargetConfig();
+        const syncResult = await syncStorageTargetNow();
+        if (!["no-target", "manual-mode", "pairing-required", "same"].includes(syncResult.status)) console.info("Synchronisation Wilf :", syncResult);
     } catch (error) {
         console.error("Impossible de synchroniser les données au démarrage :", error);
     }
@@ -1588,10 +1553,8 @@ async function initializeApp() {
     setupFilterRows();
 
     setupSettingsController();
-    await setupStorageTargetController();
-    await setupSharedSyncFileController();
+    await setupStorageSyncController();
     setupStorageTargetSync();
-    setupStorageSyncController();
     await setupSyncLifecycle();
     window.inspectWilfStorageSync = inspectStorageSync;
     window.inspectWilfAutoPlanData = inspectWilfAutoPlanData;
