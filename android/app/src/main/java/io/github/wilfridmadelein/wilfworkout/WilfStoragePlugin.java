@@ -108,8 +108,28 @@ public class WilfStoragePlugin extends Plugin {
         JSObject response = new JSObject();
         response.put("cancelled", false);
         response.put("uri", uri.toString());
+        response.put("name", getTreeDisplayName(uri));
 
         call.resolve(response);
+    }
+
+
+    private String getTreeDisplayName(Uri treeUri) {
+        ContentResolver resolver = getContext().getContentResolver();
+        try {
+            String documentId = DocumentsContract.getTreeDocumentId(treeUri);
+            Uri documentUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, documentId);
+            try (Cursor cursor = resolver.query(documentUri, new String[]{ DocumentsContract.Document.COLUMN_DISPLAY_NAME }, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int index = cursor.getColumnIndex(DocumentsContract.Document.COLUMN_DISPLAY_NAME);
+                    if (index >= 0) {
+                        String name = cursor.getString(index);
+                        if (name != null && !name.isBlank()) return name;
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+        return "Dossier sélectionné";
     }
 
     @PluginMethod
