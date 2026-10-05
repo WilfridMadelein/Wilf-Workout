@@ -9,6 +9,8 @@ const AUTO_PLAN_SUPERSET_OPTIONS = ["indifferent", "none", "sometimes", "always"
 const AUTO_PLAN_SUPERSET_LABELS = { indifferent: "Indifférent", none: "Aucun", sometimes: "Parfois", always: "Toujours" };
 const AUTO_PLAN_PRIORITY_PRESETS = ["empty", "settings"];
 const AUTO_PLAN_PRIORITY_PRESET_LABELS = { empty: "Vide", settings: "Paramètres" };
+const AUTO_PLAN_TIME_FLEXIBILITY_OPTIONS = ["strict", "flexible"];
+const AUTO_PLAN_TIME_FLEXIBILITY_LABELS = { strict: "Sévère", flexible: "Flexible" };
 const AUTO_PLAN_BODY_PARTS = {
     legs: { label: "Jambes", mode: "families", values: ["Quadriceps", "Ischio-jambiers", "Fessier", "Mollets"] },
     arms: { label: "Bras", mode: "families", values: ["Biceps", "Triceps", "Avant-bras"] },
@@ -87,6 +89,7 @@ return {
     categories: normalizeStringList(value.categories),
     equipment: normalizeStringList(value.equipment),
     exerciseCount: normalizeAutoPlanExerciseCount(value.exerciseCount),
+    timeFlexibility: AUTO_PLAN_TIME_FLEXIBILITY_OPTIONS.includes(value.timeFlexibility) ? value.timeFlexibility : "strict",
     planPriorities: value.planPriorities && typeof value.planPriorities === "object" && !Array.isArray(value.planPriorities)
         ? normalizeAutoPlanPriorities(value.planPriorities)
         : null,
@@ -103,6 +106,8 @@ export {
     AUTO_PLAN_SUPERSET_LABELS,
     AUTO_PLAN_PRIORITY_PRESETS,
     AUTO_PLAN_PRIORITY_PRESET_LABELS,
+    AUTO_PLAN_TIME_FLEXIBILITY_OPTIONS,
+    AUTO_PLAN_TIME_FLEXIBILITY_LABELS,
     normalizeOptionalPriorityNumber,
     normalizeAutoPlanExerciseCount,
     normalizeAutoPlanPriorities,

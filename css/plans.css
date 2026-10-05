@@ -2380,6 +2380,14 @@ html[data-theme="dark"] .plan-drag-progression { color: #bbb; }
     width: 72px;
 }
 
+.auto-plan-time-flexibility {
+    margin-top: 10px;
+}
+
+.auto-plan-time-flexibility .auto-plan-help {
+    margin-top: 6px;
+}
+
 .auto-plan-body-muscles {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));

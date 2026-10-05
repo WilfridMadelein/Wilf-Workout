@@ -6,6 +6,8 @@ import {
     AUTO_PLAN_SUPERSET_OPTIONS,
     AUTO_PLAN_SUPERSET_LABELS,
     AUTO_PLAN_PRIORITY_PRESETS,
+    AUTO_PLAN_TIME_FLEXIBILITY_OPTIONS,
+    AUTO_PLAN_TIME_FLEXIBILITY_LABELS,
     normalizeAutoPlanExerciseCount,
     normalizeAutoPlanDuration,
     normalizeAutoPlanPriorities,
@@ -108,6 +110,7 @@ return {
     categories: [],
     equipment: uniqueValid(getDefaultPlanEquipment(), getEquipmentOptions()),
     exerciseCount: { min: null, max: null },
+    timeFlexibility: "strict",
     planPriorities: createPriorityPreset("empty"),
     supersetPreference: "indifferent"
 };
@@ -135,6 +138,7 @@ function createDraftFromStored(value) {
         categories: uniqueValid(stored.categories, getCategoryOptions()),
         equipment: uniqueValid(stored.equipment, getEquipmentOptions()),
         exerciseCount: normalizeAutoPlanExerciseCount(stored.exerciseCount),
+        timeFlexibility: stored.timeFlexibility,
         planPriorities: stored.planPriorities ? normalizeAutoPlanPriorities(stored.planPriorities) : createPriorityPreset("empty"),
         supersetPreference: stored.supersetPreference
     };
@@ -434,6 +438,13 @@ function renderExerciseCount() {
     setOptionalInputValue(getElement("auto-plan-exercise-max"), draft.exerciseCount.max);
 }
 
+function renderTimeFlexibility() {
+    renderChoiceGroup("auto-plan-time-flexibility", AUTO_PLAN_TIME_FLEXIBILITY_OPTIONS, [draft.timeFlexibility], AUTO_PLAN_TIME_FLEXIBILITY_LABELS, value => {
+        draft.timeFlexibility = value;
+        renderTimeFlexibility();
+    });
+}
+
 function setAutoPlanAdvancedOpen(open) {
     const toggle = getElement("auto-plan-advanced-toggle");
     const content = getElement("auto-plan-advanced-content");
@@ -455,6 +466,7 @@ function setAutoPlanSectionOpen(section, open) {
 
 function renderForm() {
     renderExerciseCount();
+    renderTimeFlexibility();
     getElement("auto-plan-duration").value = draft.durationMinutes ?? "";
     renderGoals();
     renderBodyParts();

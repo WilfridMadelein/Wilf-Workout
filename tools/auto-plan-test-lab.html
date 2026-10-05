@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="../css/filters.css">
     <link rel="stylesheet" href="../css/plans.css">
     <link rel="stylesheet" href="../css/layout.css">
-    <link rel="stylesheet" href="./auto-plan-test-lab.css">
+    <link rel="stylesheet" href="./auto-plan/auto-plan-test-lab.css">
 </head>
 
 <body>
@@ -87,9 +87,9 @@
                     id="test-lab-runs"
                     type="number"
                     min="1"
-                    max="5000"
+                    max="10000"
                     step="1"
-                    value="500"
+                    value="1000"
                 >
             </label>
 
@@ -170,6 +170,28 @@
 
                 <span>min</span>
             </div>
+
+        </div>
+
+        <!-- FLEXIBILITÉ DU TEMPS -->
+
+        <div class="test-lab-constraint">
+
+            <label class="test-lab-checkbox">
+                <input
+                    id="test-lab-fix-time-flexibility"
+                    type="checkbox"
+                >
+
+                <span>
+                    Fixer la tolérance du temps
+                </span>
+            </label>
+
+            <div
+                id="test-lab-time-flexibility"
+                class="filter-buttons"
+            ></div>
 
         </div>
 
@@ -517,7 +539,7 @@
 
 <script
     type="module"
-    src="./auto-plan-test-lab.js"
+    src="./auto-plan/auto-plan-test-lab.js"
 ></script>
 
 </body>
