@@ -260,7 +260,8 @@ import {
     configureAppController,
     saveSearchState,
     loadSearchState,
-    setupAppController
+    setupAppController,
+    restoreLastPage
 } from "./app-controller.js";
 
 import {
@@ -492,7 +493,8 @@ import {
     configureWorkoutExecution,
     setupWorkoutExecution,
     startWorkoutExecution,
-    editWorkoutLogFromSummary
+    editWorkoutLogFromSummary,
+    offerWorkoutResume
 } from "./workout/workout-execution.js";
 
 import {
@@ -1616,6 +1618,8 @@ async function initializeApp() {
     setupAppController();
 
     displayExercises();
+    restoreLastPage();
+    offerWorkoutResume();
 }
 
 initializeApp();

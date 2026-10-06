@@ -1328,6 +1328,14 @@ html[data-theme="dark"] .workout-set.is-completed {
     color: #fff;
 }
 
+.workout-resume-plan {
+    margin-top: 16px !important;
+    padding: 10px 12px;
+    border-radius: 7px;
+    background: rgb(217 106 0 / 10%);
+    font-weight: 600;
+}
+
 .workout-resume-button:hover { background: #944300; }
 .workout-resume-discard:hover { background: #922525; }
 

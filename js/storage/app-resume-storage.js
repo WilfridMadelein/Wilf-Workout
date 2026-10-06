@@ -25,7 +25,7 @@ export function saveLastPage(page) {
 
 export function saveActiveWorkout(snapshot) {
     try {
-        localStorage.setItem(WORKOUT_KEY, JSON.stringify({ version: 1, savedAt: Date.now(), ...snapshot }));
+        localStorage.setItem(WORKOUT_KEY, JSON.stringify({ version: 2, savedAt: Date.now(), ...snapshot }));
         return true;
     } catch (error) {
         reportStorageError(error);
@@ -52,7 +52,7 @@ export function loadActiveWorkout() {
         const session = snapshot?.session;
         const object = value => value && typeof value === "object" && !Array.isArray(value);
         const finite = value => typeof value === "number" && Number.isFinite(value) && value >= 0;
-        if (snapshot.version !== 1 || !finite(snapshot.savedAt) || !object(session) ||
+        if (![1, 2].includes(snapshot.version) || !finite(snapshot.savedAt) || !object(session) ||
             typeof session.id !== "string" || typeof session.planName !== "string" ||
             !finite(session.startedAt) || !finite(session.totalPausedMs) || !finite(session.elapsedSeconds) ||
             typeof session.isPaused !== "boolean" || (session.isPaused && !finite(session.pausedAt)) ||
@@ -69,7 +69,8 @@ export function loadActiveWorkout() {
                 }
             }
         }
-        if (snapshot.target != null && (!object(snapshot.target) || typeof snapshot.target.exerciseId !== "string" || typeof snapshot.target.seriesId !== "string" || !["main", "left", "right"].includes(snapshot.target.sideKey))) throw new Error("Position invalide.");
+        const validTarget = target => target == null || (object(target) && typeof target.exerciseId === "string" && typeof target.seriesId === "string" && ["main", "left", "right"].includes(target.sideKey));
+        if (!validTarget(snapshot.target) || !validTarget(snapshot.reserveTarget)) throw new Error("Position invalide.");
         if (snapshot.draft != null && (!object(snapshot.draft) || !object(snapshot.draft.tempo))) throw new Error("Saisie invalide.");
         return snapshot;
     } catch (error) {

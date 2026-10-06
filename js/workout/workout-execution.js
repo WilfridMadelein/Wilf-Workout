@@ -12,6 +12,7 @@ import {
     findFirstPendingTargetInExercise,
     getNextPendingWorkoutTarget,
     isLastPendingTargetInSet,
+    getWorkoutTargetValues,
     saveWorkoutTargetDraft,
     saveWorkoutTargetLog,
     setWorkoutTargetReserveToFailure,
@@ -68,6 +69,7 @@ let finishConfirmContinueButton;
 let finishConfirmFinishButton;
 let summaryEditReturn = null;
 let recoveryInterval = null;
+let activeReserveTarget = null;
 
 // ============================================================
 // CONFIGURATION
@@ -227,6 +229,7 @@ function pauseWorkoutTimer() {
     currentExerciseView?.setTimerPaused(true);
 
     refreshTimerToggleButton();
+    persistWorkoutRecovery();
 }
 
 function resumeWorkoutTimer() {
@@ -250,6 +253,7 @@ function resumeWorkoutTimer() {
     startWorkoutTimerInterval();
 
     refreshTimerToggleButton();
+    persistWorkoutRecovery();
 }
 
 function toggleWorkoutTimer() {
@@ -390,10 +394,10 @@ function showOverview() {
                         );
                 }
 
-                if (target) {
-                    showExercise(target);
-                }
-            }
+                if (target) showExercise(target);
+            },
+
+            onStateChange: persistWorkoutRecovery
         }
     );
 
@@ -433,12 +437,9 @@ onBack: (backTarget, values) => {
         return;
     }
 
-    saveWorkoutTargetDraft(
-        backTarget,
-        values
-    );
-
+    saveWorkoutTargetDraft(backTarget, values);
     showOverview();
+    persistWorkoutRecovery();
 },
 
             draftValues: draftValues ?? undefined,
@@ -463,56 +464,38 @@ onBack: (backTarget, values) => {
 // LOG
 // ============================================================
 
-async function handleWorkoutLog(
-    loggedTarget,
-    values,
-    { isEdit = false } = {}
-) {
+async function handleWorkoutLog(loggedTarget, values, { isEdit = false } = {}) {
     if (!session) return;
+    saveWorkoutTargetLog(loggedTarget, values);
 
-saveWorkoutTargetLog(
-    loggedTarget,
-    values
-);
-
-if (isEdit) {
-    if (summaryEditReturn) {
-        closeSummaryLogEditor();
-    } else {
-        showOverview();
+    if (isEdit) {
+        persistWorkoutRecovery();
+        if (summaryEditReturn) closeSummaryLogEditor();
+        else showOverview();
+        return;
     }
 
-    return;
-}
-
-applyWorkoutLogToFollowingSeries(
-    loggedTarget,
-    values
-);
-
-const next = getNextPendingWorkoutTarget(session, loggedTarget);
-const restSeconds = getRestAfterWorkoutTarget(loggedTarget, next);
-
-{
+    applyWorkoutLogToFollowingSeries(loggedTarget, values);
+    const next = getNextPendingWorkoutTarget(session, loggedTarget);
+    const restSeconds = getRestAfterWorkoutTarget(loggedTarget, next);
+    activeReserveTarget = loggedTarget;
     startWorkoutRestTimer(restSeconds, {
         feedback: {
             value: values.value,
             valueUnit: values.valueUnit,
             reserveToFailure: null,
-            onChange: reserve => setWorkoutTargetReserveToFailure(loggedTarget, reserve)
+            onChange: reserve => {
+                setWorkoutTargetReserveToFailure(loggedTarget, reserve);
+                activeReserveTarget = null;
+                persistWorkoutRecovery();
+            }
         },
-        onComplete: () => currentExerciseView?.setLogAvailable(true)
+        onComplete: () => { currentExerciseView?.setLogAvailable(true); persistWorkoutRecovery(); }
     });
-
     if (session.isPaused) pauseWorkoutRestTimer();
-}
-
-if (!next) {
-    showOverview();
-    return;
-}
-
-showExercise(next);
+    if (next) showExercise(next);
+    else showOverview();
+    persistWorkoutRecovery();
 }
 
 // ============================================================
@@ -605,6 +588,7 @@ function leaveWorkoutExecution() {
     session = null;
     currentTarget = null;
     currentExerciseView = null;
+    activeReserveTarget = null;
 
     exitModal.hidden = true;
     finishConfirmModal.hidden = true;
@@ -682,6 +666,7 @@ function startWorkoutExecution(plan) {
     summaryEditReturn = null;
     currentTarget = null;
     currentExerciseView = null;
+    activeReserveTarget = null;
 
     planName.textContent =
         session.planName;
@@ -821,16 +806,25 @@ export {
     getWorkoutExecutionSession
 };
 
+function serializeWorkoutTarget(target) {
+    return target ? { exerciseId: target.workoutExercise.id, seriesId: target.series.id, sideKey: target.sideKey } : null;
+}
+
+function resolveWorkoutTarget(reference) {
+    if (!session || !reference) return null;
+    const set = session.sets.find(item => item.exercises.some(exercise => exercise.id === reference.exerciseId));
+    const workoutExercise = set?.exercises.find(exercise => exercise.id === reference.exerciseId);
+    const series = workoutExercise?.series.find(item => item.id === reference.seriesId);
+    return set && workoutExercise && series ? { set, workoutExercise, series, sideKey: reference.sideKey } : null;
+}
+
 function persistWorkoutRecovery() {
     if (!session || summaryEditReturn) return;
     refreshElapsedTime();
     saveActiveWorkout({
         session,
-        target: currentTarget ? {
-            exerciseId: currentTarget.workoutExercise.id,
-            seriesId: currentTarget.series.id,
-            sideKey: currentTarget.sideKey
-        } : null,
+        target: serializeWorkoutTarget(currentTarget),
+        reserveTarget: serializeWorkoutTarget(activeReserveTarget),
         draft: session.screen === "exercise" ? currentExerciseView?.getDraft() ?? null : null,
         restSeconds: getWorkoutRestRemainingSeconds(),
         restManualPaused: isWorkoutRestManuallyPaused()
@@ -840,7 +834,7 @@ function persistWorkoutRecovery() {
 function startWorkoutRecovery() {
     clearInterval(recoveryInterval);
     persistWorkoutRecovery();
-    recoveryInterval = window.setInterval(persistWorkoutRecovery, 1000);
+    recoveryInterval = window.setInterval(persistWorkoutRecovery, 5000);
 }
 
 export function offerWorkoutResume() {
@@ -851,14 +845,21 @@ export function offerWorkoutResume() {
     dialog.className = "workout-resume-dialog workout-exit-dialog";
     dialog.setAttribute("aria-labelledby", "workout-resume-title");
     dialog.setAttribute("aria-describedby", "workout-resume-description");
+
     const title = document.createElement("h2");
     title.id = "workout-resume-title";
-    title.textContent = "Reprendre votre entraînement ?";
+    title.textContent = "Reprendre l'entraînement en cours ?";
     const description = document.createElement("p");
     description.id = "workout-resume-description";
-    description.textContent = "Vous étiez en train de compléter un entraînement lors de votre dernière visite. Souhaitez-vous reprendre là où vous en étiez ? Si vous quittez cet entraînement, ses données non enregistrées seront définitivement perdues.";
+    description.textContent = "Un entraînement était encore en cours lors de votre dernière utilisation. Vous pouvez reprendre exactement là où vous vous étiez arrêté.";
+    const warning = document.createElement("p");
+    warning.className = "workout-exit-help";
+    warning.textContent = "Si vous choisissez « Quitter l'entraînement », cette progression temporaire sera supprimée définitivement.";
     const name = document.createElement("p");
-    name.textContent = snapshot.session.planName;
+    name.className = "workout-resume-plan";
+    name.textContent = `Entraînement : ${snapshot.session.planName}`;
+    const error = document.createElement("p");
+    error.setAttribute("role", "alert");
     const actions = document.createElement("div");
     actions.className = "workout-exit-actions";
     const resume = document.createElement("button");
@@ -869,29 +870,21 @@ export function offerWorkoutResume() {
     discard.type = "button";
     discard.className = "workout-resume-discard";
     discard.textContent = "Quitter l'entraînement";
-    const error = document.createElement("p");
-    error.setAttribute("role", "alert");
-    function close() {
-        dialog.close();
-        dialog.remove();
-        previousFocus?.focus();
-    }
+
+    function close() { dialog.close(); dialog.remove(); previousFocus?.focus(); }
     dialog.addEventListener("cancel", event => event.preventDefault());
     discard.addEventListener("click", () => {
-        if (!clearActiveWorkout()) {
-            error.textContent = "Impossible de supprimer la reprise locale. Veuillez réessayer.";
-            return;
-        }
+        if (!clearActiveWorkout()) { error.textContent = "Impossible de supprimer la reprise locale. Veuillez réessayer."; return; }
         close();
     });
     resume.addEventListener("click", () => {
         session = snapshot.session;
-        // Le temps hors de l'application ne compte pas dans la seance.
         session.totalPausedMs = Math.max(0, Date.now() - session.startedAt - session.elapsedSeconds * 1000);
         session.pausedAt = session.isPaused ? Date.now() : null;
         summaryEditReturn = null;
         currentTarget = null;
         currentExerciseView = null;
+        activeReserveTarget = null;
         planName.textContent = session.planName;
         exitModal.hidden = true;
         finishConfirmModal.hidden = true;
@@ -900,15 +893,26 @@ export function offerWorkoutResume() {
         close();
         refreshTimerToggleButton();
         showOverview();
-        if (session && snapshot.target) {
-            const target = snapshot.target;
-            const set = session.sets.find(item => item.exercises.some(exercise => exercise.id === target.exerciseId));
-            const workoutExercise = set?.exercises.find(exercise => exercise.id === target.exerciseId);
-            const series = workoutExercise?.series.find(item => item.id === target.seriesId);
-            if (series) showExercise({ set, workoutExercise, series, sideKey: target.sideKey }, snapshot.draft);
-        }
-        if (Number.isFinite(snapshot.restSeconds) && snapshot.restSeconds > 0) {
-            startWorkoutRestTimer(snapshot.restSeconds, { paused: snapshot.restManualPaused === true, onComplete: () => currentExerciseView?.setLogAvailable(true) });
+
+        const restoredTarget = resolveWorkoutTarget(snapshot.target);
+        if (restoredTarget) showExercise(restoredTarget, snapshot.draft);
+        activeReserveTarget = resolveWorkoutTarget(snapshot.reserveTarget);
+        const reserveValues = activeReserveTarget ? getWorkoutTargetValues(activeReserveTarget) : null;
+        if ((Number.isFinite(snapshot.restSeconds) && snapshot.restSeconds > 0) || activeReserveTarget) {
+            startWorkoutRestTimer(snapshot.restSeconds, {
+                paused: snapshot.restManualPaused === true,
+                feedback: activeReserveTarget ? {
+                    value: reserveValues.value,
+                    valueUnit: reserveValues.valueUnit,
+                    reserveToFailure: reserveValues.reserveToFailure,
+                    onChange: reserve => {
+                        setWorkoutTargetReserveToFailure(activeReserveTarget, reserve);
+                        activeReserveTarget = null;
+                        persistWorkoutRecovery();
+                    }
+                } : null,
+                onComplete: () => { currentExerciseView?.setLogAvailable(true); persistWorkoutRecovery(); }
+            });
             currentExerciseView?.setLogAvailable(false);
             if (session.isPaused) pauseWorkoutRestTimer();
         }
@@ -918,7 +922,7 @@ export function offerWorkoutResume() {
         (content.querySelector("button") ?? beginButton).focus();
     });
     actions.append(resume, discard);
-    dialog.append(title, description, name, error, actions);
+    dialog.append(title, description, warning, name, error, actions);
     document.body.appendChild(dialog);
     dialog.showModal();
     resume.focus();

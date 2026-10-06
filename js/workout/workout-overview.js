@@ -1020,13 +1020,9 @@ add.addEventListener(
                 workoutExercise
             )
         ) {
-            updateWorkoutExerciseProgression(
-                workoutExercise,
-                next,
-                session.defaults
-            );
-
+            updateWorkoutExerciseProgression(workoutExercise, next, session.defaults);
             refreshCard();
+            onSetStateChanged();
             return;
         }
 
@@ -1117,7 +1113,8 @@ function renderWorkoutOverview(
     {
         onFinish = () => {},
         onOpenSet = () => {},
-        onOpenExercise = () => {}
+        onOpenExercise = () => {},
+        onStateChange = () => {}
     } = {},
     preserveCards = false
 ) {
@@ -1140,8 +1137,9 @@ function renderWorkoutOverview(
             const block = [...container.querySelectorAll(".workout-set")].find(element => element.dataset.workoutSetId === set.id);
             block?.classList.toggle("is-completed", isWorkoutSetCompleted(set));
         });
+        onStateChange();
     }
-    const rerender = () => renderWorkoutOverview(container, session, { onFinish, onOpenSet, onOpenExercise }, true);
+    const rerender = () => { renderWorkoutOverview(container, session, { onFinish, onOpenSet, onOpenExercise, onStateChange }, true); onStateChange(); };
     const drag = createPlanDragController(overview, source => {
         rerender();
         const card = [...container.querySelectorAll(".workout-exercise-card")].find(element => element.dataset.workoutExerciseId === source.exercise.id);
@@ -1250,15 +1248,8 @@ const deleteExercise = (
         workoutExercise
     );
 
-    renderWorkoutOverview(
-        container,
-        session,
-        {
-            onFinish,
-            onOpenSet,
-            onOpenExercise
-        }
-    );
+    renderWorkoutOverview(container, session, { onFinish, onOpenSet, onOpenExercise, onStateChange });
+    onStateChange();
 };        
 
         const rows = [];

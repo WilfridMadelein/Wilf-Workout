@@ -1,4 +1,4 @@
-const APP_ASSET_VERSION = "2026-10-06-records-v1";
+const APP_ASSET_VERSION = "2026-10-06-resume-v1";
 
 async function loadHTML() {
     const pages = {
