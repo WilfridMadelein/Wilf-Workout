@@ -1,3 +1,6 @@
+import { saveActiveWorkout, loadActiveWorkout, clearActiveWorkout } from "../storage/app-resume-storage.js";
+import { getWorkoutRestRemainingSeconds } from "./workout-rest-timer.js";
+
 import {
     createWorkoutSession,
     hasWorkoutSessionLogs,
@@ -62,6 +65,7 @@ let finishConfirmModal;
 let finishConfirmContinueButton;
 let finishConfirmFinishButton;
 let summaryEditReturn = null;
+let recoveryInterval = null;
 
 // ============================================================
 // CONFIGURATION
@@ -394,7 +398,7 @@ function showOverview() {
     );
 }
 
-function showExercise(target) {
+function showExercise(target, draftValues = null) {
     if (
         !session ||
         !target
@@ -431,6 +435,7 @@ onBack: (backTarget, values) => {
     showOverview();
 },
 
+            draftValues: draftValues ?? undefined,
             logAvailable:
                 !isWorkoutRestTimerActive(),
 
@@ -576,6 +581,9 @@ function closeFinishConfirmModal() {
 }
 
 function leaveWorkoutExecution() {
+    if (!summaryEditReturn) clearActiveWorkout();
+    clearInterval(recoveryInterval);
+    recoveryInterval = null;
     stopWorkoutTimerInterval();
     stopWorkoutRestTimer();
 
@@ -687,6 +695,7 @@ function startWorkoutExecution(plan) {
     showOverview();
     refreshElapsedTime();
     startWorkoutTimerInterval();
+    startWorkoutRecovery();
 }
 
 function getWorkoutExecutionSession() {
@@ -698,6 +707,13 @@ function getWorkoutExecutionSession() {
 // ============================================================
 
 function setupWorkoutExecution() {
+    page.addEventListener("input", () => queueMicrotask(persistWorkoutRecovery));
+    page.addEventListener("change", () => queueMicrotask(persistWorkoutRecovery));
+    page.addEventListener("click", () => queueMicrotask(persistWorkoutRecovery));
+    window.addEventListener("pagehide", persistWorkoutRecovery);
+    document.addEventListener("visibilitychange", () => {
+        if (document.hidden) persistWorkoutRecovery();
+    });
     scrollProgress =
         page.querySelector(
             "#workout-overview-scroll-progress"
@@ -796,3 +812,105 @@ export {
     editWorkoutLogFromSummary,
     getWorkoutExecutionSession
 };
+
+function persistWorkoutRecovery() {
+    if (!session || summaryEditReturn) return;
+    refreshElapsedTime();
+    saveActiveWorkout({
+        session,
+        target: currentTarget ? {
+            exerciseId: currentTarget.workoutExercise.id,
+            seriesId: currentTarget.series.id,
+            sideKey: currentTarget.sideKey
+        } : null,
+        draft: session.screen === "exercise" ? currentExerciseView?.getDraft() ?? null : null,
+        restSeconds: getWorkoutRestRemainingSeconds()
+    });
+}
+
+function startWorkoutRecovery() {
+    clearInterval(recoveryInterval);
+    persistWorkoutRecovery();
+    recoveryInterval = window.setInterval(persistWorkoutRecovery, 1000);
+}
+
+export function offerWorkoutResume() {
+    const snapshot = loadActiveWorkout();
+    if (!snapshot) return;
+    const previousFocus = document.activeElement;
+    const dialog = document.createElement("dialog");
+    dialog.className = "workout-resume-dialog workout-exit-dialog";
+    dialog.setAttribute("aria-labelledby", "workout-resume-title");
+    dialog.setAttribute("aria-describedby", "workout-resume-description");
+    const title = document.createElement("h2");
+    title.id = "workout-resume-title";
+    title.textContent = "Reprendre votre entraînement ?";
+    const description = document.createElement("p");
+    description.id = "workout-resume-description";
+    description.textContent = "Vous étiez en train de compléter un entraînement lors de votre dernière visite. Souhaitez-vous reprendre là où vous en étiez ? Si vous quittez cet entraînement, ses données non enregistrées seront définitivement perdues.";
+    const name = document.createElement("p");
+    name.textContent = snapshot.session.planName;
+    const actions = document.createElement("div");
+    actions.className = "workout-exit-actions";
+    const resume = document.createElement("button");
+    resume.type = "button";
+    resume.className = "workout-resume-button";
+    resume.textContent = "Reprendre mon entraînement";
+    const discard = document.createElement("button");
+    discard.type = "button";
+    discard.className = "workout-resume-discard";
+    discard.textContent = "Quitter l'entraînement";
+    const error = document.createElement("p");
+    error.setAttribute("role", "alert");
+    function close() {
+        dialog.close();
+        dialog.remove();
+        previousFocus?.focus();
+    }
+    dialog.addEventListener("cancel", event => event.preventDefault());
+    discard.addEventListener("click", () => {
+        if (!clearActiveWorkout()) {
+            error.textContent = "Impossible de supprimer la reprise locale. Veuillez réessayer.";
+            return;
+        }
+        close();
+    });
+    resume.addEventListener("click", () => {
+        session = snapshot.session;
+        // Le temps hors de l'application ne compte pas dans la seance.
+        session.totalPausedMs = Math.max(0, Date.now() - session.startedAt - session.elapsedSeconds * 1000);
+        session.pausedAt = session.isPaused ? Date.now() : null;
+        summaryEditReturn = null;
+        currentTarget = null;
+        currentExerciseView = null;
+        planName.textContent = session.planName;
+        exitModal.hidden = true;
+        finishConfirmModal.hidden = true;
+        page.hidden = false;
+        document.body.classList.add("workout-execution-active");
+        close();
+        refreshTimerToggleButton();
+        showOverview();
+        if (session && snapshot.target) {
+            const target = snapshot.target;
+            const set = session.sets.find(item => item.exercises.some(exercise => exercise.id === target.exerciseId));
+            const workoutExercise = set?.exercises.find(exercise => exercise.id === target.exerciseId);
+            const series = workoutExercise?.series.find(item => item.id === target.seriesId);
+            if (series) showExercise({ set, workoutExercise, series, sideKey: target.sideKey }, snapshot.draft);
+        }
+        if (Number.isFinite(snapshot.restSeconds) && snapshot.restSeconds > 0) {
+            startWorkoutRestTimer(snapshot.restSeconds, { onComplete: () => currentExerciseView?.setLogAvailable(true) });
+            currentExerciseView?.setLogAvailable(false);
+            if (session.isPaused) pauseWorkoutRestTimer();
+        }
+        refreshElapsedTime();
+        startWorkoutTimerInterval();
+        startWorkoutRecovery();
+        (content.querySelector("button") ?? beginButton).focus();
+    });
+    actions.append(resume, discard);
+    dialog.append(title, description, name, error, actions);
+    document.body.appendChild(dialog);
+    dialog.showModal();
+    resume.focus();
+}

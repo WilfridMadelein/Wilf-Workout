@@ -557,3 +557,7 @@ export {
 
     isWorkoutRestTimerActive
 };
+
+export function getWorkoutRestRemainingSeconds() {
+    return getRemainingSeconds();
+}

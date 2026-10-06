@@ -813,8 +813,9 @@ onCreatePlan: async request => {
     }
 
     const pool = buildExerciseCandidatePool(exercises, input);
-    if (!pool.candidates.length) {
-        alert("Aucun exercice ne correspond aux paramètres sélectionnés.");
+    const usableCandidateCount = pool.candidates.length + (pool.summary?.secondaryFallbackEligible ?? 0);
+    if (!usableCandidateCount) {
+        alert("Aucun exercice ne correspond aux paramètres sélectionnés, même en utilisant les muscles secondaires comme dernier recours.");
         return;
     }
 

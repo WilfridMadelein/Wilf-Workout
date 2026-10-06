@@ -1,5 +1,5 @@
 import { createProgressionPreferenceSelect } from "../training/progression-preferences.js";
-import { setupNumberInput } from "../ui/ui.js";
+import { setupNumberInput, normalizeNumber } from "../ui/ui.js";
 
 import {
     renderExerciseMuscleMap,
@@ -236,13 +236,14 @@ function renderWorkoutExerciseView(container, session, target, {
     onBack = () => {},
     onLog = async () => {},
     logAvailable = true,
-    isLastInSet = false
+    isLastInSet = false,
+    draftValues = null
 } = {}) {
     clearWorkoutExerciseView(container);
 
     const workoutExercise = target.workoutExercise;
     const exercise = workoutExercise.exercise;
-    const draft = getWorkoutTargetValues(target);
+    const draft = { ...getWorkoutTargetValues(target), ...draftValues };
     const completed = isWorkoutSeriesCompleted(target.series, target.sideKey);
 
     const page = document.createElement("div");
@@ -571,7 +572,15 @@ renderExerciseMuscleMap(
 );
 
 return {
-    setLogAvailable
+    setLogAvailable,
+    getDraft: () => ({
+        ...structuredClone(draft),
+        value: normalizeNumber(volumeNumber.querySelector("input").value, { min: 1, max: 999, decimals: 0 }),
+        weight: normalizeNumber(weightNumber.querySelector("input").value, { min: 0, max: 9999.9, decimals: 1 }),
+        tempo: Object.fromEntries(["first", "second", "third", "fourth"].map((key, index) => [
+            key, Math.max(0, Math.min(999, Number(tempo.querySelectorAll("input")[index].value) || 0))
+        ]))
+    })
 };
 }
 

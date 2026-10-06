@@ -23,6 +23,12 @@ function getExerciseMainMuscles(exercise) {
         : [];
 }
 
+function getExerciseSecondaryMuscles(exercise) {
+    return Array.isArray(exercise?.muscles_secondaires)
+        ? exercise.muscles_secondaires.filter(muscle => Array.isArray(muscle) && muscle[0])
+        : [];
+}
+
 function getBodyPartForMuscleFamily(family) {
     const name = String(family || "").trim();
     if (!name) return null;
@@ -41,7 +47,8 @@ function getExercisePrimaryBodyPart(exercise) {
 
 function exerciseMatchesCategories(exercise, request) {
     const selected = new Set(request?.categories ?? []);
-    return selected.size > 0 && (exercise?.catégorie ?? []).some(category => selected.has(category));
+    if (!selected.size) return true;
+    return (exercise?.catégorie ?? []).some(category => selected.has(category));
 }
 
 function exerciseMatchesEquipment(exercise, request) {
@@ -64,6 +71,18 @@ function muscleMatchesTarget(muscle, target) {
 function getExerciseMuscleMatches(exercise, input) {
     const mainMuscles = getExerciseMainMuscles(exercise);
     return (input?.muscleTargets ?? []).filter(target => mainMuscles.some(muscle => muscleMatchesTarget(muscle, target)));
+}
+
+function getExerciseSecondaryMuscleMatches(exercise, input) {
+    const secondaryMuscles = getExerciseSecondaryMuscles(exercise);
+    const matches = [];
+
+    (input?.muscleTargets ?? []).forEach(target => {
+        const secondaryIndex = secondaryMuscles.findIndex(muscle => muscleMatchesTarget(muscle, target));
+        if (secondaryIndex >= 0) matches.push({ ...target, secondaryIndex });
+    });
+
+    return matches;
 }
 
 function getRecentProgressionWorkoutCount(progression, referenceAt = Date.now(), days = RECENT_HISTORY_DAYS) {
@@ -105,6 +124,7 @@ function evaluateExerciseConstraints(exercise, input) {
     const mainMuscles = getExerciseMainMuscles(exercise);
     const primaryMuscle = mainMuscles[0] ?? null;
     const muscleMatches = getExerciseMuscleMatches(exercise, input);
+    const secondaryMuscleMatches = getExerciseSecondaryMuscleMatches(exercise, input);
     const primaryBodyPart = getExercisePrimaryBodyPart(exercise);
     const reasons = [];
 
@@ -114,8 +134,17 @@ function evaluateExerciseConstraints(exercise, input) {
     if (!muscleMatches.length) reasons.push("muscle");
     if (progression.progressionPreference === "never") reasons.push("never");
 
+    const secondaryMatchRanks = {};
+    secondaryMuscleMatches.forEach(match => {
+        const current = secondaryMatchRanks[match.bodyPart];
+        if (current === undefined || match.secondaryIndex < current) secondaryMatchRanks[match.bodyPart] = match.secondaryIndex;
+    });
+
+    const secondaryFallbackEligible = reasons.length === 1 && reasons[0] === "muscle" && secondaryMuscleMatches.length > 0;
+
     return {
         eligible: reasons.length === 0,
+        secondaryFallbackEligible,
         reasons,
         exercise,
         exerciseId: exercise?.ID ?? null,
@@ -124,6 +153,9 @@ function evaluateExerciseConstraints(exercise, input) {
         bodyPartOrder: BODY_PART_ORDER[primaryBodyPart] ?? null,
         matchingBodyParts: [...new Set(muscleMatches.map(match => match.bodyPart))],
         matchingMuscleTargets: muscleMatches,
+        secondaryMatchingBodyParts: [...new Set(secondaryMuscleMatches.map(match => match.bodyPart))],
+        secondaryMatchingMuscleTargets: secondaryMuscleMatches,
+        secondaryMatchRanks,
         primaryTargeted: muscleMatches.some(target => target.bodyPart === primaryBodyPart && muscleMatchesTarget(primaryMuscle, target)),
         ...progression
     };
@@ -133,7 +165,7 @@ function getCandidatePoolSummary(candidates, rejected, request) {
     const rejectedByReason = Object.fromEntries(REJECTION_REASONS.map(reason => [reason, 0]));
     rejected.forEach(item => item.reasons.forEach(reason => { rejectedByReason[reason] = (rejectedByReason[reason] ?? 0) + 1; }));
 
-    const bodyParts = Object.fromEntries((request?.bodyParts ?? []).map(bodyPart => [bodyPart, { matching: 0, primary: 0 }]));
+    const bodyParts = Object.fromEntries((request?.bodyParts ?? []).map(bodyPart => [bodyPart, { matching: 0, primary: 0, secondary: 0 }]));
 
     candidates.forEach(candidate => {
         candidate.matchingBodyParts.forEach(bodyPart => {
@@ -143,7 +175,23 @@ function getCandidatePoolSummary(candidates, rejected, request) {
         if (bodyParts[candidate.primaryBodyPart]) bodyParts[candidate.primaryBodyPart].primary += 1;
     });
 
-    return { total: candidates.length + rejected.length, eligible: candidates.length, rejected: rejected.length, rejectedByReason, bodyParts };
+    [...candidates, ...rejected].forEach(candidate => {
+        const hardRejected = candidate.reasons.some(reason => reason !== "muscle");
+        if (hardRejected) return;
+
+        candidate.secondaryMatchingBodyParts.forEach(bodyPart => {
+            if (bodyParts[bodyPart]) bodyParts[bodyPart].secondary += 1;
+        });
+    });
+
+    return {
+        total: candidates.length + rejected.length,
+        eligible: candidates.length,
+        secondaryFallbackEligible: rejected.filter(item => item.secondaryFallbackEligible).length,
+        rejected: rejected.length,
+        rejectedByReason,
+        bodyParts
+    };
 }
 
 function buildExerciseCandidatePool(exercises = [], input = {}) {
@@ -174,6 +222,7 @@ export {
     exerciseMatchesEquipment,
     exerciseMatchesType,
     getExerciseMuscleMatches,
+    getExerciseSecondaryMuscleMatches,
     getProgressionContext,
     evaluateExerciseConstraints,
     buildExerciseCandidatePool,

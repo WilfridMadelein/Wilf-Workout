@@ -36,11 +36,17 @@
             </p>
         </div>
 
-        <div
-            id="test-lab-data-status"
-            class="test-lab-status"
-        >
-            Chargement…
+        <div class="test-lab-header-actions">
+            <button id="test-lab-theme-toggle" type="button" class="test-lab-theme-toggle" aria-pressed="false">
+                🌙 Sombre
+            </button>
+
+            <div
+                id="test-lab-data-status"
+                class="test-lab-status"
+            >
+                Chargement…
+            </div>
         </div>
     </header>
 
@@ -500,6 +506,7 @@
         </button>
 
         <span id="test-lab-run-status"></span>
+        <span id="test-lab-run-timer" class="test-lab-run-timer" hidden>Temps écoulé : 0.0 s</span>
 
     </div>
 
@@ -592,11 +599,35 @@
 
         </div>
 
+        <div class="test-lab-report-block">
+
+            <h3>Échantillon de 10 plans générés</h3>
+
+            <div class="test-lab-table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Test</th>
+                            <th>Temps</th>
+                            <th>Exercices</th>
+                            <th>Super-sets</th>
+                            <th>Aperçu</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="test-lab-plan-samples"></tbody>
+                </table>
+            </div>
+
+        </div>
+
         <div id="test-lab-detail-block" class="test-lab-report-block">
 
-            <h3>Détail d’un scénario</h3>
+            <h3>Détail d’un scénario / plan</h3>
 
-            <pre id="test-lab-detail">Clique « Voir » sur une anomalie ou un avertissement pour afficher le scénario.</pre>
+            <pre id="test-lab-detail">Clique « Voir » sur une anomalie, un avertissement ou un plan échantillon.</pre>
 
         </div>
 
@@ -612,6 +643,14 @@
         <p><strong>3-way :</strong> fait la même chose avec chaque combinaison de trois valeurs provenant de trois paramètres différents. C’est plus exhaustif que Pairwise et peut détecter des problèmes qui n’apparaissent que lorsque trois contraintes interagissent, mais le nombre de tests requis augmente fortement.</p>
 
         <p><strong>Valeurs limites :</strong> cible surtout les extrêmes et les frontières importantes, par exemple 15/120 minutes ou des minimums/maximums d’exercices inhabituels.</p>
+
+        <p><strong>Anomalie :</strong> indique une règle qui ne devrait normalement jamais être violée : progression « Never » sélectionnée, exercice non admissible, doublon, ordre des parties du corps invalide ou candidats disponibles mais workout vide. Une anomalie est donc plus proche d’un bug que d’un simple résultat imparfait.</p>
+
+        <p><strong>Avertissement :</strong> indique un résultat possible mais suspect ou à examiner : durée sévère hors ±5 minutes, partie du corps non couverte malgré des candidats, ou aucun candidat compatible avec les contraintes. « Aucun candidat » n’est pas automatiquement un bug, parce que certaines combinaisons de filtres peuvent réellement être impossibles.</p>
+
+        <p><strong>Seed :</strong> contrôle les choix pseudo-aléatoires du Test Lab. Avec le même seed, le même code, les mêmes données et les mêmes contraintes, le test cherche à reproduire les mêmes chemins aléatoires. Changer le seed sert surtout à explorer d’autres variantes; les statistiques globales peuvent rester très proches même lorsque les plans individuels changent.</p>
+
+        <p><strong>Sauvegarde du Test Lab :</strong> les derniers champs, boutons sélectionnés et le thème sont sauvegardés automatiquement dans le stockage local du navigateur. Ils reviennent après un rechargement ou une modification de l’algorithme tant que le Test Lab est ouvert avec la même adresse/port Live Server.</p>
 
         <p class="test-lab-help">Pour Pairwise et 3-way, le rapport affiche le pourcentage réel d’interactions couvertes. Si la limite de tests est trop basse, le Test Lab indique explicitement qu’il reste des interactions non couvertes.</p>
     </section>

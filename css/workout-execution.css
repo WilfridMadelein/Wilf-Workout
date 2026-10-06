@@ -1311,3 +1311,35 @@ html[data-theme="dark"] .workout-set.is-completed {
     position: static;
     flex: 0 0 28px;
 }
+
+/* Reprise locale d'un entrainement */
+.workout-resume-dialog {
+    border: 0;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
+}
+
+.workout-resume-dialog::backdrop {
+    background: rgb(0 0 0 / 55%);
+}
+
+.workout-resume-button {
+    border: 1px solid #a64b00;
+    background: #b65300;
+    color: #fff;
+}
+
+.workout-resume-discard {
+    border: 1px solid #a91f1f;
+    background: #b22e2e;
+    color: #fff;
+}
+
+.workout-resume-button:hover { background: #944300; }
+.workout-resume-discard:hover { background: #922525; }
+
+@media (max-width: 480px) {
+    .workout-resume-dialog .workout-exit-actions {
+        grid-template-columns: 1fr;
+    }
+}

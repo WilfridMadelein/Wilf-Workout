@@ -1,5 +1,5 @@
 import { BODY_PART_ORDER } from "./workout-constraint.js";
-import { compareScoredCandidates } from "./exercise-scoring.js";
+import { compareScoredCandidates, scoreExerciseCandidate } from "./exercise-scoring.js";
 import { composeWorkoutSupersets } from "./superset-builder.js";
 import {
     fitPrescriptionsToTarget,
@@ -43,6 +43,32 @@ function getAvailableCandidates(candidates, bodyPart, usedExercises, usedProgres
         .sort((first, second) => compareBodyPartCandidates(first, second, bodyPart));
 }
 
+function getSecondaryFallbackRank(candidate, bodyPart) {
+    const rank = candidate?.secondaryMatchRanks?.[bodyPart];
+    return Number.isInteger(rank) ? rank : Infinity;
+}
+
+function isSecondaryFallbackUsable(candidate) {
+    if (candidate?.eligible) return true;
+    return candidate?.secondaryFallbackEligible === true;
+}
+
+function getSecondaryFallbackCandidates(scoredPool, bodyPart, usedExercises, usedProgressions) {
+    const sources = [...(scoredPool?.candidates ?? []), ...(scoredPool?.rejected ?? [])];
+    const candidates = sources
+        .filter(candidate => isSecondaryFallbackUsable(candidate))
+        .filter(candidate => candidate?.secondaryMatchingBodyParts?.includes(bodyPart))
+        .filter(candidate => canUseCandidate(candidate, usedExercises, usedProgressions))
+        .map(candidate => Number.isFinite(candidate.score) ? candidate : scoreExerciseCandidate(candidate));
+
+    if (!candidates.length) return [];
+
+    const bestRank = Math.min(...candidates.map(candidate => getSecondaryFallbackRank(candidate, bodyPart)));
+    return candidates
+        .filter(candidate => getSecondaryFallbackRank(candidate, bodyPart) === bestRank)
+        .sort(compareScoredCandidates);
+}
+
 function weightedPick(candidates, { random = Math.random, temperature = AUTO_PLAN_SELECTION_TEMPERATURE, poolSize = AUTO_PLAN_SELECTION_POOL_SIZE } = {}) {
     if (!candidates.length) return null;
 
@@ -66,6 +92,13 @@ function getCoverage(selected, bodyPart) {
 
     const matching = selected.find(item => item.candidate.matchingBodyParts.includes(bodyPart));
     if (matching) return { status: "matching", exerciseId: matching.candidate.exerciseId, exerciseName: matching.candidate.exerciseName };
+
+    const secondary = selected.find(item =>
+        item.coverageBodyPart === bodyPart
+        && ["coverage-secondary", "fill-secondary"].includes(item.selectionReason)
+        && item.candidate.secondaryMatchingBodyParts?.includes(bodyPart)
+    );
+    if (secondary) return { status: "secondary", exerciseId: secondary.candidate.exerciseId, exerciseName: secondary.candidate.exerciseName };
 
     return { status: "missing", exerciseId: null, exerciseName: null };
 }
@@ -114,7 +147,9 @@ function addCandidate(selected, candidate, coverageBodyPart, reason, state, body
     if (candidate.progressionId) state.usedProgressions.add(candidate.progressionId);
 }
 
-function selectCoverageCandidates(candidates, bodyParts, selected, state, options) {
+function selectCoverageCandidates(scoredPool, bodyParts, selected, state, options) {
+    const candidates = scoredPool?.candidates ?? [];
+
     bodyParts.forEach(bodyPart => {
         const primaryCandidates = getAvailableCandidates(candidates, bodyPart, state.usedExercises, state.usedProgressions)
             .filter(candidate => candidate.primaryBodyPart === bodyPart);
@@ -127,19 +162,33 @@ function selectCoverageCandidates(candidates, bodyParts, selected, state, option
         const candidate = weightedPick(getAvailableCandidates(candidates, bodyPart, state.usedExercises, state.usedProgressions), options);
         if (candidate) addCandidate(selected, candidate, bodyPart, "coverage-matching", state, bodyParts);
     });
+
+    bodyParts.forEach(bodyPart => {
+        if (getCoverage(selected, bodyPart).status !== "missing") return;
+        const fallback = getSecondaryFallbackCandidates(scoredPool, bodyPart, state.usedExercises, state.usedProgressions);
+        const candidate = weightedPick(fallback, options);
+        if (candidate) addCandidate(selected, candidate, bodyPart, "coverage-secondary", state, bodyParts);
+    });
 }
 
-function fillRemainingCandidates(candidates, bodyParts, selected, state, targetCount, options) {
+function fillRemainingCandidates(scoredPool, bodyParts, selected, state, targetCount, options) {
     if (!bodyParts.length) return;
+    const candidates = scoredPool?.candidates ?? [];
     let index = 0;
     let misses = 0;
 
     while (selected.length < targetCount && misses < bodyParts.length) {
         const bodyPart = bodyParts[index % bodyParts.length];
-        const candidate = weightedPick(getAvailableCandidates(candidates, bodyPart, state.usedExercises, state.usedProgressions), options);
+        let candidate = weightedPick(getAvailableCandidates(candidates, bodyPart, state.usedExercises, state.usedProgressions), options);
+        let reason = "fill";
+
+        if (!candidate) {
+            candidate = weightedPick(getSecondaryFallbackCandidates(scoredPool, bodyPart, state.usedExercises, state.usedProgressions), options);
+            reason = "fill-secondary";
+        }
 
         if (candidate) {
-            addCandidate(selected, candidate, bodyPart, "fill", state, bodyParts);
+            addCandidate(selected, candidate, bodyPart, reason, state, bodyParts);
             misses = 0;
         } else {
             misses += 1;
@@ -163,7 +212,7 @@ function getFlexibleFitLimit(targetSeconds) {
 function finalizeAttempt(selected, bodyParts, input, targetSeconds, random) {
     const mode = input?.request?.timeFlexibility === "flexible" ? "flexible" : "strict";
     const fitLimit = mode === "strict" ? targetSeconds + 5 * 60 : getFlexibleFitLimit(targetSeconds);
-    const fit = fitPrescriptionsToTarget(selected, input, targetSeconds, fitLimit);
+    const fit = fitPrescriptionsToTarget(selected, input, targetSeconds, fitLimit, { random });
     const orderedExercises = sortWorkoutExercises(selected).map(item => {
         const sourceIndex = selected.indexOf(item);
         const prescription = fit.prescriptions[sourceIndex];
@@ -182,8 +231,8 @@ function finalizeAttempt(selected, bodyParts, input, targetSeconds, random) {
     const score = coveredBodyParts * 500
         + exerciseScore
         + getTimePenalty(durationSeconds, targetSeconds, mode)
-        - minMiss * 120
-        - maxMiss * 80;
+        - minMiss * 220
+        - maxMiss * 100;
 
     return {
         exercises,
@@ -257,8 +306,8 @@ function buildWorkoutFromScoredPool(scoredPool, input, {
         const targetCount = countOptions[attemptIndex % countOptions.length] ?? targetExerciseCount;
         const selected = [];
         const state = { usedExercises: new Set(), usedProgressions: new Set() };
-        selectCoverageCandidates(candidates, bodyParts, selected, state, options);
-        fillRemainingCandidates(candidates, bodyParts, selected, state, targetCount, options);
+        selectCoverageCandidates(scoredPool, bodyParts, selected, state, options);
+        fillRemainingCandidates(scoredPool, bodyParts, selected, state, targetCount, options);
         if (selected.length) results.push(finalizeAttempt(selected, bodyParts, input, targetSeconds, random));
     }
 

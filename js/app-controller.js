@@ -1,3 +1,5 @@
+import { loadLastPage, saveLastPage } from "./storage/app-resume-storage.js";
+
 let searchInput;
 let pageExercises;
 let pagePlans;
@@ -168,6 +170,7 @@ export function setupAppController() {
         loadSearchState(searchPageState);
 
         tabExercises.classList.add("active");
+        saveLastPage("exercises");
         [tabExercises, tabPlans, tabHistory, tabSettings].forEach(tab => {
             if (tab === tabExercises) tab.setAttribute("aria-current", "page");
             else tab.removeAttribute("aria-current");
@@ -196,6 +199,7 @@ export function setupAppController() {
 
         tabExercises.classList.remove("active");
         tabPlans.classList.add("active");
+        saveLastPage("plans");
         [tabExercises, tabPlans, tabHistory, tabSettings].forEach(tab => {
             if (tab === tabPlans) tab.setAttribute("aria-current", "page");
             else tab.removeAttribute("aria-current");
@@ -218,6 +222,7 @@ export function setupAppController() {
         tabExercises.classList.remove("active");
         tabPlans.classList.remove("active");
         tabHistory.classList.add("active");
+        saveLastPage("history");
         [tabExercises, tabPlans, tabHistory, tabSettings].forEach(tab => {
             if (tab === tabHistory) tab.setAttribute("aria-current", "page");
             else tab.removeAttribute("aria-current");
@@ -241,6 +246,7 @@ export function setupAppController() {
         tabPlans.classList.remove("active");
         tabHistory.classList.remove("active");
         tabSettings.classList.add("active");
+        saveLastPage("settings");
         [tabExercises, tabPlans, tabHistory, tabSettings].forEach(tab => {
             if (tab === tabSettings) tab.setAttribute("aria-current", "page");
             else tab.removeAttribute("aria-current");
@@ -248,4 +254,8 @@ export function setupAppController() {
 
         setCurrentDetailContext("search");
     });
+}
+export function restoreLastPage() {
+    const tabs = { exercises: tabExercises, plans: tabPlans, history: tabHistory, settings: tabSettings };
+    tabs[loadLastPage()].click();
 }
