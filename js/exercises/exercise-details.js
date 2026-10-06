@@ -33,6 +33,8 @@ let getPlanEditor = () => null;
 let getCurrentDetailContext = () => "search";
 let setCurrentDetailExercise = () => {};
 let setCurrentDetailContext = () => {};
+let onOpenExerciseHistory = () => {};
+let onExerciseDetailsChanged = () => {};
 
 function configureExerciseDetails(dependencies) {
     getProgressionId = dependencies.getProgressionId;
@@ -46,6 +48,8 @@ function configureExerciseDetails(dependencies) {
     getCurrentDetailContext = dependencies.getCurrentDetailContext;
     setCurrentDetailExercise = dependencies.setCurrentDetailExercise;
     setCurrentDetailContext = dependencies.setCurrentDetailContext;
+    onOpenExerciseHistory = dependencies.onOpenExerciseHistory ?? (() => {});
+    onExerciseDetailsChanged = dependencies.onExerciseDetailsChanged ?? (() => {});
 }
 
 // ------------------------------------------------------------
@@ -112,6 +116,7 @@ function displayExerciseDetails(
 
     setCurrentDetailExercise(exercise);
     setCurrentDetailContext(context);
+    onExerciseDetailsChanged(exercise);
 
     removeAddButton();
 
@@ -156,8 +161,10 @@ function displayExerciseDetails(
         header.appendChild(addButton);
     }
 
-    nameElement.textContent =
-        exercise.nom;
+    nameElement.textContent = exercise.nom;
+    nameElement.disabled = false;
+    nameElement.setAttribute("aria-label", `Voir l'historique de ${exercise.nom}`);
+    nameElement.onclick = () => onOpenExerciseHistory(exercise);
 
     const splitDetail =
     getExerciseSplitDetailText(exercise);

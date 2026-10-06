@@ -638,3 +638,14 @@ html[data-theme="dark"] .workout-summary-history-empty {
 html[data-theme="dark"] .workout-summary-log-reserve {
     color: #aaa;
 }
+
+/* =========================================================
+   RECORDS
+========================================================= */
+
+.workout-summary-record-banner { margin: 0 0 20px; padding: 12px 14px; border: 1px solid rgba(217, 106, 0, 0.45); border-radius: 9px; background: rgba(217, 106, 0, 0.08); text-align: center; font-size: 18px; }
+.workout-summary-new-record-list { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 4px; margin-top: 2px; }
+.workout-summary-new-record { color: #a94900; font-size: 13px; font-weight: 700; }
+.workout-summary-history-record-date { width: fit-content; padding: 0; border: none; background: transparent; color: #d96a00; font: inherit; font-size: 12px; text-align: left; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+html[data-theme="dark"] .workout-summary-new-record { color: #ff9f43; }
+html[data-theme="dark"] .workout-summary-history-record-date { color: #ff9f43; }

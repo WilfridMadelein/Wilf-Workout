@@ -63,6 +63,7 @@ import {
     equipmentFilters,
     categoryFilters,
     detailsContent,
+    exercisePageHistoryHost,
 
     tabExercises,
     tabPlans,
@@ -202,6 +203,11 @@ historySummaryMeta,
 historySummaryWorkoutName,
 historySummaryWorkoutDate,
 historyWorkoutSummaryHost,
+historyExerciseSearchInput,
+historyExerciseSearchList,
+historyExerciseDetailsName,
+historyExerciseDetailsContent,
+historyExerciseHistoryHost,
 
 historyDeleteModal,
 cancelHistoryDeleteButton,
@@ -267,6 +273,14 @@ import {
     showHistorySummary,
     getHistorySummaryHost
 } from "./history/history-controller.js";
+
+import {
+    configureExerciseHistoryController,
+    setupExerciseHistoryController,
+    openExercisePageHistory,
+    closeExercisePageHistory,
+    refreshExerciseHistoryViews
+} from "./history/exercise-history-controller.js";
 
 import {
     configureStorageSyncController,
@@ -636,9 +650,8 @@ async function openWorkoutSummary(
         workoutHistory =
             await loadWorkoutHistory();
 
-        refreshWorkoutHistory(
-            workoutHistory
-        );
+        refreshWorkoutHistory(workoutHistory);
+        refreshExerciseHistoryViews();
     } catch (error) {
         console.error(
             "Impossible de sauvegarder l'entraînement dans l'historique.",
@@ -726,10 +739,16 @@ async function openWorkoutSummaryFromHistory(session) {
     });
 }
 
+async function openWorkoutSummaryFromExerciseHistory(session) {
+    await openWorkoutSummaryFromHistory(session);
+    requestAnimationFrame(() => document.querySelector(".history-summary-section")?.scrollIntoView({ block: "start", behavior: "smooth" }));
+}
+
 async function deleteWorkoutFromHistory(session) {
     await deleteWorkoutHistoryFromStorage(session.id);
     workoutHistory = await loadWorkoutHistory();
     pageWorkoutSummary.hidden = true;
+    refreshExerciseHistoryViews();
     return workoutHistory;
 }
 
@@ -770,6 +789,7 @@ async function reloadSyncedAppData() {
 
     workoutHistory = await loadWorkoutHistory();
     setWorkoutHistory(workoutHistory);
+    refreshExerciseHistoryViews();
 }
 
 // ============================================================
@@ -875,6 +895,18 @@ configureHistoryController({
 
 configureExerciseMuscleMap({
     getAppSettings: () => appSettings
+});
+
+configureExerciseHistoryController({
+    exercisePageHistoryHost,
+    historySearchInput: historyExerciseSearchInput,
+    historyExerciseList: historyExerciseSearchList,
+    historyExerciseName: historyExerciseDetailsName,
+    historyExerciseDetails: historyExerciseDetailsContent,
+    historyExerciseHistoryHost,
+    getExercises: () => exercises,
+    getWorkoutHistory: () => workoutHistory,
+    onOpenWorkout: openWorkoutSummaryFromExerciseHistory
 });
 
 configureStorageSyncController({
@@ -1163,8 +1195,9 @@ configureExerciseDetails({
         () => currentDetailContext,
 
     setCurrentDetailExercise,
-    setCurrentDetailContext
-    
+    setCurrentDetailContext,
+    onOpenExerciseHistory: openExercisePageHistory,
+    onExerciseDetailsChanged: closeExercisePageHistory
 });
 
 configurePlanPdf({
@@ -1192,13 +1225,14 @@ configureWorkoutSummary({
     onClose: closeWorkoutSummary,
     onEditLog: editWorkoutLogFromSummary,
     getWorkoutHistory: () => workoutHistory,
-    onOpenHistoryWorkout: openWorkoutSummaryFromHistory,
+    onOpenHistoryWorkout: openWorkoutSummaryFromExerciseHistory,
 
     onSessionUpdated: async session => {
         try {
             await saveWorkoutHistoryNow(session);
             workoutHistory = await loadWorkoutHistory();
             refreshWorkoutHistory(workoutHistory);
+            refreshExerciseHistoryViews();
         } catch (error) {
             console.error("Impossible de mettre à jour l'historique.", error);
             alert("La modification a été appliquée, mais elle n'a pas pu être sauvegardée dans l'historique.");
@@ -1574,6 +1608,7 @@ async function initializeApp() {
     setupWorkoutSummary();
     setupWorkoutExecution();
     setupHistoryController();
+    setupExerciseHistoryController();
     setupAutoPlanController();
     setupPlanController();
     setupPlanPdf();

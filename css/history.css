@@ -480,3 +480,26 @@ html[data-theme="dark"] .history-month-group::before {
         gap: 3px;
     }
 }
+/* =========================================================
+   HISTORIQUE PAR EXERCICES
+========================================================= */
+
+.history-exercise-section { margin-top: 38px; }
+.history-exercise-section > h2 { margin: 0 0 14px; }
+.history-exercise-browser { display: grid; grid-template-columns: minmax(260px, 0.85fr) minmax(360px, 1.15fr); gap: 20px; align-items: stretch; }
+.history-exercise-search-panel, .history-exercise-details-panel { min-width: 0; height: 470px; padding: 14px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 10px; background: Canvas; color: CanvasText; }
+#history-exercise-search-input { width: 100%; padding: 11px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 7px; font: inherit; }
+.history-exercise-search-list { height: calc(100% - 54px); margin-top: 10px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; }
+.history-exercise-search-item { width: 100%; padding: 10px 11px; display: flex; justify-content: space-between; gap: 12px; border: none; border-bottom: 1px solid #eee; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.history-exercise-search-item:last-child { border-bottom: none; }
+.history-exercise-search-item:hover, .history-exercise-search-item.is-selected { background: rgba(217, 106, 0, 0.09); }
+.history-exercise-search-item span:last-child { flex: 0 0 auto; color: #777; font-size: 12px; text-align: right; }
+.history-exercise-details-panel { overflow-y: auto; }
+.history-exercise-details-panel h3 { margin: 0 0 10px; }
+.history-exercise-details-panel p { margin: 8px 0; }
+.history-exercise-history-host { margin-top: 18px; }
+.history-exercise-history-host[hidden] { display: none; }
+html[data-theme="dark"] .history-exercise-search-panel, html[data-theme="dark"] .history-exercise-details-panel { background: #242424; border-color: #444; }
+html[data-theme="dark"] .history-exercise-search-list, html[data-theme="dark"] #history-exercise-search-input, html[data-theme="dark"] .history-exercise-search-item { border-color: #444; }
+html[data-theme="dark"] .history-exercise-search-item span:last-child { color: #aaa; }
+@media (max-width: 700px) { .history-exercise-browser { grid-template-columns: 1fr; } .history-exercise-search-panel, .history-exercise-details-panel { height: 440px; } }

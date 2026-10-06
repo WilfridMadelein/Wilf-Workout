@@ -19,6 +19,7 @@ export const submuscleFilters = document.getElementById("submuscle-filters");
 export const equipmentFilters = document.getElementById("equipment-filters");
 export const categoryFilters = document.getElementById("category-filters");
 export const detailsContent = document.getElementById("details-content");
+export const exercisePageHistoryHost = document.getElementById("exercise-history-panel-host");
 
 // ------------------------------------------------------------
 // DOM — Navigation
@@ -53,6 +54,12 @@ export const historySummaryMeta = document.getElementById("history-summary-meta"
 export const historySummaryWorkoutName = document.getElementById("history-summary-workout-name");
 export const historySummaryWorkoutDate = document.getElementById("history-summary-workout-date");
 export const historyWorkoutSummaryHost = document.getElementById("history-workout-summary-host");
+
+export const historyExerciseSearchInput = document.getElementById("history-exercise-search-input");
+export const historyExerciseSearchList = document.getElementById("history-exercise-search-list");
+export const historyExerciseDetailsName = document.getElementById("history-exercise-details-name");
+export const historyExerciseDetailsContent = document.getElementById("history-exercise-details-content");
+export const historyExerciseHistoryHost = document.getElementById("history-exercise-history-host");
 
 export const historyDeleteModal = document.getElementById("history-delete-modal");
 export const cancelHistoryDeleteButton = document.getElementById("cancel-history-delete-button");

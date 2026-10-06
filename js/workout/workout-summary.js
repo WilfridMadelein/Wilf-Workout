@@ -19,9 +19,14 @@ import {
 
 import {
     getExerciseHistory,
-    getExerciseRecords,
+    getExerciseRecordAchievements,
     groupEntriesBySeries
 } from "../history/exercise-history.js";
+
+import {
+    formatExerciseRecordValue,
+    renderExerciseHistoryPanel
+} from "../history/exercise-history-view.js";
 
 // ============================================================
 // DÉPENDANCES
@@ -466,7 +471,8 @@ await renderWorkoutSummary(session, {
 
 function createExerciseSummaryCard(
     session,
-    group
+    group,
+    recordAchievements = []
 ) {
     const card =
         document.createElement("article");
@@ -515,6 +521,18 @@ function createExerciseSummaryCard(
     const preference = createProgressionPreferenceSelect(getProgressionId(group.exercise), getProgressionName(group.exercise));
     if (preference) progression.appendChild(preference);
     information.append(name, progression);
+
+    if (recordAchievements.length) {
+        const recordList = document.createElement("div");
+        recordList.className = "workout-summary-new-record-list";
+        recordAchievements.forEach(record => {
+            const line = document.createElement("div");
+            line.className = "workout-summary-new-record";
+            line.textContent = `🏆 ${record.label} — ${formatExerciseRecordValue(record)}`;
+            recordList.appendChild(line);
+        });
+        information.appendChild(recordList);
+    }
 
     main.append(
         map,
@@ -579,151 +597,10 @@ card.appendChild(main);
 // HISTORIQUE D'UN EXERCICE
 // ============================================================
 
-function formatHistoryDate(timestamp) {
-    return new Intl.DateTimeFormat("fr-CA", { weekday: "short", day: "numeric", month: "short", year: "numeric" }).format(new Date(timestamp)).replaceAll(".", "");
-}
-
-function formatHistoryValue(value, unit) {
-    if (unit === "sec") return formatDuration(value);
-    return `${value} rep${Number(value) !== 1 ? "s" : ""}`;
-}
-
-function createRecordItem(label, value) {
-    const item = document.createElement("div");
-    item.className = "workout-summary-history-record";
-
-    const title = document.createElement("span");
-    title.textContent = label;
-
-    const result = document.createElement("strong");
-    result.textContent = value;
-
-    item.append(title, result);
-    return item;
-}
-
-function renderExerciseRecords(container, records) {
-    const values = [];
-
-    if (records.totalValue) values.push([
-        records.totalValue.unit === "sec" ? "Durée totale" : "Répétitions totales",
-        formatHistoryValue(records.totalValue.value, records.totalValue.unit)
-    ]);
-
-    if (records.singleValue) values.push([
-        records.singleValue.unit === "sec" ? "Durée en une série" : "Répétitions en une série",
-        formatHistoryValue(records.singleValue.value, records.singleValue.unit)
-    ]);
-
-    if (records.singleVolume) values.push(["Volume en une série", `${Math.round(records.singleVolume.value * 100) / 100} ${records.singleVolume.unit}`]);
-    if (records.totalVolume) values.push(["Volume total", `${Math.round(records.totalVolume.value * 100) / 100} ${records.totalVolume.unit}`]);
-    if (records.maxWeight) values.push(["Poids utilisé", `${records.maxWeight.weight} ${records.maxWeight.unit}`]);
-    if (!values.length) return;
-
-    const section = document.createElement("section");
-    section.className = "workout-summary-history-records";
-
-    const title = document.createElement("h4");
-    title.textContent = "Records";
-
-    const list = document.createElement("div");
-    list.className = "workout-summary-history-record-list";
-    values.forEach(([label, value]) => list.appendChild(createRecordItem(label, value)));
-
-    section.append(title, list);
-    container.appendChild(section);
-}
-
-function createExerciseHistoryWorkout(record) {
-    const row = document.createElement("article");
-    row.className = "workout-summary-history-workout";
-
-    const dateColumn = document.createElement("div");
-    dateColumn.className = "workout-summary-history-date-column";
-
-    const dateButton = document.createElement("button");
-    dateButton.type = "button";
-    dateButton.className = "workout-summary-history-date";
-    dateButton.textContent = formatHistoryDate(record.session.startedAt);
-
-    const openWorkoutButton = document.createElement("button");
-    openWorkoutButton.type = "button";
-    openWorkoutButton.className = "workout-summary-edit-log workout-summary-history-open-workout";
-    openWorkoutButton.textContent = "Voir l'entraînement complet";
-    openWorkoutButton.hidden = true;
-
-    dateButton.addEventListener("click", () => { openWorkoutButton.hidden = !openWorkoutButton.hidden; });
-    openWorkoutButton.addEventListener("click", () => onOpenHistoryWorkout(record.session));
-
-    dateColumn.append(dateButton, openWorkoutButton);
-
-    const series = document.createElement("div");
-    series.className = "workout-summary-history-series";
-
-    groupEntriesBySeries(record.entries).forEach(entries => {
-        const line = document.createElement("div");
-        line.textContent = entries.map(formatSeriesEntry).join(" | ");
-        series.appendChild(line);
-    });
-
-    row.append(dateColumn, series);
-    return row;
-}
-
 function renderExerciseHistory(exercise) {
     const host = page.querySelector("#workout-summary-exercise-history");
     if (!host) return;
-
-    const records = getExerciseHistory(getWorkoutHistory(), exercise);
-    host.replaceChildren();
-    host.hidden = false;
-
-    const panel = document.createElement("section");
-    panel.className = "workout-summary-history-panel is-open";
-
-    const toggle = document.createElement("button");
-    toggle.type = "button";
-    toggle.className = "workout-summary-history-toggle";
-    toggle.setAttribute("aria-expanded", "true");
-
-    const title = document.createElement("strong");
-    title.textContent = `Historique — ${exercise.nom}`;
-
-    const arrow = document.createElement("span");
-    arrow.setAttribute("aria-hidden", "true");
-
-    toggle.append(title, arrow);
-
-    const content = document.createElement("div");
-    content.className = "workout-summary-history-content";
-
-    renderExerciseRecords(content, getExerciseRecords(records));
-
-    const workouts = document.createElement("div");
-    workouts.className = "workout-summary-history-workouts";
-
-    if (records.length) {
-        records.forEach(record => workouts.appendChild(createExerciseHistoryWorkout(record)));
-    } else {
-        const empty = document.createElement("p");
-        empty.className = "workout-summary-history-empty";
-        empty.textContent = "Aucun historique enregistré pour cet exercice.";
-        workouts.appendChild(empty);
-    }
-
-    content.appendChild(workouts);
-
-    toggle.addEventListener("click", () => {
-        const open = !panel.classList.contains("is-open");
-        panel.classList.toggle("is-open", open);
-        content.hidden = !open;
-        toggle.setAttribute("aria-expanded", String(open));
-    });
-
-    panel.append(toggle, content);
-    host.appendChild(panel);
-
-    requestAnimationFrame(() => host.scrollIntoView({ block: "nearest", behavior: "smooth" }));
+    renderExerciseHistoryPanel(host, { exercise, workoutHistory: getWorkoutHistory(), onOpenWorkout: onOpenHistoryWorkout });
 }
 
 // ============================================================
@@ -869,13 +746,17 @@ else confetti.replaceChildren();
         `${seriesCount} série` +
         `${seriesCount !== 1 ? "s" : ""}`;
 
+    const recordHistory = getWorkoutHistory().some(item => String(item.id) === String(session.id)) ? getWorkoutHistory() : [session, ...getWorkoutHistory()];
+    const achievementsByExercise = new Map(groups.map(group => {
+        const historyRecords = getExerciseHistory(recordHistory, group.exercise);
+        return [getExerciseKey(group.exercise), getExerciseRecordAchievements(historyRecords, session)];
+    }));
+    const newRecordCount = [...achievementsByExercise.values()].reduce((total, records) => total + records.length, 0);
+    const recordCount = page.querySelector("#workout-summary-record-count");
+    if (recordCount) recordCount.textContent = `🏆 ${newRecordCount} nouveau record${newRecordCount !== 1 ? "s" : ""}`;
+
     groups.forEach(group => {
-        exerciseList.appendChild(
-            createExerciseSummaryCard(
-                session,
-                group
-            )
-        );
+        exerciseList.appendChild(createExerciseSummaryCard(session, group, achievementsByExercise.get(getExerciseKey(group.exercise)) ?? []));
     });
 
 if (showCelebration) launchOrangeConfetti(confetti, session);

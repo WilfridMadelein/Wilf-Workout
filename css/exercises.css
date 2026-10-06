@@ -203,3 +203,12 @@
     flex-shrink: 0;
 }
 
+
+/* =========================================================
+   HISTORIQUE DE L'EXERCICE
+========================================================= */
+
+.exercise-detail-history-link { max-width: 100%; padding: 0; border: none; background: transparent; color: inherit; font: inherit; font-weight: inherit; text-align: left; overflow-wrap: anywhere; text-decoration: underline; text-decoration-color: #d96a00; text-decoration-thickness: 2px; text-underline-offset: 3px; cursor: pointer; }
+.exercise-detail-history-link:disabled { text-decoration: none; cursor: default; opacity: 1; }
+.exercise-page-history { margin: 2px 0 2px; }
+.exercise-page-history[hidden] { display: none; }
