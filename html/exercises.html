@@ -35,18 +35,42 @@
 
                             <div class="exercise-detail-header">
 
-                                <div class="progression-navigation">
+                                <div class="progression-navigation-cluster">
                                     <button
-                                        id="progression-up-button"
-                                        class="progression-nav-button"
-                                        aria-label="Progression suivante"
-                                    >▲</button>
+                                        id="progression-family-previous-button"
+                                        class="progression-family-nav-button"
+                                        type="button"
+                                        aria-label="Progression précédente de la même famille"
+                                        title="Progression précédente de la même famille"
+                                        hidden
+                                    >◀</button>
+
+                                    <div class="progression-navigation">
+                                        <button
+                                            id="progression-up-button"
+                                            class="progression-nav-button"
+                                            type="button"
+                                            aria-label="Exercice suivant dans cette progression"
+                                            title="Exercice suivant dans cette progression"
+                                        >▲</button>
+
+                                        <button
+                                            id="progression-down-button"
+                                            class="progression-nav-button"
+                                            type="button"
+                                            aria-label="Exercice précédent dans cette progression"
+                                            title="Exercice précédent dans cette progression"
+                                        >▼</button>
+                                    </div>
 
                                     <button
-                                        id="progression-down-button"
-                                        class="progression-nav-button"
-                                        aria-label="Progression précédente"
-                                    >▼</button>
+                                        id="progression-family-next-button"
+                                        class="progression-family-nav-button"
+                                        type="button"
+                                        aria-label="Progression suivante de la même famille"
+                                        title="Progression suivante de la même famille"
+                                        hidden
+                                    >▶</button>
                                 </div>
 
                                 <h3 id="details-exercise-name">Sélectionne un exercice.</h3>

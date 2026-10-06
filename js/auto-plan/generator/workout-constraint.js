@@ -12,6 +12,10 @@ function getExerciseProgressionId(exercise) {
     return String(exercise?.prog_group || "").trim();
 }
 
+function getExerciseProgressionFamily(exercise) {
+    return String(exercise?.prog_family || "").trim();
+}
+
 function getExerciseProgressionIndex(exercise) {
     const index = Number(exercise?.prog_ordre);
     return Number.isFinite(index) ? index : null;
@@ -108,6 +112,7 @@ const referenceAt = Number(input?.referenceAt) || Date.now();
 
 return {
     progressionId,
+    progressionFamily: getExerciseProgressionFamily(exercise),
     progressionIndex,
     progressionPreference: progression?.preference ?? "neutral",
     latestProgressionIndex,
@@ -217,6 +222,7 @@ export {
     REJECTION_REASONS,
     RECENT_HISTORY_DAYS,
     getBodyPartForMuscleFamily,
+    getExerciseProgressionFamily,
     getExercisePrimaryBodyPart,
     exerciseMatchesCategories,
     exerciseMatchesEquipment,

@@ -117,7 +117,7 @@
 
 .exercise-detail-header {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: start;
     gap: 10px;
 }
@@ -132,6 +132,38 @@
     overflow-wrap: anywhere;
 }
 
+.progression-navigation-cluster {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-shrink: 0;
+}
+
+.progression-family-nav-button {
+    width: 20px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+}
+
+.progression-family-nav-button:hover:not(:disabled) {
+    background: rgba(127, 127, 127, 0.12);
+    border-radius: 6px;
+}
+
+.progression-family-nav-button:disabled {
+    cursor: default;
+    opacity: 0.35;
+}
+
+.progression-family-nav-button[hidden] {
+    display: none;
+}
 
 /* =========================================================
    NAVIGATION DES PROGRESSIONS

@@ -17,6 +17,8 @@ let exerciseMatchesEquipmentFilter = () => false;
 
 let displayExerciseDetails = () => {};
 
+const progressionFamilyHistory = new Map();
+
 function configureExerciseDisplay(dependencies) {
     getExercises = dependencies.getExercises;
 
@@ -136,14 +138,14 @@ function exerciseMatchesPlanProgressionFilter(
     const selectedPlanCategories =
         getSelectedPlanCategories();
 
-if (
-    !exerciseMatchesCategories(
-        exercise,
-        selectedPlanCategories
-    )
-) {
-    return false;
-}
+    if (
+        !exerciseMatchesCategories(
+            exercise,
+            selectedPlanCategories
+        )
+    ) {
+        return false;
+    }
 
     return exerciseHasRequiredEquipmentForPlan(
         exercise
@@ -238,6 +240,143 @@ function getPlanProgressionNeighbor(
 }
 
 // ------------------------------------------------------------
+// Navigation entre progressions d'une même famille
+// ------------------------------------------------------------
+
+function getProgressionFamily(exercise) {
+    return String(exercise?.prog_family || "").trim();
+}
+
+function getProgressionFamilyMemoryKey(exercise) {
+    const family = getProgressionFamily(exercise);
+    const progression = getProgressionName(exercise);
+    return family && progression ? `${family}\u0000${progression}` : "";
+}
+
+function rememberProgressionFamilyExercise(exercise) {
+    const key = getProgressionFamilyMemoryKey(exercise);
+    if (!key) return;
+
+    progressionFamilyHistory.set(key, {
+        exerciseId: exercise?.ID ?? null,
+        order: Number(exercise?.prog_ordre)
+    });
+}
+
+function getFamilyProgressions(currentExercise, context = "search") {
+    if (context !== "search") return [];
+
+    const family = getProgressionFamily(currentExercise);
+    if (!family) return [];
+
+    const grouped = new Map();
+
+    getExercises()
+        .filter(exercise => getProgressionFamily(exercise) === family)
+        .forEach(exercise => {
+            const progression = getProgressionName(exercise);
+            const order = Number(exercise?.prog_ordre);
+            if (!progression || Number.isNaN(order)) return;
+
+            if (!grouped.has(progression)) grouped.set(progression, []);
+            grouped.get(progression).push(exercise);
+        });
+
+    return [...grouped.entries()]
+        .map(([progression, exercises]) => ({
+            progression,
+            exercises: exercises.sort((first, second) => Number(first.prog_ordre) - Number(second.prog_ordre))
+        }))
+        .sort((first, second) => first.progression.localeCompare(second.progression, "fr", { sensitivity: "base" }));
+}
+
+function getClosestFamilyProgressionExercise(exercises, desiredOrder, memoryKey) {
+    const remembered = progressionFamilyHistory.get(memoryKey);
+
+    if (remembered) {
+        const rememberedExercise = exercises.find(exercise =>
+            remembered.exerciseId !== null && exercise?.ID === remembered.exerciseId
+        );
+        if (rememberedExercise) return rememberedExercise;
+
+        const rememberedOrder = Number(remembered.order);
+        if (Number.isFinite(rememberedOrder)) {
+            const sameRememberedOrder = exercises.find(exercise => Number(exercise.prog_ordre) === rememberedOrder);
+            if (sameRememberedOrder) return sameRememberedOrder;
+        }
+    }
+
+    const sameOrder = exercises.find(exercise => Number(exercise.prog_ordre) === desiredOrder);
+    if (sameOrder) return sameOrder;
+
+    return [...exercises].sort((first, second) => {
+        const firstOrder = Number(first.prog_ordre);
+        const secondOrder = Number(second.prog_ordre);
+        const distanceDifference = Math.abs(firstOrder - desiredOrder) - Math.abs(secondOrder - desiredOrder);
+        return distanceDifference || firstOrder - secondOrder;
+    })[0] || null;
+}
+
+function getProgressionFamilyNeighbor(currentExercise, direction, context = "search") {
+    if (direction !== -1 && direction !== 1) return null;
+
+    const progressions = getFamilyProgressions(currentExercise, context);
+    if (progressions.length < 2) return null;
+
+    const currentProgression = getProgressionName(currentExercise);
+    const currentIndex = progressions.findIndex(item => item.progression === currentProgression);
+    if (currentIndex < 0) return null;
+
+    const targetIndex = (currentIndex + direction + progressions.length) % progressions.length;
+    const target = progressions[targetIndex];
+    const desiredOrder = Number(currentExercise?.prog_ordre);
+    const memoryKey = `${getProgressionFamily(currentExercise)}\u0000${target.progression}`;
+
+    return getClosestFamilyProgressionExercise(
+        target.exercises,
+        Number.isFinite(desiredOrder) ? desiredOrder : 0,
+        memoryKey
+    );
+}
+
+function updateProgressionFamilyNavigation(currentExercise, context = "search") {
+    const previousButton = document.getElementById("progression-family-previous-button");
+    const nextButton = document.getElementById("progression-family-next-button");
+    if (!previousButton || !nextButton) return;
+
+    const hideNavigation = (hidden = true) => {
+        previousButton.hidden = hidden;
+        nextButton.hidden = hidden;
+        previousButton.disabled = true;
+        nextButton.disabled = true;
+        previousButton.onclick = null;
+        nextButton.onclick = null;
+    };
+
+    if (context !== "search" || !getProgressionFamily(currentExercise)) {
+        hideNavigation();
+        return;
+    }
+
+    rememberProgressionFamilyExercise(currentExercise);
+
+    const previousExercise = getProgressionFamilyNeighbor(currentExercise, -1, "search");
+    const nextExercise = getProgressionFamilyNeighbor(currentExercise, 1, "search");
+    if (!previousExercise || !nextExercise) {
+        hideNavigation(false);
+        return;
+    }
+
+    previousButton.hidden = false;
+    nextButton.hidden = false;
+    previousButton.disabled = false;
+    nextButton.disabled = false;
+
+    previousButton.onclick = () => displayExerciseDetails(previousExercise, "search");
+    nextButton.onclick = () => displayExerciseDetails(nextExercise, "search");
+}
+
+// ------------------------------------------------------------
 // Navigation visuelle de progression
 // ------------------------------------------------------------
 
@@ -297,6 +436,8 @@ function updateProgressionNavigation(
             context
         );
     };
+
+    updateProgressionFamilyNavigation(currentExercise, context);
 }
 
 // ============================================================
@@ -313,5 +454,9 @@ export {
     exerciseHasRequiredEquipmentForPlan,
     getPlanProgressionNeighbor,
 
+    getProgressionFamily,
+    getFamilyProgressions,
+    getProgressionFamilyNeighbor,
+    updateProgressionFamilyNavigation,
     updateProgressionNavigation
 };

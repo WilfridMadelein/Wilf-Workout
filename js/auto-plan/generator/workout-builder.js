@@ -25,6 +25,21 @@ function candidateKey(candidate) {
     return candidate.exerciseId ?? candidate.exerciseName;
 }
 
+function getCandidateProgressionFamily(candidate) {
+    return String(candidate?.progressionFamily || candidate?.exercise?.prog_family || "").trim();
+}
+
+function preferUnusedProgressionFamilies(candidates, usedFamilies) {
+    if (!candidates.length || !usedFamilies?.size) return candidates;
+
+    const unused = candidates.filter(candidate => {
+        const family = getCandidateProgressionFamily(candidate);
+        return !family || !usedFamilies.has(family);
+    });
+
+    return unused.length ? unused : candidates;
+}
+
 function canUseCandidate(candidate, usedExercises, usedProgressions) {
     if (usedExercises.has(candidateKey(candidate))) return false;
     return !candidate.progressionId || !usedProgressions.has(candidate.progressionId);
@@ -37,10 +52,12 @@ function compareBodyPartCandidates(first, second, bodyPart) {
     return compareScoredCandidates(first, second);
 }
 
-function getAvailableCandidates(candidates, bodyPart, usedExercises, usedProgressions) {
-    return candidates
+function getAvailableCandidates(candidates, bodyPart, usedExercises, usedProgressions, usedFamilies, { preferFamilies = true } = {}) {
+    const available = candidates
         .filter(candidate => candidate.matchingBodyParts.includes(bodyPart) && canUseCandidate(candidate, usedExercises, usedProgressions))
         .sort((first, second) => compareBodyPartCandidates(first, second, bodyPart));
+
+    return preferFamilies ? preferUnusedProgressionFamilies(available, usedFamilies) : available;
 }
 
 function getSecondaryFallbackRank(candidate, bodyPart) {
@@ -53,7 +70,7 @@ function isSecondaryFallbackUsable(candidate) {
     return candidate?.secondaryFallbackEligible === true;
 }
 
-function getSecondaryFallbackCandidates(scoredPool, bodyPart, usedExercises, usedProgressions) {
+function getSecondaryFallbackCandidates(scoredPool, bodyPart, usedExercises, usedProgressions, usedFamilies) {
     const sources = [...(scoredPool?.candidates ?? []), ...(scoredPool?.rejected ?? [])];
     const candidates = sources
         .filter(candidate => isSecondaryFallbackUsable(candidate))
@@ -64,9 +81,11 @@ function getSecondaryFallbackCandidates(scoredPool, bodyPart, usedExercises, use
     if (!candidates.length) return [];
 
     const bestRank = Math.min(...candidates.map(candidate => getSecondaryFallbackRank(candidate, bodyPart)));
-    return candidates
+    const ranked = candidates
         .filter(candidate => getSecondaryFallbackRank(candidate, bodyPart) === bestRank)
         .sort(compareScoredCandidates);
+
+    return preferUnusedProgressionFamilies(ranked, usedFamilies);
 }
 
 function weightedPick(candidates, { random = Math.random, temperature = AUTO_PLAN_SELECTION_TEMPERATURE, poolSize = AUTO_PLAN_SELECTION_POOL_SIZE } = {}) {
@@ -145,27 +164,31 @@ function addCandidate(selected, candidate, coverageBodyPart, reason, state, body
 
     state.usedExercises.add(candidateKey(candidate));
     if (candidate.progressionId) state.usedProgressions.add(candidate.progressionId);
+
+    const progressionFamily = getCandidateProgressionFamily(candidate);
+    if (progressionFamily) state.usedFamilies.add(progressionFamily);
 }
 
 function selectCoverageCandidates(scoredPool, bodyParts, selected, state, options) {
     const candidates = scoredPool?.candidates ?? [];
 
     bodyParts.forEach(bodyPart => {
-        const primaryCandidates = getAvailableCandidates(candidates, bodyPart, state.usedExercises, state.usedProgressions)
-            .filter(candidate => candidate.primaryBodyPart === bodyPart);
-        const candidate = weightedPick(primaryCandidates, options);
+        const primaryCandidates = getAvailableCandidates(
+            candidates, bodyPart, state.usedExercises, state.usedProgressions, state.usedFamilies, { preferFamilies: false }
+        ).filter(candidate => candidate.primaryBodyPart === bodyPart);
+        const candidate = weightedPick(preferUnusedProgressionFamilies(primaryCandidates, state.usedFamilies), options);
         if (candidate) addCandidate(selected, candidate, bodyPart, "coverage-primary", state, bodyParts);
     });
 
     bodyParts.forEach(bodyPart => {
         if (getCoverage(selected, bodyPart).status !== "missing") return;
-        const candidate = weightedPick(getAvailableCandidates(candidates, bodyPart, state.usedExercises, state.usedProgressions), options);
+        const candidate = weightedPick(getAvailableCandidates(candidates, bodyPart, state.usedExercises, state.usedProgressions, state.usedFamilies), options);
         if (candidate) addCandidate(selected, candidate, bodyPart, "coverage-matching", state, bodyParts);
     });
 
     bodyParts.forEach(bodyPart => {
         if (getCoverage(selected, bodyPart).status !== "missing") return;
-        const fallback = getSecondaryFallbackCandidates(scoredPool, bodyPart, state.usedExercises, state.usedProgressions);
+        const fallback = getSecondaryFallbackCandidates(scoredPool, bodyPart, state.usedExercises, state.usedProgressions, state.usedFamilies);
         const candidate = weightedPick(fallback, options);
         if (candidate) addCandidate(selected, candidate, bodyPart, "coverage-secondary", state, bodyParts);
     });
@@ -179,11 +202,11 @@ function fillRemainingCandidates(scoredPool, bodyParts, selected, state, targetC
 
     while (selected.length < targetCount && misses < bodyParts.length) {
         const bodyPart = bodyParts[index % bodyParts.length];
-        let candidate = weightedPick(getAvailableCandidates(candidates, bodyPart, state.usedExercises, state.usedProgressions), options);
+        let candidate = weightedPick(getAvailableCandidates(candidates, bodyPart, state.usedExercises, state.usedProgressions, state.usedFamilies), options);
         let reason = "fill";
 
         if (!candidate) {
-            candidate = weightedPick(getSecondaryFallbackCandidates(scoredPool, bodyPart, state.usedExercises, state.usedProgressions), options);
+            candidate = weightedPick(getSecondaryFallbackCandidates(scoredPool, bodyPart, state.usedExercises, state.usedProgressions, state.usedFamilies), options);
             reason = "fill-secondary";
         }
 
@@ -209,6 +232,17 @@ function getFlexibleFitLimit(targetSeconds) {
     return targetSeconds + Math.max(5 * 60, Math.min(10 * 60, targetSeconds * 0.2));
 }
 
+function getRepeatedProgressionFamilyCount(exercises) {
+    const counts = new Map();
+
+    exercises.forEach(item => {
+        const family = getCandidateProgressionFamily(item.candidate);
+        if (family) counts.set(family, (counts.get(family) ?? 0) + 1);
+    });
+
+    return [...counts.values()].reduce((total, count) => total + Math.max(0, count - 1), 0);
+}
+
 function finalizeAttempt(selected, bodyParts, input, targetSeconds, random) {
     const mode = input?.request?.timeFlexibility === "flexible" ? "flexible" : "strict";
     const fitLimit = mode === "strict" ? targetSeconds + 5 * 60 : getFlexibleFitLimit(targetSeconds);
@@ -228,16 +262,19 @@ function finalizeAttempt(selected, bodyParts, input, targetSeconds, random) {
     const requestedMax = Number(input?.request?.exerciseCount?.max);
     const minMiss = Number.isFinite(requestedMin) && requestedMin > exercises.length ? requestedMin - exercises.length : 0;
     const maxMiss = Number.isFinite(requestedMax) && requestedMax > 0 && exercises.length > requestedMax ? exercises.length - requestedMax : 0;
+    const repeatedProgressionFamilies = getRepeatedProgressionFamilyCount(exercises);
     const score = coveredBodyParts * 500
         + exerciseScore
         + getTimePenalty(durationSeconds, targetSeconds, mode)
         - minMiss * 220
-        - maxMiss * 100;
+        - maxMiss * 100
+        - repeatedProgressionFamilies * 160;
 
     return {
         exercises,
         coverage,
         coveredBodyParts,
+        repeatedProgressionFamilies,
         score,
         timeMode: mode,
         supersetComposition,
@@ -305,7 +342,7 @@ function buildWorkoutFromScoredPool(scoredPool, input, {
     for (let attemptIndex = 0; attemptIndex < Math.max(1, attempts); attemptIndex += 1) {
         const targetCount = countOptions[attemptIndex % countOptions.length] ?? targetExerciseCount;
         const selected = [];
-        const state = { usedExercises: new Set(), usedProgressions: new Set() };
+        const state = { usedExercises: new Set(), usedProgressions: new Set(), usedFamilies: new Set() };
         selectCoverageCandidates(scoredPool, bodyParts, selected, state, options);
         fillRemainingCandidates(scoredPool, bodyParts, selected, state, targetCount, options);
         if (selected.length) results.push(finalizeAttempt(selected, bodyParts, input, targetSeconds, random));
@@ -344,6 +381,7 @@ function buildWorkoutFromScoredPool(scoredPool, input, {
         withinTimeTolerance: best.withinTimeTolerance,
         attemptedPlans: results.length,
         planScore: best.score,
+        repeatedProgressionFamilies: best.repeatedProgressionFamilies,
         supersetComposition: best.supersetComposition
     };
 }
@@ -354,6 +392,8 @@ export {
     AUTO_PLAN_SELECTION_POOL_SIZE,
     AUTO_PLAN_BUILD_ATTEMPTS,
     getSelectedBodyParts,
+    getCandidateProgressionFamily,
+    preferUnusedProgressionFamilies,
     weightedPick,
     getCoverage,
     getExerciseCountBounds,
