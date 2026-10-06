@@ -99,3 +99,31 @@ html[data-theme="dark"] .test-lab-help { color: #b8b8b8; }
     .test-lab-header-actions { justify-content: flex-start; }
     .test-lab-run-timer { width: 100%; margin-left: 0; }
 }
+
+/* Couleurs des controles natifs, filtres et resultats du Test Lab. */
+html[data-theme="light"] { color-scheme: light; }
+html[data-theme="dark"] { color-scheme: dark; background: #121212; }
+
+html[data-theme="dark"] .test-lab-shell button {
+    background: #303030;
+    color: #f1f1f1;
+    border-color: #555;
+}
+
+html[data-theme="dark"] .test-lab-shell .filter-button.active {
+    background: #ededed;
+    color: #181818;
+    border-color: #ededed;
+}
+
+html[data-theme="dark"] .test-lab-shell button:disabled {
+    cursor: default;
+    opacity: 0.5;
+}
+
+html[data-theme="dark"] .test-lab-summary-card { border-color: #444; }
+html[data-theme="dark"] .test-lab-status.ok { border-color: #7fd694; }
+html[data-theme="dark"] .test-lab-status.error { border-color: #ff9d96; color: #ff9d96; }
+html[data-theme="dark"] .test-lab-summary-card.error strong { color: #ff9d96; }
+html[data-theme="dark"] .test-lab-summary-card.warning strong { color: #efc36b; }
+html[data-theme="dark"] .test-lab-summary-card.ok strong { color: #7fd694; }

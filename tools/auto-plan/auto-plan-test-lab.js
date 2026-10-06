@@ -94,7 +94,7 @@ function applyTheme(theme, { save = false } = {}) {
 function restoreLabState() {
     const saved = readStoredLabState();
     if (!saved) {
-        applyTheme("light");
+        applyTheme(state.appSettings?.theme ?? "light");
         return;
     }
 
@@ -115,7 +115,7 @@ function restoreLabState() {
     if (!state.selections.timeFlexibility.size) state.selections.timeFlexibility.add("strict");
 
     renderAllToggleGroups();
-    applyTheme(saved.theme ?? "light");
+    applyTheme(saved.theme ?? state.appSettings?.theme ?? "light");
     renderAdvancedProfileEditor();
 }
 
@@ -949,8 +949,7 @@ function formatScenarioDetail(item) {
         "",
         "WORKOUT",
         ...(workoutLines.length ? workoutLines : ["Aucun exercice sélectionné."])
-    ].join("
-");
+    ].join("\n");
 }
 
 function formatConstraintsForReport(constraints) {

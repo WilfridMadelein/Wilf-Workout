@@ -1,5 +1,7 @@
+import { enableWorkoutTimerSound } from "./workout-timer-sound.js";
+
 import { saveActiveWorkout, loadActiveWorkout, clearActiveWorkout } from "../storage/app-resume-storage.js";
-import { getWorkoutRestRemainingSeconds } from "./workout-rest-timer.js";
+import { getWorkoutRestRemainingSeconds, isWorkoutRestManuallyPaused } from "./workout-rest-timer.js";
 
 import {
     createWorkoutSession,
@@ -183,7 +185,7 @@ function refreshTimerToggleButton() {
     if (!session) return;
 
     if (session.isPaused) {
-        timerToggleButton.textContent = "▶";
+        timerToggleButton.textContent = "▶︎";
 
         timerToggleButton.setAttribute(
             "aria-label",
@@ -196,7 +198,7 @@ function refreshTimerToggleButton() {
         return;
     }
 
-    timerToggleButton.textContent = "⏸";
+    timerToggleButton.textContent = "❚❚";
 
     timerToggleButton.setAttribute(
         "aria-label",
@@ -222,6 +224,7 @@ function pauseWorkoutTimer() {
 
     stopWorkoutTimerInterval();
     pauseWorkoutRestTimer();
+    currentExerciseView?.setTimerPaused(true);
 
     refreshTimerToggleButton();
 }
@@ -242,6 +245,7 @@ function resumeWorkoutTimer() {
     session.isPaused = false;
 
     resumeWorkoutRestTimer();
+    currentExerciseView?.setTimerPaused(false);
     refreshElapsedTime();
     startWorkoutTimerInterval();
 
@@ -317,6 +321,8 @@ function getShell() {
 
 function showOverview() {
     if (!session) return;
+
+    clearWorkoutExerciseView(content);
 
     currentTarget = null;
     currentExerciseView = null;
@@ -707,6 +713,8 @@ function getWorkoutExecutionSession() {
 // ============================================================
 
 function setupWorkoutExecution() {
+    page.addEventListener("pointerdown", enableWorkoutTimerSound);
+    page.addEventListener("keydown", enableWorkoutTimerSound);
     page.addEventListener("input", () => queueMicrotask(persistWorkoutRecovery));
     page.addEventListener("change", () => queueMicrotask(persistWorkoutRecovery));
     page.addEventListener("click", () => queueMicrotask(persistWorkoutRecovery));
@@ -824,7 +832,8 @@ function persistWorkoutRecovery() {
             sideKey: currentTarget.sideKey
         } : null,
         draft: session.screen === "exercise" ? currentExerciseView?.getDraft() ?? null : null,
-        restSeconds: getWorkoutRestRemainingSeconds()
+        restSeconds: getWorkoutRestRemainingSeconds(),
+        restManualPaused: isWorkoutRestManuallyPaused()
     });
 }
 
@@ -899,7 +908,7 @@ export function offerWorkoutResume() {
             if (series) showExercise({ set, workoutExercise, series, sideKey: target.sideKey }, snapshot.draft);
         }
         if (Number.isFinite(snapshot.restSeconds) && snapshot.restSeconds > 0) {
-            startWorkoutRestTimer(snapshot.restSeconds, { onComplete: () => currentExerciseView?.setLogAvailable(true) });
+            startWorkoutRestTimer(snapshot.restSeconds, { paused: snapshot.restManualPaused === true, onComplete: () => currentExerciseView?.setLogAvailable(true) });
             currentExerciseView?.setLogAvailable(false);
             if (session.isPaused) pauseWorkoutRestTimer();
         }

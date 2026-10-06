@@ -1,3 +1,5 @@
+import { setupTimerNotifications } from "./workout/workout-timer-notifications.js";
+
 // ============================================================
 // MODULES
 // ============================================================
@@ -1558,6 +1560,7 @@ async function initializeApp() {
     setupFilterRows();
 
     setupSettingsController();
+    await setupTimerNotifications();
     await setupStorageSyncController();
     setupStorageTargetSync();
     await setupSyncLifecycle();

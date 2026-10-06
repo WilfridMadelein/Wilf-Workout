@@ -1,3 +1,5 @@
+import { createWorkoutDurationTimer } from "./workout-duration-timer.js";
+
 import { createProgressionPreferenceSelect } from "../training/progression-preferences.js";
 import { setupNumberInput, normalizeNumber } from "../ui/ui.js";
 
@@ -227,7 +229,11 @@ function confirmLogModification() {
 // RENDU
 // ============================================================
 
+const durationTimerCleanup = new WeakMap();
+
 function clearWorkoutExerciseView(container) {
+    durationTimerCleanup.get(container)?.();
+    durationTimerCleanup.delete(container);
     destroyExerciseMuscleMapsIn(container);
     container.replaceChildren();
 }
@@ -356,6 +362,9 @@ heading.appendChild(seriesContext);
         return row;
     }
 
+    let durationTimer = null;
+    durationTimerCleanup.set(container, () => durationTimer?.destroy());
+
     // Volume
 
     const volume = document.createElement("div");
@@ -371,6 +380,7 @@ heading.appendChild(seriesContext);
         },
         value => {
             draft.value = value ?? 1;
+            durationTimer?.refresh();
         }
     );
 
@@ -382,6 +392,7 @@ heading.appendChild(seriesContext);
         draft.valueUnit,
         value => {
             draft.valueUnit = value;
+            updateDurationTimer();
         }
     );
 
@@ -432,6 +443,26 @@ heading.appendChild(seriesContext);
         createControlRow("Poids", weight),
         createControlRow("Tempo", tempo)
     );
+
+    function updateDurationTimer() {
+        if (draft.valueUnit !== "sec" || completed) {
+            durationTimer?.destroy();
+            durationTimer?.element.remove();
+            durationTimer = null;
+            draft.exerciseTimer = null;
+            return;
+        }
+        if (durationTimer) return;
+        durationTimer = createWorkoutDurationTimer({
+            getDuration: () => normalizeNumber(volumeNumber.querySelector("input").value, { min: 1, max: 999, decimals: 0 }),
+            saved: draft.exerciseTimer,
+            globallyPaused: session.isPaused
+        });
+        draft.exerciseTimer = null;
+        controls.appendChild(durationTimer.element);
+    }
+    updateDurationTimer();
+    volumeNumber.addEventListener("input", () => durationTimer?.refresh());
 
 if (completed) {
     const reserve = document.createElement("div");
@@ -573,8 +604,10 @@ renderExerciseMuscleMap(
 
 return {
     setLogAvailable,
+    setTimerPaused: value => durationTimer?.setGlobalPaused(value),
     getDraft: () => ({
         ...structuredClone(draft),
+        exerciseTimer: durationTimer?.snapshot() ?? null,
         value: normalizeNumber(volumeNumber.querySelector("input").value, { min: 1, max: 999, decimals: 0 }),
         weight: normalizeNumber(weightNumber.querySelector("input").value, { min: 0, max: 9999.9, decimals: 1 }),
         tempo: Object.fromEntries(["first", "second", "third", "fourth"].map((key, index) => [

@@ -1,3 +1,7 @@
+import { updateTimerNotification, cancelTimerNotification, finishTimerNotification } from "./workout-timer-notifications.js";
+
+import { playWorkoutTimerSignal } from "./workout-timer-sound.js";
+
 import {
     formatReserveToFailure,
     getReserveToFailureOptions,
@@ -14,6 +18,8 @@ let expandedClock;
 let compactClock;
 let minusButton;
 let plusButton;
+let toggleButtons;
+let resetButton;
 
 let reserveDialog;
 let reserveProgress;
@@ -71,7 +77,7 @@ function createRestTimer() {
                     class="workout-rest-minus"
                     aria-label="Retirer 15 secondes"
                 >
-                    −
+                    -15
                 </button>
 
                 <button
@@ -87,8 +93,12 @@ function createRestTimer() {
                     class="workout-rest-plus"
                     aria-label="Ajouter 15 secondes"
                 >
-                    +
+                    +15
                 </button>
+            </div>
+            <div class="workout-rest-playback">
+                <button type="button" class="workout-rest-toggle" aria-label="Mettre le minuteur de repos en pause">&#10074;&#10074;</button>
+                <button type="button" class="workout-rest-reset" aria-label="Réinitialiser le minuteur de repos">&#8634;</button>
             </div>
 <div class="workout-rest-feedback" hidden>
     <label class="workout-rest-feedback-label">
@@ -109,6 +119,7 @@ function createRestTimer() {
         </div>
 
         <div class="workout-rest-compact">
+            <button type="button" class="workout-rest-toggle" aria-label="Mettre le minuteur de repos en pause">&#10074;&#10074;</button>
             <button
                 type="button"
                 class="workout-rest-compact-skip"
@@ -145,6 +156,8 @@ function createRestTimer() {
         host.querySelector(
             ".workout-rest-plus"
         );
+    toggleButtons = host.querySelectorAll(".workout-rest-toggle");
+    resetButton = host.querySelector(".workout-rest-reset");
 reserveFeedback = host.querySelector(".workout-rest-feedback");
 reserveQuestion = host.querySelector(".workout-rest-feedback-question");
 reserveSelect = host.querySelector(".workout-rest-feedback-select");
@@ -263,9 +276,19 @@ function refreshRestTimer() {
     const seconds =
         getRemainingSeconds();
 
+    if (timer.soundEnabled && !timer.paused && seconds <= 3 && timer.lastSignal !== seconds) {
+        playWorkoutTimerSignal(seconds, "start");
+        timer.lastSignal = seconds;
+    }
+
     const text =
         formatRestTime(seconds);
 
+    toggleButtons.forEach(button => {
+        button.textContent = timer.paused ? "▶︎" : "❚❚";
+        button.setAttribute("aria-label", timer.paused ? "Reprendre le minuteur de repos" : "Mettre le minuteur de repos en pause");
+        button.disabled = timer.globalPaused;
+    });
     expandedClock.textContent = text;
     compactClock.textContent = text;
 
@@ -299,6 +322,7 @@ function startInterval() {
 // ============================================================
 
 function stopWorkoutRestTimer() {
+    cancelTimerNotification("rest");
     clearInterval(interval);
     interval = null;
     timer = null;
@@ -317,12 +341,15 @@ function completeWorkoutRestTimer() {
     const onComplete =
         timer.onComplete;
 
+    finishTimerNotification("rest");
     stopWorkoutRestTimer();
     onComplete();
 }
 
 function skipWorkoutRestTimer() {
     if (!timer) return;
+    cancelTimerNotification("rest");
+    timer.lastSignal = 0; // Un repos saute ne produit pas de signal de fin.
     timer.remainingSeconds = 0;
     timer.endsAt = Date.now();
     refreshRestTimer();
@@ -347,12 +374,14 @@ function adjustWorkoutRestTimer(delta) {
     }
 
     timer.remainingSeconds = next;
+    if (next > 3) timer.lastSignal = null;
 
     if (!timer.paused) {
         timer.endsAt =
             Date.now() + next * 1000;
     }
 
+    syncRestNotification();
     refreshRestTimer();
 }
 
@@ -378,27 +407,56 @@ function collapseWorkoutRestTimer() {
 // PAUSE GLOBALE
 // ============================================================
 
+function syncRestNotification() {
+    if (!timer || !timer.soundEnabled) return;
+    updateTimerNotification("rest", {
+        title: "Repos terminé",
+        endAt: timer.endsAt,
+        paused: timer.paused,
+        remainingSeconds: getRemainingSeconds()
+    });
+}
+
+function updateRestPauseState() {
+    if (!timer) return;
+    const paused = timer.manualPaused || timer.globalPaused;
+    if (paused === timer.paused) return;
+    timer.remainingSeconds = getRemainingSeconds();
+    timer.paused = paused;
+    if (!paused) {
+        timer.endsAt = Date.now() + timer.remainingSeconds * 1000;
+        startInterval();
+    }
+    syncRestNotification();
+    refreshRestTimer();
+}
+
 function pauseWorkoutRestTimer() {
-    if (!timer || timer.paused) return;
-
-    timer.remainingSeconds =
-        getRemainingSeconds();
-
-    timer.paused = true;
-
+    if (!timer) return;
+    timer.globalPaused = true;
+    updateRestPauseState();
     refreshRestTimer();
 }
 
 function resumeWorkoutRestTimer() {
-    if (!timer || !timer.paused) return;
+    if (!timer) return;
+    timer.globalPaused = false;
+    updateRestPauseState();
+    refreshRestTimer();
+}
 
-    timer.paused = false;
+function toggleWorkoutRestTimer() {
+    if (!timer || timer.globalPaused) return;
+    timer.manualPaused = !timer.manualPaused;
+    updateRestPauseState();
+}
 
-    timer.endsAt =
-        Date.now() +
-        timer.remainingSeconds * 1000;
-
-    startInterval();
+function resetWorkoutRestTimer() {
+    if (!timer) return;
+    timer.remainingSeconds = timer.initialSeconds;
+    timer.endsAt = Date.now() + timer.initialSeconds * 1000;
+    timer.lastSignal = null;
+    syncRestNotification();
     refreshRestTimer();
 }
 
@@ -410,7 +468,8 @@ function startWorkoutRestTimer(
     seconds,
     {
         onComplete = () => {},
-        feedback = null
+        feedback = null,
+        paused = false
     } = {}
 ) {
     stopWorkoutRestTimer();
@@ -428,11 +487,15 @@ function startWorkoutRestTimer(
 
     timer = {
         remainingSeconds: duration,
+        initialSeconds: duration,
+        manualPaused: paused,
+        globalPaused: false,
+        soundEnabled: duration > 0,
         endsAt:
             Date.now() +
             duration * 1000,
 
-        paused: false,
+        paused,
         expanded: true,
 
         onComplete
@@ -446,6 +509,7 @@ function startWorkoutRestTimer(
         "has-active-rest"
     );
 
+    syncRestNotification();
     startInterval();
     refreshRestTimer();
 }
@@ -467,6 +531,14 @@ function setupWorkoutRestTimer(
     page = workoutPage;
 
     createRestTimer();
+    toggleButtons.forEach(button => button.addEventListener("click", event => {
+        event.stopPropagation();
+        toggleWorkoutRestTimer();
+    }));
+    resetButton.addEventListener("click", event => {
+        event.stopPropagation();
+        resetWorkoutRestTimer();
+    });
 
     minusButton.addEventListener(
         "click",
@@ -560,4 +632,8 @@ export {
 
 export function getWorkoutRestRemainingSeconds() {
     return getRemainingSeconds();
+}
+
+export function isWorkoutRestManuallyPaused() {
+    return timer?.manualPaused === true;
 }

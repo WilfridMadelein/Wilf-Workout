@@ -439,17 +439,7 @@ body.workout-execution-active {
     font: inherit;
 }
 
-.workout-rest-feedback-ignore {
-    margin: 7px 0 0;
-    padding: 0;
-    border: none;
-    background: transparent;
-    color: #666;
-    font: inherit;
-    font-size: 12px;
-    text-decoration: underline;
-    cursor: pointer;
-}
+
 
 html[data-theme="dark"] .workout-rest-timer {
     background: #242424;
@@ -467,8 +457,10 @@ html[data-theme="dark"] .workout-rest-feedback-select {
     color: #ededed;
 }
 
-html[data-theme="dark"] .workout-rest-feedback-ignore {
-    color: #aaa;
+html[data-theme="dark"] .workout-rest-feedback-ignore,
+html[data-theme="dark"] .workout-rest-skip,
+html[data-theme="dark"] .workout-rest-compact-skip {
+    color: #ff9d96;
 }
 
 /* =========================================================
@@ -1160,7 +1152,7 @@ html[data-theme="dark"] .workout-action-dialog {
     background: transparent;
     color: inherit;
 
-    font-size: 25px;
+    font-size: 18px;
     cursor: pointer;
 }
 
@@ -1179,7 +1171,8 @@ html[data-theme="dark"] .workout-action-dialog {
     cursor: default;
 }
 
-.workout-rest-skip {
+.workout-rest-skip,
+.workout-rest-feedback-ignore {
     margin: 8px auto 0;
     padding: 4px 10px;
 
@@ -1343,3 +1336,25 @@ html[data-theme="dark"] .workout-set.is-completed {
         grid-template-columns: 1fr;
     }
 }
+
+.workout-rest-playback {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.workout-rest-toggle,
+.workout-rest-reset {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 6px;
+    border: 1px solid #999;
+    border-radius: 8px;
+    background: transparent;
+    color: inherit;
+    font-size: 22px;
+    cursor: pointer;
+}
+
+.workout-rest-toggle:disabled { cursor: default; opacity: 0.5; }
