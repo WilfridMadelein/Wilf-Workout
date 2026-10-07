@@ -1,4 +1,4 @@
-const APP_ASSET_VERSION = "2026-10-06-plan-share-v2";
+const APP_ASSET_VERSION = "2026-10-06-plan-share-v4";
 
 async function loadHTML() {
     const pages = {

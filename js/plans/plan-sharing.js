@@ -6,12 +6,32 @@ import { hydratePlan, serializePlan, savePlanNow } from "../storage/plan-storage
 
 const PLAN_SHARE_FORMAT = "wilf-workout-plan-share";
 const PLAN_SHARE_VERSION = 1;
-const PLAN_SHARE_HASH_KEY = "wilf-plan";
+const PLAN_SHARE_HASH_KEY = "p";
 const PLAN_SHARE_WEB_URL = "https://wilfridmadelein.github.io/Wilf-Workout/";
 const SHARED_PLAN_PREFIX = "Sharing is caring | ";
 const PLAN_NAME_MAX_LENGTH = 80;
 const MAX_SHARE_TOKEN_LENGTH = 250000;
 const MAX_SHARE_JSON_LENGTH = 1000000;
+
+// Format compact v2 : masques de champs modifies/presents, valeurs puis extensions.
+// Les exercices suivants ne repetent pas les champs identiques au precedent.
+const SHARE_FIELDS = {
+    plan: ["schemaVersion", "name", "notes", "categories", "equipment", "includeCategories", "includeEquipment", "includeNotes", "autoAddDefaultInstructions", "autoPlanGeneration", "defaults", "exercises"],
+    exercise: ["exerciseId", "exerciseName", "sets", "value", "valueUnit", "rest", "tempo", "weight", "weightUnit", "splitOrder", "combination", "details"],
+    defaults: ["sets", "reps", "time", "rest", "weight", "weightUnit", "tempo"],
+    tempo: ["first", "second", "third", "fourth"],
+    combination: ["group"],
+    details: ["instructions"]
+};
+const SHARE_DEFAULTS = {
+    plan: { schemaVersion: 4, notes: "", categories: [], equipment: [], includeCategories: false, includeEquipment: false, includeNotes: false, autoAddDefaultInstructions: true, autoPlanGeneration: null },
+    exercise: { sets: 3, value: 10, valueUnit: "rep", rest: 60, tempo: { first: 3, second: 0, third: 1, fourth: 0 }, weight: 0, weightUnit: "lbs", splitOrder: "left-right", combination: { group: 1 }, details: {} },
+    defaults: { sets: 3, reps: 10, time: 30, rest: 60, weight: 0, weightUnit: "lbs", tempo: { first: 3, second: 0, third: 1, fourth: 0 } },
+    tempo: { first: 3, second: 0, third: 1, fourth: 0 },
+    combination: { group: 1 },
+    details: { instructions: "" }
+};
+const SHARE_NESTED_FIELDS = { defaults: "defaults", tempo: "tempo", combination: "combination", details: "details" };
 
 let plans = [];
 let getExercises = () => [];
@@ -48,29 +68,212 @@ function base64UrlToBytes(value) {
     return bytes;
 }
 
+function packShareRecord(record, schema, baseline = SHARE_DEFAULTS[schema]) {
+    if (!record || typeof record !== "object" || Array.isArray(record)) throw new Error("Structure de plan invalide.");
+    const fields = SHARE_FIELDS[schema];
+    let changed = 0;
+    let present = 0;
+    const values = [];
+    fields.forEach((key, index) => {
+        const exists = Object.hasOwn(record, key);
+        if (exists === Object.hasOwn(baseline, key) && JSON.stringify(record[key]) === JSON.stringify(baseline[key])) return;
+        changed |= 1 << index;
+        if (!exists) return;
+        present |= 1 << index;
+        const nested = SHARE_NESTED_FIELDS[key];
+        if (key === "exercises") {
+            if (!Array.isArray(record[key]) || record[key].length > 500) throw new Error("Liste d'exercices invalide.");
+            let previous = SHARE_DEFAULTS.exercise;
+            values.push(record[key].map(exercise => {
+                const packed = packShareRecord(exercise, "exercise", previous);
+                previous = exercise;
+                return packed;
+            }));
+        } else values.push(nested ? packShareRecord(record[key], nested) : record[key]);
+    });
+    const extra = Object.fromEntries(Object.entries(record).filter(([key]) => !fields.includes(key)));
+    return [changed, present, ...values, ...(Object.keys(extra).length ? [extra] : [])];
+}
+
+function unpackShareRecord(packed, schema, baseline = SHARE_DEFAULTS[schema]) {
+    const fields = SHARE_FIELDS[schema];
+    if (!Array.isArray(packed) || packed.length < 2) throw new Error("Plan compact invalide.");
+    const [changed, present] = packed;
+    if (!Number.isInteger(changed) || changed < 0 || changed >= 2 ** fields.length || !Number.isInteger(present) || present < 0 || present >= 2 ** fields.length || (present & changed) !== present) throw new Error("Champs du plan compact invalides.");
+    const record = Object.fromEntries(Object.entries(baseline).filter(([key]) => fields.includes(key)));
+    let position = 2;
+    fields.forEach((key, index) => {
+        if (!(changed & (1 << index))) return;
+        if (!(present & (1 << index))) { delete record[key]; return; }
+        if (position >= packed.length) throw new Error("Plan compact incomplet.");
+        const value = packed[position++];
+        const nested = SHARE_NESTED_FIELDS[key];
+        if (key === "exercises") {
+            if (!Array.isArray(value) || value.length > 500) throw new Error("Liste d'exercices invalide.");
+            let previous = SHARE_DEFAULTS.exercise;
+            record[key] = value.map(exercise => {
+                const decoded = unpackShareRecord(exercise, "exercise", previous);
+                previous = decoded;
+                return decoded;
+            });
+        } else record[key] = nested ? unpackShareRecord(value, nested) : value;
+    });
+    if (position < packed.length) {
+        const extra = packed[position++];
+        if (!extra || typeof extra !== "object" || Array.isArray(extra) || Object.keys(extra).some(key => fields.includes(key))) throw new Error("Extensions du plan invalides.");
+        Object.defineProperties(record, Object.fromEntries(Object.entries(extra).map(([key, value]) => [key, { value, enumerable: true, writable: true, configurable: true }])));
+    }
+    if (position !== packed.length) throw new Error("Plan compact invalide.");
+    return record;
+}
+
+// Sous-ensemble CBOR (RFC 8949) pour les valeurs JSON du plan, sans dependance.
+function encodeShareBinary(value) {
+    const bytes = [];
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
+    function header(type, length) {
+        if (length < 24) bytes.push(type * 32 + length);
+        else if (length <= 255) bytes.push(type * 32 + 24, length);
+        else if (length <= 65535) bytes.push(type * 32 + 25, length >>> 8, length & 255);
+        else bytes.push(type * 32 + 26, length >>> 24, (length >>> 16) & 255, (length >>> 8) & 255, length & 255);
+    }
+    function write(item, depth) {
+        if (depth > 64) throw new Error("Plan trop imbrique pour le format binaire.");
+        if (item === null) { bytes.push(246); return; }
+        if (typeof item === "boolean") { bytes.push(item ? 245 : 244); return; }
+        if (typeof item === "number") {
+            const integer = item < 0 ? -1 - item : item;
+            if (Number.isInteger(integer) && integer <= 0xffffffff) header(item < 0 ? 1 : 0, integer);
+            else {
+                const buffer = new ArrayBuffer(8);
+                new DataView(buffer).setFloat64(0, item);
+                bytes.push(251, ...new Uint8Array(buffer));
+            }
+            return;
+        }
+        if (typeof item === "string") {
+            const text = encoder.encode(item);
+            // JSON reste disponible pour les rares chaines avec un surrogate isole.
+            if (decoder.decode(text) !== item) throw new Error("Chaine incompatible avec UTF-8.");
+            header(3, text.length);
+            for (const byte of text) bytes.push(byte);
+            return;
+        }
+        if (Array.isArray(item)) {
+            header(4, item.length);
+            item.forEach(entry => write(entry, depth + 1));
+        } else {
+            const entries = Object.entries(item);
+            header(5, entries.length);
+            entries.forEach(([key, entry]) => { write(key, depth + 1); write(entry, depth + 1); });
+        }
+    }
+    write(value, 0);
+    return new Uint8Array(bytes);
+}
+
+function decodeShareBinary(bytes) {
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const decoder = new TextDecoder("utf-8", { fatal: true, ignoreBOM: true });
+    let offset = 0;
+    function take(length) {
+        if (offset + length > bytes.length) throw new Error("Plan binaire incomplet.");
+        const start = offset;
+        offset += length;
+        return start;
+    }
+    function read(depth) {
+        if (depth > 64) throw new Error("Plan binaire trop imbrique.");
+        const initial = bytes[take(1)];
+        const type = initial >>> 5;
+        const size = initial & 31;
+        if (initial === 244) return false;
+        if (initial === 245) return true;
+        if (initial === 246) return null;
+        if (initial === 251) {
+            const value = view.getFloat64(take(8));
+            if (!Number.isFinite(value)) throw new Error("Nombre du plan invalide.");
+            return value;
+        }
+        if (![0, 1, 3, 4, 5].includes(type) || size > 26) throw new Error("Type du plan binaire invalide.");
+        const length = size < 24 ? size : size === 24 ? view.getUint8(take(1)) : size === 25 ? view.getUint16(take(2)) : view.getUint32(take(4));
+        if (type === 0) return length;
+        if (type === 1) return -1 - length;
+        if (type === 3) { const start = take(length); return decoder.decode(bytes.subarray(start, offset)); }
+        if (length > bytes.length - offset) throw new Error("Taille du plan binaire invalide.");
+        if (type === 4) return Array.from({ length }, () => read(depth + 1));
+        const record = {};
+        for (let index = 0; index < length; index++) {
+            const key = read(depth + 1);
+            if (typeof key !== "string" || Object.hasOwn(record, key)) throw new Error("Cle du plan binaire invalide.");
+            Object.defineProperty(record, key, { value: read(depth + 1), enumerable: true, writable: true, configurable: true });
+        }
+        return record;
+    }
+    const value = read(0);
+    if (offset !== bytes.length) throw new Error("Plan binaire invalide.");
+    return value;
+}
+
 async function encodeSharePayload(payload) {
-    const json = JSON.stringify(payload);
-    const raw = new TextEncoder().encode(json);
-    if (typeof CompressionStream !== "function") return `j.${bytesToBase64Url(raw)}`;
-    const compressed = await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer();
-    return `g.${bytesToBase64Url(new Uint8Array(compressed))}`;
+    const normalized = JSON.parse(JSON.stringify(payload));
+    const packed = [2, packShareRecord(normalized.plan, "plan")];
+    const compact = JSON.stringify(packed);
+    if (JSON.stringify(normalized).length > MAX_SHARE_JSON_LENGTH) throw new Error("Le plan partagé est trop volumineux.");
+    const candidates = [{ raw: new TextEncoder().encode(compact), plain: "p", modes: ["r", "d", "c"] }];
+    try { candidates.push({ raw: encodeShareBinary(packed), plain: "b", modes: ["s", "e", "z"] }); }
+    catch { /* Preserver toutes les chaines et extensions avec le format JSON. */ }
+    let shortest = null;
+    for (const { raw, plain, modes } of candidates) {
+        const token = `${plain}${bytesToBase64Url(raw)}`;
+        if (shortest === null || token.length < shortest.length) shortest = token;
+        if (typeof CompressionStream === "function") {
+            for (const [index, format] of ["deflate-raw", "deflate", "gzip"].entries()) {
+                try {
+                    const compressed = await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream(format))).arrayBuffer();
+                    const compressedToken = `${modes[index]}${bytesToBase64Url(new Uint8Array(compressed))}`;
+                    if (compressedToken.length < shortest.length) shortest = compressedToken;
+                } catch { /* Conserver les formats pris en charge par ce navigateur. */ }
+            }
+        }
+    }
+    if (shortest.length > MAX_SHARE_TOKEN_LENGTH) throw new Error("Le plan partagé est trop volumineux.");
+    return shortest;
 }
 
 async function decodeSharePayload(token) {
-    if (typeof token !== "string" || token.length < 3 || token.length > MAX_SHARE_TOKEN_LENGTH) throw new Error("Lien de partage invalide ou trop volumineux.");
-    const separator = token.indexOf(".");
-    if (separator !== 1) throw new Error("Format de partage inconnu.");
-    const mode = token.slice(0, separator);
-    const bytes = base64UrlToBytes(token.slice(separator + 1));
+    if (typeof token !== "string" || token.length < 2 || token.length > MAX_SHARE_TOKEN_LENGTH) throw new Error("Lien de partage invalide ou trop volumineux.");
+    const mode = token[0];
+    const bytes = base64UrlToBytes(token.slice(1));
     let output = bytes;
-    if (mode === "g") {
+    const formats = { c: "gzip", d: "deflate", r: "deflate-raw", s: "deflate-raw", e: "deflate", z: "gzip" };
+    if (Object.hasOwn(formats, mode)) {
         if (typeof DecompressionStream !== "function") throw new Error("Cette version de l'application ne peut pas lire ce lien compressé.");
-        const decompressed = await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
-        output = new Uint8Array(decompressed);
-    } else if (mode !== "j") throw new Error("Format de partage inconnu.");
-    const json = new TextDecoder().decode(output);
-    if (json.length > MAX_SHARE_JSON_LENGTH) throw new Error("Le plan partagé est trop volumineux.");
-    return JSON.parse(json);
+        const reader = new Blob([bytes]).stream().pipeThrough(new DecompressionStream(formats[mode])).getReader();
+        const chunks = [];
+        let length = 0;
+        try {
+            while (true) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                length += value.length;
+                if (length > MAX_SHARE_JSON_LENGTH) {
+                    await reader.cancel();
+                    throw new Error("Le plan partagé est trop volumineux.");
+                }
+                chunks.push(value);
+            }
+        } finally { reader.releaseLock(); }
+        output = new Uint8Array(length);
+        let offset = 0;
+        for (const chunk of chunks) { output.set(chunk, offset); offset += chunk.length; }
+    } else if (mode !== "p" && mode !== "b") throw new Error("Format de partage inconnu.");
+    const binary = ["b", "s", "e", "z"].includes(mode);
+    const decoded = binary ? decodeShareBinary(output) : JSON.parse(new TextDecoder().decode(output));
+    if (JSON.stringify(decoded).length > MAX_SHARE_JSON_LENGTH) throw new Error("Le plan partagé est trop volumineux.");
+    if (!Array.isArray(decoded) || decoded.length !== 2 || decoded[0] !== 2) throw new Error("Version du plan compact inconnue.");
+    return { format: PLAN_SHARE_FORMAT, version: PLAN_SHARE_VERSION, plan: unpackShareRecord(decoded[1], "plan") };
 }
 
 function createSharedPlanRecord(plan) {
@@ -299,7 +502,7 @@ async function shareText(title, message, url) {
     const copied = copyShareText(fullText);
     if (navigator.share) {
         try {
-            await navigator.share({ title, text: message, url });
+            await navigator.share({ title, text: fullText });
             if (!await copied) window.prompt("La copie automatique a échoué. Copiez ce message :", fullText);
             return;
         } catch (error) {
@@ -317,7 +520,7 @@ async function shareText(title, message, url) {
 async function sharePlan(plan) {
     if (!plan) return;
     try {
-        const payload = { format: PLAN_SHARE_FORMAT, version: PLAN_SHARE_VERSION, sharedAt: new Date().toISOString(), plan: createSharedPlanRecord(plan) };
+        const payload = { format: PLAN_SHARE_FORMAT, version: PLAN_SHARE_VERSION, plan: createSharedPlanRecord(plan) };
         const token = await encodeSharePayload(payload);
         const url = new URL(PLAN_SHARE_WEB_URL);
         url.hash = new URLSearchParams({ [PLAN_SHARE_HASH_KEY]: token }).toString();
