@@ -140,6 +140,7 @@ function ensurePlanFilterState(plan) {
 }
 
 function refreshPlanFilterInterface() {
+    const selectedPlanCategories = getSelectedPlanCategories();
     if (getAutoAddCategoriesToPlan()) addCategoriesToCurrentPlan(...selectedPlanCategories);
     updatePlanCategoryButtons();
     updatePlanEquipmentRelevance();
