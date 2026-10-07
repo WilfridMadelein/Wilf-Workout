@@ -1359,6 +1359,7 @@ planCategoryOptions,
 configurePlanSharing({
     plans,
     getExercises: () => exercises,
+    getAppSettings: () => appSettings,
     renderPlansList,
     openPlan,
     navigateToPlans: () => tabPlans.click(),

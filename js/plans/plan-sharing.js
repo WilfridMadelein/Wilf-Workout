@@ -1,5 +1,5 @@
 import { hydratePlan, serializePlan, savePlanNow } from "../storage/plan-storage.js";
-import { encodePlanShareV3, decodePlanShareV3 } from "./plan-share-codec-v3.js";
+import { encodePlanShareV3, decodePlanShareV3 } from "./plan-sharing-codec.js";
 
 // ============================================================
 // PARTAGE DE PLANS
@@ -36,6 +36,7 @@ const SHARE_NESTED_FIELDS = { defaults: "defaults", tempo: "tempo", combination:
 
 let plans = [];
 let getExercises = () => [];
+let getAppSettings = () => null;
 let renderPlansList = () => {};
 let openPlan = () => {};
 let navigateToPlans = () => {};
@@ -51,7 +52,7 @@ const handledTokens = new Set();
 const deferredTokens = new Set();
 
 function configurePlanSharing(dependencies) {
-    ({ plans, getExercises, renderPlansList, openPlan, navigateToPlans, importModal, importMessage, cancelImportButton, overwriteImportButton, copyImportButton } = dependencies);
+    ({ plans, getExercises, getAppSettings, renderPlansList, openPlan, navigateToPlans, importModal, importMessage, cancelImportButton, overwriteImportButton, copyImportButton } = dependencies);
 }
 
 function bytesToBase64Url(bytes) {
@@ -217,38 +218,15 @@ function decodeShareBinary(bytes) {
     return value;
 }
 
-async function encodeSharePayload(payload) {
-    const normalized = JSON.parse(JSON.stringify(payload));
-    const packed = [2, packShareRecord(normalized.plan, "plan")];
-    const compact = JSON.stringify(packed);
-    if (JSON.stringify(normalized).length > MAX_SHARE_JSON_LENGTH) throw new Error("Le plan partagé est trop volumineux.");
-    const candidates = [{ raw: new TextEncoder().encode(compact), plain: "p", modes: ["r", "d", "c"] }];
-    try { candidates.push({ raw: encodeShareBinary(packed), plain: "b", modes: ["s", "e", "z"] }); }
-    catch { /* Preserver toutes les chaines et extensions avec le format JSON. */ }
-    try { candidates.push({ raw: encodePlanShareV3(normalized.plan), plain: "u", modes: ["v", "w", "x"] }); }
-    catch (error) { console.debug("Format de partage V3 non applicable, conservation du format compatible V2.", error); }
-    let shortest = null;
-    for (const { raw, plain, modes } of candidates) {
-        const token = `${plain}${bytesToBase64Url(raw)}`;
-        if (shortest === null || token.length < shortest.length) shortest = token;
-        if (typeof CompressionStream === "function") {
-            for (const [index, format] of ["deflate-raw", "deflate", "gzip"].entries()) {
-                try {
-                    const compressed = await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream(format))).arrayBuffer();
-                    const compressedToken = `${modes[index]}${bytesToBase64Url(new Uint8Array(compressed))}`;
-                    if (compressedToken.length < shortest.length) shortest = compressedToken;
-                } catch { /* Conserver les formats pris en charge par ce navigateur. */ }
-            }
-        }
-    }
-    if (shortest.length > MAX_SHARE_TOKEN_LENGTH) throw new Error("Le plan partagé est trop volumineux.");
-    return shortest;
+async function compressShareBytes(raw, format) {
+    if (typeof CompressionStream !== "function") return null;
+    try { return new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream(format))).arrayBuffer()); }
+    catch { return null; }
 }
 
 async function decompressShareBytes(bytes, format) {
     if (typeof DecompressionStream !== "function") throw new Error("Cette version de l'application ne peut pas lire ce lien compressé.");
-    const reader = new Blob([bytes]).stream().pipeThrough(new DecompressionStream(format)).getReader();
-    const chunks = [];
+    const reader = new Blob([bytes]).stream().pipeThrough(new DecompressionStream(format)).getReader(), chunks = [];
     let length = 0;
     try {
         while (true) {
@@ -259,20 +237,62 @@ async function decompressShareBytes(bytes, format) {
             chunks.push(value);
         }
     } finally { reader.releaseLock(); }
-    const output = new Uint8Array(length);
-    let offset = 0;
+    const output = new Uint8Array(length); let offset = 0;
     for (const chunk of chunks) { output.set(chunk, offset); offset += chunk.length; }
     return output;
 }
 
+async function shortestEncodedToken(raw, modes) {
+    let shortest = `${modes.raw}${bytesToBase64Url(raw)}`;
+    for (const [format, mode] of [["deflate-raw", modes.rawDeflate], ["deflate", modes.deflate], ["gzip", modes.gzip]]) {
+        const compressed = await compressShareBytes(raw, format);
+        if (!compressed) continue;
+        const token = `${mode}${bytesToBase64Url(compressed)}`;
+        if (token.length < shortest.length) shortest = token;
+    }
+    return shortest;
+}
+
+async function encodeSharePayload(payload) {
+    const normalized = JSON.parse(JSON.stringify(payload));
+    if (JSON.stringify(normalized).length > MAX_SHARE_JSON_LENGTH) throw new Error("Le plan partagé est trop volumineux.");
+
+    try {
+        const compactV3 = encodePlanShareV3(normalized.plan, getExercises());
+        const token = await shortestEncodedToken(compactV3, { raw: "m", rawDeflate: "n", deflate: "o", gzip: "q" });
+        if (token.length > MAX_SHARE_TOKEN_LENGTH) throw new Error("Le plan partagé est trop volumineux.");
+        return token;
+    } catch (error) {
+        console.warn("Codec de partage V3 indisponible pour ce plan, utilisation du format V2.", error);
+    }
+
+    const packed = [2, packShareRecord(normalized.plan, "plan")], compact = JSON.stringify(packed);
+    const candidates = [{ raw: new TextEncoder().encode(compact), plain: "p", modes: { rawDeflate: "r", deflate: "d", gzip: "c" } }];
+    try { candidates.push({ raw: encodeShareBinary(packed), plain: "b", modes: { rawDeflate: "s", deflate: "e", gzip: "z" } }); }
+    catch { /* Preserver toutes les chaines et extensions avec le format JSON. */ }
+    let shortest = null;
+    for (const candidate of candidates) {
+        const token = await shortestEncodedToken(candidate.raw, { raw: candidate.plain, ...candidate.modes });
+        if (shortest === null || token.length < shortest.length) shortest = token;
+    }
+    if (shortest.length > MAX_SHARE_TOKEN_LENGTH) throw new Error("Le plan partagé est trop volumineux.");
+    return shortest;
+}
+
 async function decodeSharePayload(token) {
     if (typeof token !== "string" || token.length < 2 || token.length > MAX_SHARE_TOKEN_LENGTH) throw new Error("Lien de partage invalide ou trop volumineux.");
-    const mode = token[0];
-    const bytes = base64UrlToBytes(token.slice(1));
-    const formats = { c: "gzip", d: "deflate", r: "deflate-raw", s: "deflate-raw", e: "deflate", z: "gzip", v: "deflate-raw", w: "deflate", x: "gzip" };
+    const mode = token[0], bytes = base64UrlToBytes(token.slice(1));
+    const v3Formats = { n: "deflate-raw", o: "deflate", q: "gzip" };
+    if (mode === "m" || Object.hasOwn(v3Formats, mode)) {
+        const output = mode === "m" ? bytes : await decompressShareBytes(bytes, v3Formats[mode]);
+        const settings = getAppSettings?.() ?? {};
+        const plan = decodePlanShareV3(output, getExercises(), { splitOrder: settings.splitOrder, autoAddDefaultInstructions: settings.planDefaults?.autoAddDefaultInstructions });
+        return { format: PLAN_SHARE_FORMAT, version: PLAN_SHARE_VERSION, plan };
+    }
+
+    const formats = { c: "gzip", d: "deflate", r: "deflate-raw", s: "deflate-raw", e: "deflate", z: "gzip" };
     const output = Object.hasOwn(formats, mode) ? await decompressShareBytes(bytes, formats[mode]) : bytes;
-    if (["u", "v", "w", "x"].includes(mode)) return { format: PLAN_SHARE_FORMAT, version: PLAN_SHARE_VERSION, plan: decodePlanShareV3(output) };
-    if (!["p", "b", "r", "d", "c", "s", "e", "z"].includes(mode)) throw new Error("Format de partage inconnu.");
+    if (!Object.hasOwn(formats, mode) && mode !== "p" && mode !== "b") throw new Error("Format de partage inconnu.");
     const binary = ["b", "s", "e", "z"].includes(mode);
     const decoded = binary ? decodeShareBinary(output) : JSON.parse(new TextDecoder().decode(output));
     if (JSON.stringify(decoded).length > MAX_SHARE_JSON_LENGTH) throw new Error("Le plan partagé est trop volumineux.");
@@ -288,6 +308,7 @@ function createSharedPlanRecord(plan) {
     delete record.filters;
     delete record.filtersInitialized;
     delete record.autoExcludedProgressions;
+    record.autoPlanGeneration = null;
     return record;
 }
 
@@ -353,13 +374,13 @@ function replacePlanContents(target, source) {
 
 function clearCurrentShareHash() {
     try {
-        const url = new URL(window.location.href);
-        if (!extractShareToken(url.toString())) return;
-        url.hash = "";
-        history.replaceState(history.state, "", url.toString());
-    } catch (error) {
-        console.warn("Impossible de nettoyer le lien de partage.", error);
-    }
+        const url = new URL(window.location.href), hash = url.hash.replace(/^#/, "");
+        if (!hash) return;
+        if (!hash.startsWith(`${PLAN_SHARE_HASH_KEY}=`)) { url.hash = ""; history.replaceState(history.state, "", url.toString()); return; }
+        const params = new URLSearchParams(hash);
+        if (!params.has(PLAN_SHARE_HASH_KEY)) return;
+        params.delete(PLAN_SHARE_HASH_KEY); url.hash = params.toString(); history.replaceState(history.state, "", url.toString());
+    } catch (error) { console.warn("Impossible de nettoyer le lien de partage.", error); }
 }
 
 async function importSharedPlan(sharedRecord, name, existing = null) {
@@ -410,11 +431,10 @@ async function completePendingImport(mode) {
 
 function extractShareToken(urlValue) {
     try {
-        const url = new URL(urlValue, window.location.href);
-        const hash = url.hash.replace(/^#/, "");
+        const url = new URL(urlValue, window.location.href), hash = url.hash.replace(/^#/, "");
         if (!hash) return null;
-        if (!hash.includes("=")) return /^[pbrdcsezuvwx][A-Za-z0-9_-]+$/.test(hash) ? hash : null;
-        return new URLSearchParams(hash).get(PLAN_SHARE_HASH_KEY);
+        if (hash.startsWith(`${PLAN_SHARE_HASH_KEY}=`)) return new URLSearchParams(hash).get(PLAN_SHARE_HASH_KEY);
+        return hash;
     } catch { return null; }
 }
 
