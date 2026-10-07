@@ -28,6 +28,8 @@ let startWorkout = () => {};
 let plans;
 let editPlanNameButton;
 let currentPlanNameInput;
+let shareCurrentPlanButton;
+let sharePlan = async () => {};
 
 let planAutoAddCategories;
 let planAutoAddEquipment;
@@ -113,6 +115,8 @@ export function configurePlanController(dependencies) {
         currentPlanName,
         editPlanNameButton,
         currentPlanNameInput,
+        shareCurrentPlanButton,
+        sharePlan,
         backToPlansButton,
         startPlanWorkoutButton,
         startWorkout,
@@ -790,7 +794,7 @@ function renderAutoPlanGeneration(plan) {
 // Ouvrir un plan
 // ------------------------------------------------------------
 
-function openPlan(plan) {
+export function openPlan(plan) {
     const previousPlan = getCurrentPlan();
 
     if (previousPlan && previousPlan !== plan) {
@@ -832,6 +836,23 @@ function openPlan(plan) {
 // Liste des plans
 // ------------------------------------------------------------
 
+const planUpdatedDateFormatter = new Intl.DateTimeFormat("fr-CA", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" });
+
+function formatPlanUpdatedAt(plan) {
+    const date = new Date(Number(plan.updatedAt ?? plan.createdAt ?? Date.now()));
+    return Number.isNaN(date.getTime()) ? "Date inconnue" : planUpdatedDateFormatter.format(date);
+}
+
+function createPlanShareButton(plan) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.classList.add("plan-share-button");
+    button.textContent = "Partager";
+    button.setAttribute("aria-label", `Partager ${plan.name}`);
+    button.addEventListener("click", event => { event.stopPropagation(); sharePlan(plan); });
+    return button;
+}
+
 export function renderPlansList() {
     plansList.replaceChildren();
 
@@ -847,9 +868,19 @@ export function renderPlansList() {
         const setCount = getPlanSetCount(plan);
         const muscles = getPlanPrimaryMuscles(plan);
 
+        const titleRow = document.createElement("div");
+        titleRow.classList.add("plan-card-title-row");
+
         const title = document.createElement("span");
         title.classList.add("plan-card-title");
         title.textContent = plan.name;
+
+        const shareButton = createPlanShareButton(plan);
+        titleRow.append(title, shareButton);
+
+        const modified = document.createElement("span");
+        modified.classList.add("plan-card-updated");
+        modified.textContent = `Dernière modification : ${formatPlanUpdatedAt(plan)}`;
 
         const summary = document.createElement("span");
         summary.classList.add("plan-card-info");
@@ -866,7 +897,7 @@ export function renderPlansList() {
         muscleList.classList.add("plan-card-muscles");
         muscleList.textContent = muscles.length ? muscles.join(", ") : "Aucun muscle principal";
 
-        card.append(title, summary, muscleList);
+        card.append(titleRow, modified, summary, muscleList);
 
         const appendMetadataLine = (className, label, values, emptyText) => {
             const line = document.createElement("div");
@@ -919,6 +950,7 @@ export function renderPlansList() {
                 resizePlanNotesTextarea(notes);
                 updateNotesCounter(notes, notesCounter);
                 schedulePlanSave(plan);
+                modified.textContent = `Dernière modification : ${formatPlanUpdatedAt(plan)}`;
             });
 
             ["click", "mousedown", "keydown"].forEach(type => notes.addEventListener(type, event => event.stopPropagation()));
@@ -1271,6 +1303,12 @@ autoAddDefaultInstructions: defaults.autoAddDefaultInstructions !== false,
         "click",
         startPlanNameEditing
     );
+
+    shareCurrentPlanButton.addEventListener("click", () => {
+        finishPlanNameEditing();
+        const plan = getCurrentPlan();
+        if (plan) sharePlan(plan);
+    });
 
     currentPlanName.addEventListener(
         "click",

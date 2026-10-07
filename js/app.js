@@ -91,6 +91,11 @@ planDeleteModal,
 planDeleteMessage,
 cancelPlanDeleteButton,
 confirmPlanDeleteButton,
+sharedPlanImportModal,
+sharedPlanImportMessage,
+cancelSharedPlanImportButton,
+overwriteSharedPlanImportButton,
+copySharedPlanImportButton,
 planNotesCounter,
 
 newPlanButton,
@@ -106,6 +111,7 @@ downloadPlansButton,
     plans,
     editPlanNameButton,
     currentPlanNameInput,
+    shareCurrentPlanButton,
     planHome,
     plansList,
     planEditor,
@@ -468,8 +474,16 @@ import {
     setupPlanController,
     addCategoriesToCurrentPlan,
     addEquipmentToCurrentPlan,
-    addAndOpenPlan
+    addAndOpenPlan,
+    openPlan
 } from "./plans/plan-controller.js";
+
+import {
+    configurePlanSharing,
+    sharePlan,
+    setupPlanSharing,
+    handleInitialPlanShare
+} from "./plans/plan-sharing.js";
 
 import {
     configurePlanPdf,
@@ -1267,6 +1281,8 @@ configurePlanController({
     plans,
     editPlanNameButton,
     currentPlanNameInput,
+    shareCurrentPlanButton,
+    sharePlan,
     planHome,
     plansList,
     planEditor,
@@ -1338,6 +1354,19 @@ planCategorySelected,
 addPlanCategoryButton,
 planCategoryOptions,    
 
+});
+
+configurePlanSharing({
+    plans,
+    getExercises: () => exercises,
+    renderPlansList,
+    openPlan,
+    navigateToPlans: () => tabPlans.click(),
+    importModal: sharedPlanImportModal,
+    importMessage: sharedPlanImportMessage,
+    cancelImportButton: cancelSharedPlanImportButton,
+    overwriteImportButton: overwriteSharedPlanImportButton,
+    copyImportButton: copySharedPlanImportButton
 });
 
 configureFilterUI({
@@ -1616,10 +1645,12 @@ async function initializeApp() {
     setupPlanPdf();
     setupBackupControls();
     setupAppController();
+    await setupPlanSharing();
 
     displayExercises();
     restoreLastPage();
     offerWorkoutResume();
+    await handleInitialPlanShare();
 }
 
 initializeApp();

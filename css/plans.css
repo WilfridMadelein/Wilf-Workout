@@ -2611,3 +2611,27 @@ html[data-theme="dark"] .auto-plan-help {
         grid-template-columns: 1fr;
     }
 }
+
+
+/* =========================================================
+   PARTAGE DE PLANS
+========================================================= */
+
+.plan-card-title-row { width: 100%; min-width: 0; display: flex; align-items: flex-start; gap: 10px; }
+.plan-card-title-row .plan-card-title { min-width: 0; margin-right: auto; overflow-wrap: anywhere; }
+.plan-card-updated { margin-top: -2px; color: #777; font-size: 12px; }
+.plan-share-button { flex: 0 0 auto; padding: 6px 10px; border: 1px solid #d96a00; border-radius: 6px; background: transparent; color: #b95a00; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.plan-share-button:hover { background: rgba(217, 106, 0, 0.09); }
+.plan-share-button:focus-visible { outline: 2px solid #d96a00; outline-offset: 2px; }
+.plan-share-current { margin-left: auto; }
+.shared-plan-import-actions { flex-wrap: wrap; }
+.shared-plan-copy-button { border-color: #d96a00; color: #a94f00; }
+.shared-plan-overwrite-button { border-color: #a66; background: #7d3535; color: #fff; }
+html[data-theme="dark"] .plan-card-updated { color: #aaa; }
+html[data-theme="dark"] .plan-share-button, html[data-theme="dark"] .shared-plan-copy-button { border-color: #ff9f43; color: #ffad62; }
+html[data-theme="dark"] .plan-share-button:hover { background: rgba(255, 159, 67, 0.12); }
+
+@media (max-width: 520px) {
+    .shared-plan-import-actions { align-items: stretch; flex-direction: column; }
+    .shared-plan-import-actions button { width: 100%; }
+}

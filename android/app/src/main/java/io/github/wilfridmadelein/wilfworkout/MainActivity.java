@@ -10,6 +10,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(WilfStoragePlugin.class);
         registerPlugin(WilfTimerNotificationsPlugin.class);
+        registerPlugin(WilfSharePlugin.class);
         super.onCreate(savedInstanceState);
     }
     @Override

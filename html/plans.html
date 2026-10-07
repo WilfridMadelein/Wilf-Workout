@@ -86,6 +86,18 @@
 
 </div>
 
+<div id="shared-plan-import-modal" class="plan-pdf-modal" hidden>
+    <div class="plan-pdf-dialog plan-backup-dialog">
+        <h3>Ce plan existe déjà</h3>
+        <p id="shared-plan-import-message"></p>
+        <div class="plan-pdf-actions shared-plan-import-actions">
+            <button id="cancel-shared-plan-import-button" type="button">Retour en arrière</button>
+            <button id="copy-shared-plan-import-button" class="shared-plan-copy-button" type="button">Créer une nouvelle version</button>
+            <button id="overwrite-shared-plan-import-button" class="shared-plan-overwrite-button" type="button">Écraser l'ancienne version</button>
+        </div>
+    </div>
+</div>
+
 <!-- CRÉATION AUTOMATIQUE -->
 <div id="auto-plan-page" class="auto-plan-page" hidden>
     <button id="back-to-plan-home-button" type="button">← Retour aux plans</button>
@@ -505,6 +517,8 @@
         maxlength="80"
         hidden
     >
+
+    <button id="share-current-plan-button" class="plan-share-button plan-share-current" type="button">Partager</button>
 
 </div>
 
