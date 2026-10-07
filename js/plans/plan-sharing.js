@@ -1,4 +1,5 @@
 import { hydratePlan, serializePlan, savePlanNow } from "../storage/plan-storage.js";
+import { encodePlanShareV3, decodePlanShareV3 } from "./plan-share-codec-v3.js";
 
 // ============================================================
 // PARTAGE DE PLANS
@@ -224,6 +225,8 @@ async function encodeSharePayload(payload) {
     const candidates = [{ raw: new TextEncoder().encode(compact), plain: "p", modes: ["r", "d", "c"] }];
     try { candidates.push({ raw: encodeShareBinary(packed), plain: "b", modes: ["s", "e", "z"] }); }
     catch { /* Preserver toutes les chaines et extensions avec le format JSON. */ }
+    try { candidates.push({ raw: encodePlanShareV3(normalized.plan), plain: "u", modes: ["v", "w", "x"] }); }
+    catch (error) { console.debug("Format de partage V3 non applicable, conservation du format compatible V2.", error); }
     let shortest = null;
     for (const { raw, plain, modes } of candidates) {
         const token = `${plain}${bytesToBase64Url(raw)}`;
@@ -242,33 +245,34 @@ async function encodeSharePayload(payload) {
     return shortest;
 }
 
+async function decompressShareBytes(bytes, format) {
+    if (typeof DecompressionStream !== "function") throw new Error("Cette version de l'application ne peut pas lire ce lien compressé.");
+    const reader = new Blob([bytes]).stream().pipeThrough(new DecompressionStream(format)).getReader();
+    const chunks = [];
+    let length = 0;
+    try {
+        while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            length += value.length;
+            if (length > MAX_SHARE_JSON_LENGTH) { await reader.cancel(); throw new Error("Le plan partagé est trop volumineux."); }
+            chunks.push(value);
+        }
+    } finally { reader.releaseLock(); }
+    const output = new Uint8Array(length);
+    let offset = 0;
+    for (const chunk of chunks) { output.set(chunk, offset); offset += chunk.length; }
+    return output;
+}
+
 async function decodeSharePayload(token) {
     if (typeof token !== "string" || token.length < 2 || token.length > MAX_SHARE_TOKEN_LENGTH) throw new Error("Lien de partage invalide ou trop volumineux.");
     const mode = token[0];
     const bytes = base64UrlToBytes(token.slice(1));
-    let output = bytes;
-    const formats = { c: "gzip", d: "deflate", r: "deflate-raw", s: "deflate-raw", e: "deflate", z: "gzip" };
-    if (Object.hasOwn(formats, mode)) {
-        if (typeof DecompressionStream !== "function") throw new Error("Cette version de l'application ne peut pas lire ce lien compressé.");
-        const reader = new Blob([bytes]).stream().pipeThrough(new DecompressionStream(formats[mode])).getReader();
-        const chunks = [];
-        let length = 0;
-        try {
-            while (true) {
-                const { value, done } = await reader.read();
-                if (done) break;
-                length += value.length;
-                if (length > MAX_SHARE_JSON_LENGTH) {
-                    await reader.cancel();
-                    throw new Error("Le plan partagé est trop volumineux.");
-                }
-                chunks.push(value);
-            }
-        } finally { reader.releaseLock(); }
-        output = new Uint8Array(length);
-        let offset = 0;
-        for (const chunk of chunks) { output.set(chunk, offset); offset += chunk.length; }
-    } else if (mode !== "p" && mode !== "b") throw new Error("Format de partage inconnu.");
+    const formats = { c: "gzip", d: "deflate", r: "deflate-raw", s: "deflate-raw", e: "deflate", z: "gzip", v: "deflate-raw", w: "deflate", x: "gzip" };
+    const output = Object.hasOwn(formats, mode) ? await decompressShareBytes(bytes, formats[mode]) : bytes;
+    if (["u", "v", "w", "x"].includes(mode)) return { format: PLAN_SHARE_FORMAT, version: PLAN_SHARE_VERSION, plan: decodePlanShareV3(output) };
+    if (!["p", "b", "r", "d", "c", "s", "e", "z"].includes(mode)) throw new Error("Format de partage inconnu.");
     const binary = ["b", "s", "e", "z"].includes(mode);
     const decoded = binary ? decodeShareBinary(output) : JSON.parse(new TextDecoder().decode(output));
     if (JSON.stringify(decoded).length > MAX_SHARE_JSON_LENGTH) throw new Error("Le plan partagé est trop volumineux.");
@@ -350,10 +354,8 @@ function replacePlanContents(target, source) {
 function clearCurrentShareHash() {
     try {
         const url = new URL(window.location.href);
-        const params = new URLSearchParams(url.hash.replace(/^#/, ""));
-        if (!params.has(PLAN_SHARE_HASH_KEY)) return;
-        params.delete(PLAN_SHARE_HASH_KEY);
-        url.hash = params.toString();
+        if (!extractShareToken(url.toString())) return;
+        url.hash = "";
         history.replaceState(history.state, "", url.toString());
     } catch (error) {
         console.warn("Impossible de nettoyer le lien de partage.", error);
@@ -409,10 +411,11 @@ async function completePendingImport(mode) {
 function extractShareToken(urlValue) {
     try {
         const url = new URL(urlValue, window.location.href);
-        return new URLSearchParams(url.hash.replace(/^#/, "")).get(PLAN_SHARE_HASH_KEY);
-    } catch {
-        return null;
-    }
+        const hash = url.hash.replace(/^#/, "");
+        if (!hash) return null;
+        if (!hash.includes("=")) return /^[pbrdcsezuvwx][A-Za-z0-9_-]+$/.test(hash) ? hash : null;
+        return new URLSearchParams(hash).get(PLAN_SHARE_HASH_KEY);
+    } catch { return null; }
 }
 
 async function processShareToken(token) {
@@ -523,7 +526,7 @@ async function sharePlan(plan) {
         const payload = { format: PLAN_SHARE_FORMAT, version: PLAN_SHARE_VERSION, plan: createSharedPlanRecord(plan) };
         const token = await encodeSharePayload(payload);
         const url = new URL(PLAN_SHARE_WEB_URL);
-        url.hash = new URLSearchParams({ [PLAN_SHARE_HASH_KEY]: token }).toString();
+        url.hash = token;
         const message = "Regarde, je t'ai créé un plan sur Wilf-Workout qui devrait t'intéresser !";
         await shareText(`Wilf-Workout — ${plan.name}`, message, url.toString());
     } catch (error) {
