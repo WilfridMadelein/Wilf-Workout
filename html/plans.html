@@ -256,6 +256,38 @@
 
                     <span>sec</span>
                 </div>
+
+            </div>
+
+            <div class="plan-parameter">
+                <label for="auto-plan-priority-superset-rest">Repos super-set</label>
+
+                <div class="auto-plan-priority-value-row">
+                    <button
+                        type="button"
+                        class="auto-plan-priority-reset"
+                        data-auto-priority-reset="supersetRest"
+                        aria-label="Réinitialiser le repos super-set"
+                    >⟳</button>
+
+                    <div class="plan-default-number-control">
+                        <input
+                            id="auto-plan-priority-superset-rest"
+                            class="plan-default-number-input"
+                            type="number"
+                            min="0"
+                            max="999"
+                            step="15"
+                        >
+
+                        <div class="plan-default-arrow-stack">
+                            <button type="button" class="plan-number-arrow" data-auto-priority-direction="1">▲</button>
+                            <button type="button" class="plan-number-arrow" data-auto-priority-direction="-1">▼</button>
+                        </div>
+                    </div>
+
+                    <span>sec</span>
+                </div>
             </div>
 
             <div class="plan-parameter">
@@ -611,6 +643,30 @@
                     max="999"
                     step="15"
                     value="60"
+                >
+
+                <div class="plan-default-arrow-stack">
+                    <button type="button" class="plan-number-arrow" data-direction="1">▲</button>
+                    <button type="button" class="plan-number-arrow" data-direction="-1">▼</button>
+                </div>
+            </div>
+
+            <span>sec</span>
+        </div>
+
+        <div class="plan-parameter">
+            <label for="plan-superset-rest">Repos super-set</label>
+
+            <div class="plan-default-number-control">
+                <input
+                    type="number"
+                    id="plan-superset-rest"
+                    class="plan-default-number-input"
+                    data-min-chars="3"
+                    min="0"
+                    max="999"
+                    step="15"
+                    value="15"
                 >
 
                 <div class="plan-default-arrow-stack">

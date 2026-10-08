@@ -19,6 +19,7 @@ let setsInput;
 let repsInput;
 let timeInput;
 let restInput;
+let supersetRestInput;
 let weightInput;
 let tempoInputs;
 let weightUnitSwitch;
@@ -47,6 +48,7 @@ let onApplySplitOrderToAll = async () => {};
 // ============================================================
 
 function configureSettingsController(dependencies) {
+    supersetRestInput = document.getElementById("settings-plan-superset-rest");
     ({
         getAppSettings,
         scheduleAppSettingsSave,
@@ -139,6 +141,7 @@ function refreshSettingsInterface() {
     repsInput.value = defaults.reps;
     timeInput.value = defaults.time;
     restInput.value = defaults.rest;
+    supersetRestInput.value = defaults.supersetRest;
     weightInput.value = defaults.weight;
 
     const tempo = [
@@ -168,6 +171,7 @@ function refreshSettingsInterface() {
         repsInput,
         timeInput,
         restInput,
+        supersetRestInput,
         weightInput,
         ...tempoInputs
     ].forEach(input => {
@@ -264,6 +268,8 @@ function setupSettingsController() {
         },
         (defaults, value) => defaults.rest = value
     );
+
+    bind(supersetRestInput, { min: 0, max: 999, step: 15, minChars: 3, snapStep: true }, (defaults, value) => defaults.supersetRest = value ?? 15);
 
     bind(
         weightInput,

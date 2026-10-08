@@ -171,8 +171,8 @@ function createPreferredPrescription(candidate, input, { profile = null, random 
     };
 }
 
-function getPrescriptionDurationSeconds(prescription) {
-    return getPlanExerciseDurationSeconds(prescription);
+function getPrescriptionDurationSeconds(prescription, effectiveRest = prescription.rest) {
+    return getPlanExerciseDurationSeconds(prescription, effectiveRest);
 }
 
 function getWorkoutPrescriptionDurationSeconds(prescriptions = []) {

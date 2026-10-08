@@ -329,6 +329,8 @@ import {
 
 import {
     configureExerciseFilters,
+    shouldGroupExercisesByMuscle,
+    updateMuscleRoleFilter,
 
     createMuscleButtons,
     updateMuscleSpecialButtons,
@@ -1101,6 +1103,8 @@ planAutoExcludeProgressions.addEventListener(
 );
 
 configureExerciseFilters({
+    getAppSettings: () => appSettings,
+    scheduleAppSettingsSave,
     getSelectedCategories: () => selectedCategories,
     getSelectedEquipment: () => selectedEquipment,
     getSelectedTypes: () => selectedTypes,
@@ -1150,6 +1154,8 @@ configureExerciseDisplay({
 });
 
 configureExerciseList({
+    shouldGroupExercisesByMuscle,
+    updateMuscleRoleFilter,
     getExercises: () => exercises,
 
     getSearchInput: () => searchInput,

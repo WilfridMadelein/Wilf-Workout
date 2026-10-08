@@ -1,3 +1,4 @@
+import { getPlanExerciseRest } from "./plan-rest.js";
 import {
     getExerciseSplitType
 } from "../exercises/exercise-split.js";
@@ -32,11 +33,12 @@ function getTempoSeconds(tempo = {}) {
     }, 0);
 }
 
-function getPlanExerciseDurationSeconds(planExercise) {
+function getPlanExerciseDurationSeconds(planExercise, effectiveRest = planExercise?.rest) {
     const splitType = getExerciseSplitType(planExercise?.exercise);
     const sets = getSafeNumber(planExercise?.sets);
     const value = getSafeNumber(planExercise?.value);
-    const rest = getSafeNumber(planExercise?.rest);
+    const rest = getSafeNumber(effectiveRest);
+    const splitRest = getSafeNumber(planExercise?.rest);
 
     let workSeconds;
 
@@ -54,13 +56,13 @@ function getPlanExerciseDurationSeconds(planExercise) {
     const splitMultiplier =
         splitType === "split" ? 2 : 1;
 
-    return (workSeconds + rest) * sets * splitMultiplier;
+    return (workSeconds * splitMultiplier + rest + (splitType === "split" ? splitRest : 0)) * sets;
 }
 
 function getPlanDurationSeconds(plan) {
     return (plan?.exercises ?? []).reduce(
         (total, exercise) =>
-            total + getPlanExerciseDurationSeconds(exercise),
+            total + getPlanExerciseDurationSeconds(exercise, getPlanExerciseRest(plan, exercise)),
         0
     );
 }

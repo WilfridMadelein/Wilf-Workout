@@ -13,6 +13,8 @@ let getSelectedProgressionsInclude = () => new Set();
 let getSelectedProgressionsExclude = () => new Set();
 let getSelectedMuscleFamilies = () => new Set();
 let getSelectedSubmuscles = () => new Map();
+let getAppSettings = () => ({});
+let scheduleAppSettingsSave = () => {};
 
 let getEquipmentOptions = () => [];
 let getMuscleFamilies = () => [];
@@ -32,6 +34,8 @@ let displayExercises = () => {};
 let updateFilterSummaries = () => {};
 
 function configureExerciseFilters(dependencies) {
+    getAppSettings = dependencies.getAppSettings;
+    scheduleAppSettingsSave = dependencies.scheduleAppSettingsSave;
     getSelectedCategories = dependencies.getSelectedCategories;
     getSelectedEquipment = dependencies.getSelectedEquipment;
     getSelectedTypes = dependencies.getSelectedTypes;
@@ -75,6 +79,14 @@ function configureExerciseFilters(dependencies) {
 // ------------------------------------------------------------
 
 function createMuscleButtons() {
+    const roleFilter = document.getElementById("muscle-role-filter");
+    roleFilter.addEventListener("change", event => {
+        if (!event.target.matches('input[name="muscle-role"]')) return;
+        const settings = getAppSettings();
+        settings.muscleFilterRole = event.target.value === "primary-secondary" ? "primary-secondary" : "primary";
+        scheduleAppSettingsSave(settings);
+        displayExercises();
+    });
     const muscleFilters = getMuscleFilters();
     const submuscleFilters = getSubmuscleFilters();
     const selectedMuscleFamilies =
@@ -274,7 +286,19 @@ function removeSubmuscleContainer(family) {
     }
 }
 
-function exerciseMatchesMuscle(exercise) {
+function shouldGroupExercisesByMuscle() {
+    return getSelectedMuscleFamilies().size > 0 && getAppSettings().muscleFilterRole === "primary-secondary";
+}
+
+function updateMuscleRoleFilter() {
+    const roleFilter = document.getElementById("muscle-role-filter");
+    if (!roleFilter) return;
+    roleFilter.hidden = getSelectedMuscleFamilies().size === 0;
+    const role = getAppSettings().muscleFilterRole === "primary-secondary" ? "primary-secondary" : "primary";
+    roleFilter.querySelectorAll("input").forEach(input => { input.checked = input.value === role; });
+}
+
+function exerciseMatchesMuscle(exercise, primaryOnly = getAppSettings().muscleFilterRole !== "primary-secondary") {
     const selectedMuscleFamilies =
         getSelectedMuscleFamilies();
 
@@ -287,7 +311,7 @@ function exerciseMatchesMuscle(exercise) {
 
     const allMuscles = [
         ...(exercise.muscles_principaux || []),
-        ...(exercise.muscles_secondaires || [])
+        ...(primaryOnly ? [] : exercise.muscles_secondaires || [])
     ];
 
     return [...selectedMuscleFamilies].some(
@@ -1214,6 +1238,8 @@ function exerciseMatchesProgression(
 // ============================================================
 
 export {
+    shouldGroupExercisesByMuscle,
+    updateMuscleRoleFilter,
     configureExerciseFilters,
 
     createMuscleButtons,

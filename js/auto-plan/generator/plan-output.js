@@ -1,3 +1,4 @@
+import { normalizeSupersetRest } from "../../plans/plan-rest.js";
 import { getPlanExerciseDetailsLines } from "../../exercises/exercise-details.js";
 import { getProgressionName } from "../../exercises/exercise-search.js";
 import { normalizeSplitOrder } from "../../exercises/exercise-split.js";
@@ -35,6 +36,7 @@ function getGeneratedPlanDefaults(request, workout, fallbackDefaults = {}) {
         reps: priorities.reps ?? getRepresentativeValue(reps, fallbackDefaults.reps ?? AUTO_PLAN_PRESCRIPTION_DEFAULTS.reps),
         time: priorities.time ?? getRepresentativeValue(times, fallbackDefaults.time ?? AUTO_PLAN_PRESCRIPTION_DEFAULTS.time),
         rest: priorities.rest ?? getRepresentativeValue(prescriptions.map(item => item.rest), AUTO_PLAN_PRESCRIPTION_DEFAULTS.rest),
+        supersetRest: normalizeSupersetRest(priorities.supersetRest, 15),
         weight: priorities.weight ?? 0,
         weightUnit: ["kg", "lbs"].includes(priorities.weightUnit) ? priorities.weightUnit : ["kg", "lbs"].includes(fallbackDefaults.weightUnit) ? fallbackDefaults.weightUnit : "lbs",
         tempo: {

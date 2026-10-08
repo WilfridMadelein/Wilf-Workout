@@ -1,3 +1,5 @@
+import { normalizeSupersetRest } from "./plan-rest.js";
+import { refreshPlanRestControls } from "./plan-render.js";
 import {
     setupNumberInput,
     updateNumberInputWidth
@@ -76,6 +78,7 @@ let planSetsInput;
 let planRepsInput;
 let planTimeInput;
 let planRestInput;
+let planSupersetRestInput;
 let planWeightInput;
 let planWeightUnitButtons;
 let planTempoInputs;
@@ -103,6 +106,7 @@ let getDefaultPlanSettings = () => null;
 
 
 export function configurePlanController(dependencies) {
+    planSupersetRestInput = document.getElementById("plan-superset-rest");
     ({
         getCurrentPlan,
         setCurrentPlan,
@@ -216,6 +220,8 @@ export function ensurePlanDefaults(plan) {
         plan.defaults.rest = 60;
     }
 
+    plan.defaults.supersetRest = normalizeSupersetRest(plan.defaults.supersetRest);
+
     if (plan.defaults.weight == null) {
         plan.defaults.weight = 0;
     }
@@ -277,6 +283,9 @@ export function loadPlanDefaultsIntoInputs() {
     planRepsInput.value = currentPlan.defaults.reps;
     planTimeInput.value = currentPlan.defaults.time;
     planRestInput.value = currentPlan.defaults.rest;
+    planSupersetRestInput.value = currentPlan.defaults.supersetRest ?? "";
+    planSupersetRestInput.placeholder = "Actuel";
+    planSupersetRestInput.title = "Repos entre les exercices du super-set. Vide : repos individuels actuels.";
     planWeightInput.value = currentPlan.defaults.weight;
 
     updatePlanWeightUnitButtons(currentPlan.defaults.weightUnit);
@@ -303,6 +312,7 @@ planTempoInputs.forEach((input, index) => {
     planRepsInput,
     planTimeInput,
     planRestInput,
+    planSupersetRestInput,
     planWeightInput,
     ...planTempoInputs
 ].forEach(input => {
@@ -407,6 +417,11 @@ export function setupPlanDefaultInputs() {
         (defaults, value) =>
             defaults.rest = value
     );
+
+    bind(planSupersetRestInput, { min: 0, max: 999, step: 15, minChars: 3, snapStep: true }, (defaults, value) => {
+        defaults.supersetRest = normalizeSupersetRest(value);
+        refreshPlanRestControls();
+    });
 
     bind(
     planWeightInput,
@@ -1123,6 +1138,7 @@ function createNewPlanDefaults(defaults = {}) {
         reps: defaults.reps ?? 10,
         time: defaults.time ?? 30,
         rest: defaults.rest ?? 60,
+        supersetRest: normalizeSupersetRest(defaults.supersetRest, 15),
         weight: defaults.weight ?? 0,
         weightUnit: defaults.weightUnit ?? "lbs",
 

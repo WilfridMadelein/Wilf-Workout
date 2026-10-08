@@ -236,6 +236,7 @@ function assertSupportedPlan(plan) {
 }
 
 function encodePlanShareV3(plan, exercises = []) {
+    if (plan.defaults?.supersetRest != null) throw new Error("Repos super-set : utiliser le format de partage V2.");
     assertSupportedPlan(plan);
     const exerciseMap = new Map(exercises.map(exercise => [String(exercise.ID), exercise])), writer = new Writer();
     writer.string(plan.name ?? "Plan"); writer.string(plan.notes ?? "");

@@ -1,3 +1,4 @@
+import { getPlanExerciseRest, usesSupersetRest } from "./plan-rest.js";
 import { createPlanDragController } from "./plan-drag.js";
 
 import {
@@ -229,6 +230,23 @@ function updatePlanExerciseSplitLine(header, planExercise) {
     order.textContent = info.order;
 
     line.replaceChildren(label, order);
+}
+
+function refreshPlanRestControls() {
+    const plan = getCurrentPlan();
+    if (!plan) return;
+    renderedExerciseCards.forEach((card, planExercise) => {
+        const restControl = card.shell.querySelector(".plan-rest-control");
+        const input = restControl.querySelector("input");
+        const isSupersetRest = usesSupersetRest(plan, planExercise);
+        input.value = getPlanExerciseRest(plan, planExercise);
+        input.dispatchEvent(new Event("input"));
+        input.setAttribute("aria-label", isSupersetRest ? "Repos super-set en secondes" : "Repos en secondes");
+        restControl.querySelectorAll("input, button").forEach(control => { control.disabled = isSupersetRest; });
+        restControl.querySelector(".plan-rest-labels span:last-child").textContent = isSupersetRest ? "repos super-set" : "repos";
+        restControl.title = isSupersetRest ? "Modifiable dans les paramètres du plan" : "";
+    });
+    refreshPlanDurationDisplay(plan);
 }
 
 function refreshPlanDurationDisplay(plan = getCurrentPlan()) {
@@ -1217,6 +1235,7 @@ function refreshProgressionCard(newExercise) {
         drag.addSet(setBlock, groupExercises, dragRows);
         workout.appendChild(setBlock);
     });
+    refreshPlanRestControls();
 
     list.appendChild(workout);
 }
@@ -1371,5 +1390,6 @@ export {
     configurePlanRender,
     createPlanNumberInput,
     renderPlanExercises,
-    openPlanExerciseInstructions
+    openPlanExerciseInstructions,
+    refreshPlanRestControls
 };

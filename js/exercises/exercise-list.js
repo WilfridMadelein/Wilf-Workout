@@ -32,6 +32,8 @@ let highlightSearchMatches = () => "";
 let exerciseMatchesCategoryFilter = () => false;
 let exerciseMatchesEquipmentFilter = () => false;
 let exerciseMatchesMuscle = () => true;
+let shouldGroupExercisesByMuscle = () => false;
+let updateMuscleRoleFilter = () => {};
 let exerciseMatchesProgression = () => true;
 
 let removeAddButton = () => {};
@@ -43,6 +45,8 @@ let addExerciseToCurrentPlan = () => {};
 let saveCurrentPlanFilters = () => {};
 
 function configureExerciseList(dependencies) {
+    shouldGroupExercisesByMuscle = dependencies.shouldGroupExercisesByMuscle;
+    updateMuscleRoleFilter = dependencies.updateMuscleRoleFilter;
     getExercises = dependencies.getExercises;
 
     getSearchInput = dependencies.getSearchInput;
@@ -112,6 +116,7 @@ function displayExercises() {
     }
 
     updateFilterSummaries();
+    updateMuscleRoleFilter();
 
     if (isPlanContext) {
         updatePlanFilterSummaries();
@@ -187,6 +192,11 @@ function displayExercises() {
     rankedExercises.sort(
         compareExercisesBySearch
     );
+    const groupByMuscle = shouldGroupExercisesByMuscle();
+    if (groupByMuscle) {
+        rankedExercises.forEach(item => { item.primaryMuscleMatch = exerciseMatchesMuscle(item.exercise, true); });
+        rankedExercises.sort((first, second) => Number(second.primaryMuscleMatch) - Number(first.primaryMuscleMatch));
+    }
 
     // Compteur
     if (exerciseCount) {
@@ -200,8 +210,20 @@ function displayExercises() {
     }
 
     exerciseList.innerHTML = "";
+    let resultContainer = exerciseList;
+    let currentMuscleRole = null;
 
     rankedExercises.forEach(item => {
+        if (groupByMuscle && currentMuscleRole !== item.primaryMuscleMatch) {
+            currentMuscleRole = item.primaryMuscleMatch;
+            resultContainer = document.createElement("section");
+            resultContainer.classList.add("exercise-muscle-section");
+            const heading = document.createElement("h3");
+            heading.classList.add("exercise-muscle-section-title");
+            heading.textContent = currentMuscleRole ? "Primaire" : "Secondaire";
+            resultContainer.appendChild(heading);
+            exerciseList.appendChild(resultContainer);
+        }
         const exercise = item.exercise;
 
         const element =
@@ -293,7 +315,7 @@ if (getProgressionDisplay(exercise) !== "") {
             }
         );
 
-        exerciseList.appendChild(element);
+        resultContainer.appendChild(element);
     });
 
     if (rankedExercises.length === 0) {

@@ -205,8 +205,15 @@ function createWorkoutCard(session) {
 // CALENDRIER
 // ============================================================
 
-function getWorkoutDateKeys() {
-    return new Set(history.map(session => getDateKey(session.startedAt)));
+function getWorkoutDurationByDate() {
+    const durations = new Map();
+    history.forEach(session => {
+        const dateKey = getDateKey(session.startedAt);
+        const seconds = Number(session.elapsedSeconds);
+        const duration = Number.isFinite(seconds) ? Math.max(0, seconds) : 0;
+        durations.set(dateKey, (durations.get(dateKey) ?? 0) + duration);
+    });
+    return durations;
 }
 
 function appendCalendarSpacer() {
@@ -236,7 +243,7 @@ function renderCalendar() {
     calendarTitle.textContent = formatMonthYear(calendarYear, calendarMonth);
     calendarDays.replaceChildren();
 
-    const workoutDates = getWorkoutDateKeys();
+    const workoutDurations = getWorkoutDurationByDate();
     const firstDay = new Date(calendarYear, calendarMonth, 1);
     const firstWeekday = (firstDay.getDay() + 6) % 7;
     const dayCount = new Date(calendarYear, calendarMonth + 1, 0).getDate();
@@ -252,7 +259,14 @@ function renderCalendar() {
         button.className = "history-calendar-day";
         button.textContent = String(day);
 
-        if (workoutDates.has(dateKey)) button.classList.add("has-workout");
+        if (workoutDurations.has(dateKey)) {
+            button.classList.add("has-workout");
+            const duration = document.createElement("span");
+            duration.className = "history-calendar-day-duration";
+            duration.textContent = `${Math.floor(workoutDurations.get(dateKey) / 60)} min`;
+            button.appendChild(duration);
+            button.setAttribute("aria-label", `${formatFullDate(date.getTime())} : ${duration.textContent} d’entraînement`);
+        }
         if (dateKey === selectedDateKey) button.classList.add("is-selected");
 
         button.addEventListener("click", () => selectCalendarDate(dateKey));

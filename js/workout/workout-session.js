@@ -1,3 +1,4 @@
+import { normalizeSupersetRest } from "../plans/plan-rest.js";
 import { isIsometricExercise } from "../exercises/exercise-search.js";
 import { normalizeReserveToFailure } from "../training/reserve-to-failure.js";
 
@@ -149,6 +150,7 @@ function createWorkoutExercise(planExercise, planExerciseIndex) {
         weightUnit: planExercise.weightUnit,
         tempo: cloneTempo(planExercise.tempo),
         rest: planExercise.rest,
+        normalRest: planExercise.rest,
 
         splitRest: planExercise.rest,
 
@@ -183,6 +185,17 @@ function refreshWorkoutSetMetadata(session) {
         );
 
         set.isSuperset = sourceExercises.size > 1;
+        const supersetRest = normalizeSupersetRest(session.defaults?.supersetRest);
+        if (supersetRest !== null) {
+            set.exercises.forEach((exercise, index) => {
+                exercise.normalRest ??= exercise.rest;
+                const rest = set.isSuperset && index < set.exercises.length - 1 ? supersetRest : exercise.normalRest;
+                exercise.series.forEach(series => {
+                    if (!hasWorkoutSeriesLogs(series) && series.rest === exercise.rest) series.rest = rest;
+                });
+                exercise.rest = rest;
+            });
+        }
 
         if (set.isSuperset) {
             set.colorIndex = (supersetColorIndex % 3) + 1;
@@ -235,7 +248,8 @@ const session = {
 
     defaults: {
         reps: plan.defaults?.reps ?? 10,
-        time: plan.defaults?.time ?? 30
+        time: plan.defaults?.time ?? 30,
+        supersetRest: normalizeSupersetRest(plan.defaults?.supersetRest)
     },
 
     sets

@@ -1,3 +1,4 @@
+import { normalizeSupersetRest } from "../plans/plan-rest.js";
 import {
     getStoredPlans,
     putStoredPlan,
@@ -258,6 +259,7 @@ function serializePlan(plan) {
             reps: plan.defaults?.reps ?? 10,
             time: plan.defaults?.time ?? 30,
             rest: plan.defaults?.rest ?? 60,
+            supersetRest: normalizeSupersetRest(plan.defaults?.supersetRest),
 
             weight: plan.defaults?.weight ?? 0,
             weightUnit: ["kg", "lbs"].includes(plan.defaults?.weightUnit)
@@ -327,6 +329,7 @@ function hydratePlan(record, exercises) {
             reps: savedPlan.defaults?.reps ?? 10,
             time: savedPlan.defaults?.time ?? 30,
             rest: savedPlan.defaults?.rest ?? 60,
+            supersetRest: normalizeSupersetRest(savedPlan.defaults?.supersetRest),
 
             weight: savedPlan.defaults?.weight ?? 0,
             weightUnit: ["kg", "lbs"].includes(savedPlan.defaults?.weightUnit)

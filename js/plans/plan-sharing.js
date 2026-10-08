@@ -257,13 +257,15 @@ async function encodeSharePayload(payload) {
     const normalized = JSON.parse(JSON.stringify(payload));
     if (JSON.stringify(normalized).length > MAX_SHARE_JSON_LENGTH) throw new Error("Le plan partagé est trop volumineux.");
 
-    try {
-        const compactV3 = encodePlanShareV3(normalized.plan, getExercises());
-        const token = await shortestEncodedToken(compactV3, { raw: "m", rawDeflate: "n", deflate: "o", gzip: "q" });
-        if (token.length > MAX_SHARE_TOKEN_LENGTH) throw new Error("Le plan partagé est trop volumineux.");
-        return token;
-    } catch (error) {
-        console.warn("Codec de partage V3 indisponible pour ce plan, utilisation du format V2.", error);
+    if (normalized.plan.defaults?.supersetRest == null) {
+        try {
+            const compactV3 = encodePlanShareV3(normalized.plan, getExercises());
+            const token = await shortestEncodedToken(compactV3, { raw: "m", rawDeflate: "n", deflate: "o", gzip: "q" });
+            if (token.length > MAX_SHARE_TOKEN_LENGTH) throw new Error("Le plan partagé est trop volumineux.");
+            return token;
+        } catch (error) {
+            console.warn("Codec de partage V3 indisponible pour ce plan, utilisation du format V2.", error);
+        }
     }
 
     const packed = [2, packShareRecord(normalized.plan, "plan")], compact = JSON.stringify(packed);

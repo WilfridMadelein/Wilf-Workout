@@ -1,3 +1,4 @@
+import { normalizeSupersetRest } from "../../plans/plan-rest.js";
 import { BODY_PART_ORDER } from "./workout-constraint.js";
 import { compareScoredCandidates, scoreExerciseCandidate } from "./exercise-scoring.js";
 import { composeWorkoutSupersets } from "./superset-builder.js";
@@ -254,6 +255,11 @@ function finalizeAttempt(selected, bodyParts, input, targetSeconds, random) {
     });
     const supersetComposition = composeWorkoutSupersets(orderedExercises, input?.request?.supersetPreference, { random });
     const exercises = supersetComposition.exercises;
+    const supersetRest = normalizeSupersetRest(input?.request?.planPriorities?.supersetRest, 15);
+    exercises.forEach((item, index) => {
+        const isIntermediate = item.isSuperset && exercises[index + 1]?.combinationGroup === item.combinationGroup;
+        item.estimatedDurationSeconds = getPrescriptionDurationSeconds(item.prescription, isIntermediate ? supersetRest : item.prescription.rest);
+    });
     const durationSeconds = exercises.reduce((total, item) => total + item.estimatedDurationSeconds, 0);
     const coverage = Object.fromEntries(bodyParts.map(bodyPart => [bodyPart, getCoverage(exercises, bodyPart)]));
     const coveredBodyParts = Object.values(coverage).filter(item => item.status !== "missing").length;

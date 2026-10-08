@@ -42,7 +42,7 @@ function normalizeOptionalPriorityNumber(value, min, max, decimals = 0) {
 
 function normalizeAutoPlanPriorities(value = {}) {
     const tempo = value?.tempo ?? {};
-    const hasStoredValues = [value?.sets, value?.reps, value?.time, value?.rest, value?.weight, tempo.first, tempo.second, tempo.third, tempo.fourth].some(item => item !== null && item !== undefined && item !== "");
+    const hasStoredValues = [value?.sets, value?.reps, value?.time, value?.rest, value?.supersetRest, value?.weight, tempo.first, tempo.second, tempo.third, tempo.fourth].some(item => item !== null && item !== undefined && item !== "");
 
     return {
         preset: AUTO_PLAN_PRIORITY_PRESETS.includes(value?.preset) ? value.preset : hasStoredValues ? "settings" : "empty",
@@ -50,6 +50,7 @@ function normalizeAutoPlanPriorities(value = {}) {
         reps: normalizeOptionalPriorityNumber(value?.reps, 1, 999),
         time: normalizeOptionalPriorityNumber(value?.time, 1, 999),
         rest: normalizeOptionalPriorityNumber(value?.rest, 0, 999),
+        supersetRest: normalizeOptionalPriorityNumber(value?.supersetRest, 0, 999),
         weight: normalizeOptionalPriorityNumber(value?.weight, 0, 9999.9, 1),
         weightUnit: ["kg", "lbs"].includes(value?.weightUnit) ? value.weightUnit : "lbs",
         tempo: {

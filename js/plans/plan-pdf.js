@@ -1,3 +1,4 @@
+import { getPlanExerciseRest } from "./plan-rest.js";
 import { getProgressionName } from "../exercises/exercise-search.js";
 import { getPlanExerciseDetailsLines } from "../exercises/exercise-details.js";
 import { getPlanExerciseSplitInfo } from "../exercises/exercise-split.js";
@@ -692,6 +693,7 @@ y += 7;
     );
 
     const groups = getPlanGroups(plan);
+    const exerciseRests = new Map(plan.exercises.map(item => [item, getPlanExerciseRest(plan, item)]));
     let supersetColorIndex = 0;
 
     for (let index = 0; index < groups.length; index++) {
@@ -702,11 +704,11 @@ y += 7;
         // ----------------------------------------------------
 
         if (group.exercises.length === 1) {
-            const left = createSetLayout(doc, group, planOrder, setWidth, null);
+            const left = createSetLayout(doc, group, planOrder, setWidth, null, exerciseRests);
 
             const nextGroup = groups[index + 1];
             const right = nextGroup?.exercises.length === 1
-                ? createSetLayout(doc, nextGroup, planOrder, setWidth, null)
+                ? createSetLayout(doc, nextGroup, planOrder, setWidth, null, exerciseRests)
                 : null;
 
             const rowHeight = Math.max(left.height, right?.height ?? 0);
@@ -746,7 +748,8 @@ y += 7;
             group,
             planOrder,
             setWidth,
-            fillColor
+            fillColor,
+            exerciseRests
         );
 
         const nextGroup = groups[index + 1];
@@ -754,7 +757,7 @@ y += 7;
         const nextSingle =
             multi.oddSuperset &&
             nextGroup?.exercises.length === 1
-                ? createSetLayout(doc, nextGroup, planOrder, setWidth, null)
+                ? createSetLayout(doc, nextGroup, planOrder, setWidth, null, exerciseRests)
                 : null;
 
         const blockHeight = getMultiSetHeight(multi, nextSingle);
@@ -790,7 +793,7 @@ const slot = drawMultiSetBlock(
     }
 }
 
-function createSetLayout(doc, groupData, planOrder, setWidth, fillColor) {
+function createSetLayout(doc, groupData, planOrder, setWidth, fillColor, exerciseRests) {
     const cardWidth = setWidth - PDF_SET_PADDING * 2;
 
     const cards = groupData.exercises.map(planExercise =>
@@ -798,7 +801,8 @@ function createSetLayout(doc, groupData, planOrder, setWidth, fillColor) {
             doc,
             planExercise,
             planOrder.get(planExercise) - 1,
-            cardWidth
+            cardWidth,
+            exerciseRests.get(planExercise)
         )
     );
 
@@ -1020,7 +1024,8 @@ function getExerciseCardLayout(
     doc,
     planExercise,
     index,
-    width
+    width,
+    effectiveRest = planExercise.rest
 ) {
     const exercise =
         planExercise.exercise ?? {};
@@ -1178,7 +1183,7 @@ function getExerciseCardLayout(
             label: "Repos : ",
 
             value:
-                `${formatNumber(planExercise.rest)} sec`
+                `${formatNumber(effectiveRest)} sec`
         }
     );
 

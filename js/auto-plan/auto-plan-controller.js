@@ -79,6 +79,7 @@ function createPriorityPreset(preset) {
             reps: defaults.reps,
             time: defaults.time,
             rest: defaults.rest,
+            supersetRest: defaults.supersetRest,
             weight: defaults.weight,
             weightUnit,
             tempo: { ...defaults.tempo },
@@ -414,6 +415,7 @@ function renderPlanPriorities() {
     setOptionalInputValue(getElement("auto-plan-priority-reps"), priorities.reps);
     setOptionalInputValue(getElement("auto-plan-priority-time"), priorities.time);
     setOptionalInputValue(getElement("auto-plan-priority-rest"), priorities.rest);
+    setOptionalInputValue(getElement("auto-plan-priority-superset-rest"), priorities.supersetRest);
     setOptionalInputValue(getElement("auto-plan-priority-weight"), priorities.weight);
 
     setOptionalInputValue(getElement("auto-plan-priority-tempo-1"), priorities.tempo.first, { zeroDisplay: "X", minChars: 1 });
@@ -690,6 +692,7 @@ function setupAutoPlanController() {
 bindOptionalNumber("auto-plan-priority-sets", { min: 1, max: 999, step: 1 }, value => draft.planPriorities.sets = value, "[data-auto-priority-direction]");
 bindOptionalNumber("auto-plan-priority-reps", { min: 1, max: 999, step: 1 }, value => draft.planPriorities.reps = value, "[data-auto-priority-direction]");
 bindOptionalNumber("auto-plan-priority-time", { min: 1, max: 999, step: 15, snap: true }, value => draft.planPriorities.time = value, "[data-auto-priority-direction]");
+bindOptionalNumber("auto-plan-priority-superset-rest", { min: 0, max: 999, step: 15, snap: true }, value => draft.planPriorities.supersetRest = value, "[data-auto-priority-direction]");
 bindOptionalNumber("auto-plan-priority-rest", { min: 0, max: 999, step: 15, snap: true }, value => draft.planPriorities.rest = value, "[data-auto-priority-direction]");
 bindOptionalNumber("auto-plan-priority-weight", { min: 0, max: 9999.9, step: 2.5, decimals: 1, snap: true }, value => draft.planPriorities.weight = value, "[data-auto-priority-direction]");
 
