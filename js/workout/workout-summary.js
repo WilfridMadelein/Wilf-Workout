@@ -40,6 +40,7 @@ let onEditLog = () => {};
 let onSessionUpdated = async () => {};
 let getWorkoutHistory = () => [];
 let onOpenHistoryWorkout = async () => {};
+let onOpenExerciseHistory = null;
 
 let currentSession = null;
 let isSetup = false;
@@ -55,7 +56,8 @@ function configureWorkoutSummary(dependencies) {
         onEditLog = () => {},
         onSessionUpdated = async () => {},
         getWorkoutHistory = () => [],
-        onOpenHistoryWorkout = async () => {}
+        onOpenHistoryWorkout = async () => {},
+        onOpenExerciseHistory = null
     } = dependencies);
 }
 
@@ -598,9 +600,16 @@ card.appendChild(main);
 // ============================================================
 
 function renderExerciseHistory(exercise) {
+    if (currentMode === "history" && onOpenExerciseHistory) {
+        onOpenExerciseHistory(exercise);
+        return;
+    }
     const host = page.querySelector("#workout-summary-exercise-history");
     if (!host) return;
-    renderExerciseHistoryPanel(host, { exercise, workoutHistory: getWorkoutHistory(), onOpenWorkout: onOpenHistoryWorkout });
+    renderExerciseHistoryPanel(host, { exercise, workoutHistory: getWorkoutHistory(), onOpenWorkout: async session => {
+        onOpenExerciseHistory?.(exercise, { navigate: false, scrollIntoView: false });
+        await onOpenHistoryWorkout(session);
+    } });
 }
 
 // ============================================================

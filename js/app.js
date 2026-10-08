@@ -285,7 +285,7 @@ import {
     configureExerciseHistoryController,
     setupExerciseHistoryController,
     openExercisePageHistory,
-    closeExercisePageHistory,
+    openHistoryTabExerciseHistory,
     refreshExerciseHistoryViews
 } from "./history/exercise-history-controller.js";
 
@@ -1219,7 +1219,6 @@ configureExerciseDetails({
     setCurrentDetailExercise,
     setCurrentDetailContext,
     onOpenExerciseHistory: openExercisePageHistory,
-    onExerciseDetailsChanged: closeExercisePageHistory
 });
 
 configurePlanPdf({
@@ -1248,6 +1247,10 @@ configureWorkoutSummary({
     onEditLog: editWorkoutLogFromSummary,
     getWorkoutHistory: () => workoutHistory,
     onOpenHistoryWorkout: openWorkoutSummaryFromExerciseHistory,
+    onOpenExerciseHistory: (exercise, { navigate = true, scrollIntoView = true } = {}) => {
+        if (navigate && pageHistory.style.display !== "block") tabHistory.click();
+        openHistoryTabExerciseHistory(exercise, { scrollIntoView });
+    },
 
     onSessionUpdated: async session => {
         try {

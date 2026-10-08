@@ -499,6 +499,8 @@ html[data-theme="dark"] .history-month-group::before {
 .history-exercise-search-list { height: calc(100% - 54px); margin-top: 10px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px; }
 .history-exercise-search-item { width: 100%; padding: 10px 11px; display: flex; justify-content: space-between; gap: 12px; border: none; border-bottom: 1px solid #eee; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .history-exercise-search-item:last-child { border-bottom: none; }
+.history-exercise-search-section-title { position: sticky; top: 0; z-index: 1; margin: 0; padding: 8px 11px; border-bottom: 1px solid #ddd; background: Canvas; color: CanvasText; font-size: 13px; }
+.history-exercise-current-records { display: block; margin-top: 5px; color: #b45309; font-size: 12px; }
 .history-exercise-search-item:hover, .history-exercise-search-item.is-selected { background: rgba(217, 106, 0, 0.09); }
 .history-exercise-search-item span:last-child { flex: 0 0 auto; color: #777; font-size: 12px; text-align: right; }
 .history-exercise-details-panel { overflow-y: auto; }
@@ -509,4 +511,31 @@ html[data-theme="dark"] .history-month-group::before {
 html[data-theme="dark"] .history-exercise-search-panel, html[data-theme="dark"] .history-exercise-details-panel { background: #242424; border-color: #444; }
 html[data-theme="dark"] .history-exercise-search-list, html[data-theme="dark"] #history-exercise-search-input, html[data-theme="dark"] .history-exercise-search-item { border-color: #444; }
 html[data-theme="dark"] .history-exercise-search-item span:last-child { color: #aaa; }
+html[data-theme="dark"] .history-exercise-search-section-title { background: #242424; color: #ededed; border-color: #444; }
+html[data-theme="dark"] .history-exercise-current-records { color: #f28c28; }
 @media (max-width: 700px) { .history-exercise-browser { grid-template-columns: 1fr; } .history-exercise-search-panel, .history-exercise-details-panel { height: 440px; } }
+
+/* =========================================================
+   GRAPHIQUES — HISTORIQUE
+========================================================= */
+.history-chart-section, .history-exercise-chart { padding: 18px; border: 1px solid #ddd; border-radius: 14px; background: Canvas; color: CanvasText; margin-bottom: 30px; min-width: 0; }
+.history-chart-section h2 { margin: 0 0 14px; }
+.history-chart-toolbar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: end; margin-bottom: 14px; }
+.history-chart-toolbar label { display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: #666; font-weight: 600; }
+.history-chart-toolbar label[hidden] { display: none; }
+.history-chart-toolbar select { min-width: 135px; max-width: min(100%, 330px); border: 1px solid #ccc; border-radius: 8px; padding: 9px; background: Canvas; color: CanvasText; font: inherit; }
+.history-chart-canvas { position: relative; width: 100%; height: 260px; min-width: 0; }
+.history-chart-message { font-size: 12px; color: #777; margin: 10px 0 0; }
+.history-calendar-day.is-highlighted-week { outline: 2px solid #f28c28; outline-offset: -2px; background: rgba(242,140,40,.12); }
+.history-calendar-day.is-highlighted-week.is-selected { background: #f28c28; }
+.history-exercise-chart { margin: 12px 0 4px; padding: 12px 4px 8px; border: none; border-radius: 0; }
+.history-exercise-chart .history-chart-canvas { height: 245px; }
+.history-record-chart-button { text-align: left; display: flex; flex-direction: column; gap: 3px; padding: 0; border: none; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.history-record-chart-button:hover span, .history-record-chart-button:focus-visible span { color: #d96a00; text-decoration: underline; }
+.history-record-chart-button:focus-visible, .history-chart-toolbar select:focus-visible { outline: 2px solid #f28c28; outline-offset: 3px; }
+html[data-theme="dark"] .history-chart-section { border-color: #444; }
+html[data-theme="dark"] .history-chart-toolbar label, html[data-theme="dark"] .history-chart-message { color: #aaa; }
+@media (max-width: 550px) { .history-chart-toolbar label { flex: 1 1 130px; } .history-chart-toolbar select { width: 100%; min-width: 0; } .history-chart-canvas { height: 225px; } }
+
+.history-calendar-day.is-outside-month { opacity: .48; }
+.history-calendar-day.is-outside-month.is-highlighted-week { opacity: .85; }

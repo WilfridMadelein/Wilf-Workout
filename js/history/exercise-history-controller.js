@@ -2,6 +2,7 @@ import { getSearchTerms, getProgressionName, getProgressionDisplay, findValidTer
 import { getExerciseSplitDetailText } from "../exercises/exercise-split.js";
 import { renderExerciseMuscleMap, destroyExerciseMuscleMapsIn } from "../exercises/exercise-muscle-map.js";
 import { renderExerciseHistoryPanel } from "./exercise-history-view.js";
+import { getExerciseHistory } from "./exercise-history.js";
 
 // ============================================================
 // HISTORIQUE PAR EXERCICE
@@ -18,6 +19,7 @@ let getWorkoutHistory = () => [];
 let onOpenWorkout = async () => {};
 let selectedExercisePageExercise = null;
 let selectedHistoryExercise = null;
+let openedHistoryExercise = null;
 let isSetup = false;
 
 function configureExerciseHistoryController(dependencies) {
@@ -33,9 +35,7 @@ function appendDetailLine(container, label, value) {
 }
 
 function renderHistoryExerciseDetails(exercise) {
-    const changed = !selectedHistoryExercise || String(selectedHistoryExercise.ID) !== String(exercise.ID);
     selectedHistoryExercise = exercise;
-    if (changed && historyExerciseHistoryHost) { historyExerciseHistoryHost.replaceChildren(); historyExerciseHistoryHost.hidden = true; }
     destroyExerciseMuscleMapsIn(historyExerciseDetails);
     historyExerciseDetails.replaceChildren();
     historyExerciseName.disabled = false;
@@ -65,10 +65,27 @@ function renderHistoryExerciseDetails(exercise) {
 function renderHistoryExerciseList() {
     if (!historyExerciseList || !historySearchInput) return;
     const terms = getSearchTerms(historySearchInput.value);
-    const ranked = getExercises().filter(exercise => !terms.length || findValidTermCombination(exercise.nom, terms) || findValidTermCombination(getProgressionName(exercise), terms)).map(exercise => ({ exercise, searchRanking: getExerciseSearchRanking(exercise, terms) })).sort(compareExercisesBySearch);
+    const history = getWorkoutHistory();
+    const sevenDays = new Date(); sevenDays.setHours(0, 0, 0, 0); sevenDays.setDate(sevenDays.getDate() - 6);
+    const thirtyOneDays = new Date(sevenDays); thirtyOneDays.setDate(thirtyOneDays.getDate() - 24);
+    const ranked = getExercises().filter(exercise => !terms.length || findValidTermCombination(exercise.nom, terms) || findValidTermCombination(getProgressionName(exercise), terms)).map(exercise => {
+        const records = getExerciseHistory(history, exercise);
+        const lastUsed = records.length ? Number(records[0].session.startedAt) : null;
+        return { exercise, lastUsed, section: lastUsed >= sevenDays.getTime() ? 0 : lastUsed >= thirtyOneDays.getTime() ? 1 : 2, searchRanking: getExerciseSearchRanking(exercise, terms) };
+    }).filter(item => item.lastUsed !== null).sort((first, second) => first.section - second.section || compareExercisesBySearch(first, second));
     historyExerciseList.replaceChildren();
+    let currentSection = -1, section;
 
-    ranked.forEach(({ exercise }) => {
+    ranked.forEach(({ exercise, section: sectionIndex }) => {
+        if (currentSection !== sectionIndex) {
+            currentSection = sectionIndex;
+            section = document.createElement("section");
+            const title = document.createElement("h4");
+            title.className = "history-exercise-search-section-title";
+            title.textContent = ["7 derniers jours", "31 derniers jours", "Tous"][sectionIndex];
+            section.appendChild(title);
+            historyExerciseList.appendChild(section);
+        }
         const button = document.createElement("button");
         button.type = "button";
         button.className = "history-exercise-search-item";
@@ -79,7 +96,7 @@ function renderHistoryExerciseList() {
         progression.textContent = getProgressionDisplay(exercise);
         button.append(name, progression);
         button.addEventListener("click", () => { renderHistoryExerciseDetails(exercise); renderHistoryExerciseList(); });
-        historyExerciseList.appendChild(button);
+        section.appendChild(button);
     });
 
     if (!ranked.length) {
@@ -103,15 +120,19 @@ function openExercisePageHistory(exercise) {
     renderExerciseHistoryPanel(exercisePageHistoryHost, { exercise, workoutHistory: getWorkoutHistory(), onOpenWorkout });
 }
 
-function openHistoryTabExerciseHistory(exercise = selectedHistoryExercise) {
+function openHistoryTabExerciseHistory(exercise = selectedHistoryExercise, { scrollIntoView = true } = {}) {
     if (!historyExerciseHistoryHost || !exercise) return;
+    renderHistoryExerciseDetails(exercise);
     selectedHistoryExercise = exercise;
-    renderExerciseHistoryPanel(historyExerciseHistoryHost, { exercise, workoutHistory: getWorkoutHistory(), onOpenWorkout });
+    openedHistoryExercise = exercise;
+    renderHistoryExerciseList();
+    renderExerciseHistoryPanel(historyExerciseHistoryHost, { exercise, workoutHistory: getWorkoutHistory(), onOpenWorkout, scrollIntoView });
 }
 
 function refreshExerciseHistoryViews() {
-    if (selectedExercisePageExercise && exercisePageHistoryHost && !exercisePageHistoryHost.hidden) renderExerciseHistoryPanel(exercisePageHistoryHost, { exercise: selectedExercisePageExercise, workoutHistory: getWorkoutHistory(), onOpenWorkout, scrollIntoView: false });
-    if (selectedHistoryExercise && historyExerciseHistoryHost && !historyExerciseHistoryHost.hidden) renderExerciseHistoryPanel(historyExerciseHistoryHost, { exercise: selectedHistoryExercise, workoutHistory: getWorkoutHistory(), onOpenWorkout, scrollIntoView: false });
+    renderHistoryExerciseList();
+    if (selectedExercisePageExercise && exercisePageHistoryHost && !exercisePageHistoryHost.hidden) renderExerciseHistoryPanel(exercisePageHistoryHost, { exercise: selectedExercisePageExercise, workoutHistory: getWorkoutHistory(), onOpenWorkout, scrollIntoView: false, expanded: exercisePageHistoryHost.querySelector(".workout-summary-history-panel")?.classList.contains("is-open") ?? true });
+    if (openedHistoryExercise && historyExerciseHistoryHost && !historyExerciseHistoryHost.hidden) renderExerciseHistoryPanel(historyExerciseHistoryHost, { exercise: openedHistoryExercise, workoutHistory: getWorkoutHistory(), onOpenWorkout, scrollIntoView: false, expanded: historyExerciseHistoryHost.querySelector(".workout-summary-history-panel")?.classList.contains("is-open") ?? true });
 }
 
 function setupExerciseHistoryController() {
@@ -122,4 +143,4 @@ function setupExerciseHistoryController() {
     renderHistoryExerciseList();
 }
 
-export { configureExerciseHistoryController, setupExerciseHistoryController, openExercisePageHistory, closeExercisePageHistory, refreshExerciseHistoryViews };
+export { configureExerciseHistoryController, setupExerciseHistoryController, openExercisePageHistory, openHistoryTabExerciseHistory, closeExercisePageHistory, refreshExerciseHistoryViews };

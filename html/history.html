@@ -42,6 +42,18 @@
         </section>
     </section>
 
+    <!-- GRAPHIQUES — ENTRAÎNEMENTS -->
+    <section class="history-chart-section" aria-label="Statistiques d'entraînement">
+        <h2>Statistiques d'entraînement</h2>
+        <div class="history-chart-toolbar">
+            <label>Graphique <select id="history-chart-metric"><option value="countWeek">Entraînements par semaine</option><option value="durationWeek">Minutes par semaine</option><option value="durationSession">Minutes par entraînement</option></select></label>
+            <label>Période <select id="history-chart-range"><option value="8">8 semaines</option><option value="12">12 semaines</option><option value="26">26 semaines</option><option value="52">52 semaines</option><option value="0">Tout</option></select></label>
+            <label>Début de semaine <select id="history-week-start"><option value="1">Lundi</option><option value="2">Mardi</option><option value="3">Mercredi</option><option value="4">Jeudi</option><option value="5">Vendredi</option><option value="6">Samedi</option><option value="0">Dimanche</option></select></label>
+        </div>
+        <div class="history-chart-canvas"><canvas id="history-workout-chart" role="img" aria-label="Évolution des entraînements, sélectionner un point pour consulter le calendrier"></canvas></div>
+        <p id="history-chart-message" class="history-chart-message" aria-live="polite">Sélectionne un point pour retrouver sa date dans le calendrier.</p>
+    </section>
+
     <!-- RÉCAPITULATIF -->
     <section class="history-summary-section">
         <h2>Récapitulatif de l'entraînement</h2>

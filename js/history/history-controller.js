@@ -1,3 +1,6 @@
+import { dateKey, startOfWeek, shiftDays, getWorkoutChartData } from "./history-chart-data.js";
+import { renderProgressChart } from "./history-charts.js";
+import { getSelectedChartMetric, getChartPreferences, saveChartPreferences } from "./history-chart-preferences.js";
 import { hasWorkoutExerciseLogs, isWorkoutSetCompleted } from "../workout/workout-session.js";
 
 // ============================================================
@@ -30,6 +33,10 @@ let currentPage = 0;
 let selectedDateKey = null;
 let selectedWorkoutId = null;
 let pendingDeleteSession = null;
+let selectedWeekStart = 1;
+let highlightedWeekStart = null;
+let workoutChart = null;
+let chartRevision = 0;
 
 const now = new Date();
 let calendarYear = now.getFullYear();
@@ -121,6 +128,7 @@ function setSelectedHistoryWorkout(session) {
 
     selectedWorkoutId = session.id;
     selectedDateKey = getDateKey(session.startedAt);
+    highlightedWeekStart = null;
 
     const date = new Date(session.startedAt);
     calendarYear = date.getFullYear();
@@ -216,14 +224,9 @@ function getWorkoutDurationByDate() {
     return durations;
 }
 
-function appendCalendarSpacer() {
-    const spacer = document.createElement("div");
-    spacer.className = "history-calendar-day-spacer";
-    calendarDays.appendChild(spacer);
-}
-
 function selectCalendarDate(dateKey) {
     selectedDateKey = dateKey;
+    highlightedWeekStart = null;
     selectedWorkoutId = null;
     summaryMeta.hidden = true;
     summaryHost.hidden = true;
@@ -245,35 +248,30 @@ function renderCalendar() {
 
     const workoutDurations = getWorkoutDurationByDate();
     const firstDay = new Date(calendarYear, calendarMonth, 1);
-    const firstWeekday = (firstDay.getDay() + 6) % 7;
-    const dayCount = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+    const firstWeekday = (firstDay.getDay() - selectedWeekStart + 7) % 7;
 
-    for (let index = 0; index < firstWeekday; index += 1) appendCalendarSpacer();
-
-    for (let day = 1; day <= dayCount; day += 1) {
-        const date = new Date(calendarYear, calendarMonth, day);
-        const dateKey = getDateKey(date.getTime());
+    for (let index = 0; index < 42; index += 1) {
+        const date = new Date(calendarYear, calendarMonth, index - firstWeekday + 1);
+        const outside = date.getMonth() !== calendarMonth, calendarKey = getDateKey(date.getTime());
         const button = document.createElement("button");
-
-        button.type = "button";
-        button.className = "history-calendar-day";
-        button.textContent = String(day);
-
-        if (workoutDurations.has(dateKey)) {
+        button.type = "button"; button.className = "history-calendar-day";
+        button.textContent = String(date.getDate());
+        if (outside) button.classList.add("is-outside-month");
+        if (workoutDurations.has(calendarKey)) {
             button.classList.add("has-workout");
-            const duration = document.createElement("span");
-            duration.className = "history-calendar-day-duration";
-            duration.textContent = `${Math.floor(workoutDurations.get(dateKey) / 60)} min`;
+            const duration = document.createElement("span"); duration.className = "history-calendar-day-duration";
+            duration.textContent = `${Math.floor(workoutDurations.get(calendarKey) / 60)} min`;
             button.appendChild(duration);
             button.setAttribute("aria-label", `${formatFullDate(date.getTime())} : ${duration.textContent} d’entraînement`);
         }
-        if (dateKey === selectedDateKey) button.classList.add("is-selected");
-
-        button.addEventListener("click", () => selectCalendarDate(dateKey));
+        if (calendarKey === selectedDateKey) button.classList.add("is-selected");
+        if (highlightedWeekStart && date >= highlightedWeekStart && date < shiftDays(highlightedWeekStart, 7)) button.classList.add("is-highlighted-week");
+        button.addEventListener("click", () => {
+            if (outside) { calendarYear = date.getFullYear(); calendarMonth = date.getMonth(); }
+            selectCalendarDate(calendarKey);
+        });
         calendarDays.appendChild(button);
     }
-
-    for (let index = firstWeekday + dayCount; index < 42; index += 1) appendCalendarSpacer();
 }
 
 // ============================================================
@@ -372,6 +370,7 @@ async function deletePendingWorkout() {
 
         renderCalendar();
         renderWorkoutList();
+        renderWorkoutChart();
     } catch (error) {
         console.error("Impossible de supprimer l'entraînement de l'historique.", error);
         alert("Impossible de supprimer cet entraînement de l'historique.");
@@ -416,6 +415,7 @@ function setWorkoutHistory(records) {
     renderCalendar();
     renderWorkoutList();
     renderSummaryMeta();
+    renderWorkoutChart();
 }
 
 function refreshWorkoutHistory(records) {
@@ -426,13 +426,100 @@ function refreshWorkoutHistory(records) {
     renderCalendar();
     renderWorkoutList();
     renderSummaryMeta();
+    renderWorkoutChart();
 }
 
+// ============================================================
+// GRAPHIQUE ET NAVIGATION DES SEMAINES
+// ============================================================
+function getWeekSetting() {
+    try { const saved = localStorage.getItem("wilf-history-week-start");
+        if (saved === null) return 1;
+        const day = Number(saved); return Number.isInteger(day) && day >= 0 && day <= 6 ? day : 1; }
+    catch { return 1; }
+}
+function selectWorkoutChartPoint(point, weekly) {
+    if (weekly) {
+        highlightedWeekStart = startOfWeek(point.date, selectedWeekStart);
+        selectedDateKey = dateKey(highlightedWeekStart);
+        selectedWorkoutId = null;
+        summaryMeta.hidden = true; summaryHost.hidden = true;
+        calendarYear = highlightedWeekStart.getFullYear(); calendarMonth = highlightedWeekStart.getMonth();
+        const first = history.findIndex(session => dateKey(startOfWeek(session.startedAt, selectedWeekStart)) === point.key);
+        if (first >= 0) currentPage = Math.floor(first / PAGE_SIZE);
+        renderCalendar(); renderWorkoutList();
+        document.querySelector(".history-calendar")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        return;
+    }
+    highlightedWeekStart = null;
+    const session = point.session;
+    if (!session) return;
+    setSelectedHistoryWorkout(session);
+    onOpenWorkout(session);
+}
+async function renderWorkoutChart() {
+    const canvas = document.getElementById("history-workout-chart");
+    if (!canvas) return;
+    const version = ++chartRevision;
+    const metric = document.getElementById("history-chart-metric")?.value ?? "countWeek";
+    const range = Number(document.getElementById("history-chart-range")?.value ?? 12);
+    const points = getWorkoutChartData(history, metric, selectedWeekStart, range);
+    const message = document.getElementById("history-chart-message");
+    if (message) message.textContent = points.length && history.length ? "Sélectionne un point pour retrouver la date et le récapitulatif dans l'historique." : "Aucun entraînement enregistré pour cette période.";
+    const previous = workoutChart; workoutChart = null;
+    if (!points.length || !history.length) { previous?.destroy(); return; }
+    try {
+        const chart = await renderProgressChart(canvas, points, { label: metric === "countWeek" ? "Entraînements" : "Durée", unit: metric === "countWeek" ? "séances" : "min", bars: metric !== "durationSession", existing: previous, onSelect: point => selectWorkoutChartPoint(point, metric !== "durationSession") });
+        if (version !== chartRevision) chart?.destroy(); else workoutChart = chart;
+    } catch (error) {
+        previous?.destroy();
+        if (version === chartRevision && message) message.textContent = /Chart\.js (est absent|n'a pas été chargé)/.test(error?.message ?? "") ? "Chart.js est absent de js/vendor/chartjs/." : "Impossible d'afficher le graphique pour le moment.";
+        console.warn("Graphique indisponible :", error);
+    }
+}
 // ============================================================
 // INITIALISATION
 // ============================================================
 
 function setupHistoryController() {
+    selectedWeekStart = getWeekSetting();
+    const metricSelect = document.getElementById("history-chart-metric");
+    const rangeSelect = document.getElementById("history-chart-range");
+    const weekSelect = document.getElementById("history-week-start");
+    const savedMetric = getSelectedChartMetric("workout");
+    if (metricSelect && savedMetric) metricSelect.value = savedMetric;
+    const restoreChartSettings = () => {
+        const perSession = metricSelect?.value === "durationSession";
+        rangeSelect?.querySelectorAll("option").forEach(option => {
+            option.textContent = option.value === "0" ? "Tout" : `${option.value} ${perSession ? "séances" : "semaines"}`;
+        });
+        if (weekSelect) weekSelect.closest("label").hidden = perSession;
+        const saved = getChartPreferences("workout", metricSelect?.value ?? "countWeek");
+        if (rangeSelect) rangeSelect.value = String(saved.range ?? 12);
+        selectedWeekStart = saved.weekStart ?? getWeekSetting();
+        if (weekSelect) weekSelect.value = String(selectedWeekStart);
+    };
+    const saveChartSettings = () => saveChartPreferences("workout", metricSelect?.value ?? "countWeek", { range: Number(rangeSelect?.value ?? 12), weekStart: selectedWeekStart });
+    restoreChartSettings();
+    if (weekSelect) {
+        weekSelect.value = String(selectedWeekStart);
+        weekSelect.addEventListener("change", () => {
+            selectedWeekStart = Number(weekSelect.value); highlightedWeekStart = null;
+            saveChartSettings();
+            renderCalendar(); renderWorkoutChart();
+        });
+    }
+    const weekdayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+    const refreshWeekHeaders = () => document.querySelectorAll(".history-calendar-weekdays span").forEach((span, index) => { span.textContent = weekdayNames[(selectedWeekStart + index) % 7]; });
+    refreshWeekHeaders();
+    weekSelect?.addEventListener("change", refreshWeekHeaders);
+    metricSelect?.addEventListener("change", () => {
+        restoreChartSettings(); saveChartSettings(); highlightedWeekStart = null;
+        refreshWeekHeaders(); renderCalendar(); renderWorkoutChart();
+    });
+    rangeSelect?.addEventListener("change", () => { saveChartSettings(); renderWorkoutChart(); });
+    document.getElementById("tab-history")?.addEventListener("click", () => requestAnimationFrame(() => workoutChart?.resize()));
+    renderCalendar(); renderWorkoutChart();
     calendarPreviousButton.addEventListener("click", () => {
         calendarMonth -= 1;
 

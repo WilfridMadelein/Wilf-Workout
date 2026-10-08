@@ -5,7 +5,7 @@ import { convertWeight } from "../training/weight-estimation.js";
 // HISTORIQUE D'UN EXERCICE
 // ============================================================
 
-const EXERCISE_RECORD_ORDER = ["singleReps", "totalReps", "singleDuration", "totalDuration", "maxWeight", "singleVolume", "totalVolume"];
+const EXERCISE_RECORD_ORDER = ["singleReps", "totalReps", "singleDuration", "totalDuration", "maxWeight", "singleVolume", "totalVolume", "estimatedReps", "estimated1RM", "estimatedFiveSeconds"];
 const EXERCISE_RECORD_LABELS = {
     singleReps: "Répétitions en une série",
     totalReps: "Répétitions totales",
@@ -13,7 +13,10 @@ const EXERCISE_RECORD_LABELS = {
     totalDuration: "Durée totale",
     maxWeight: "Poids utilisé",
     singleVolume: "Volume en une série",
-    totalVolume: "Volume total"
+    totalVolume: "Volume total",
+    estimatedReps: "Répétitions maximales estimées (RIR)",
+    estimated1RM: "1RM estimé (Epley + RIR)",
+    estimatedFiveSeconds: "Charge théorique sur 5 s (expérimental)"
 };
 
 function getExerciseKey(exercise) { return String(exercise?.ID ?? exercise?.nom ?? "exercise"); }
@@ -51,7 +54,7 @@ function createMetric(value, unit, compareValue = value) { return { value, unit,
 function setHighest(current, candidate) { return !candidate ? current : !current || candidate.compareValue > current.compareValue ? candidate : current; }
 
 function getExerciseSessionMetrics(record) {
-    const metrics = { singleReps: null, totalReps: null, singleDuration: null, totalDuration: null, maxWeight: null, singleVolume: null, totalVolume: null };
+    const metrics = { singleReps: null, totalReps: null, singleDuration: null, totalDuration: null, maxWeight: null, singleVolume: null, totalVolume: null, estimatedReps: null, estimated1RM: null, estimatedFiveSeconds: null };
     let totalReps = 0;
     let totalDuration = 0;
     let totalVolumeKg = 0;
@@ -71,10 +74,16 @@ function getExerciseSessionMetrics(record) {
             if (value > 0) metrics.singleReps = setHighest(metrics.singleReps, createMetric(value, "rep"));
         }
 
+        const reserve = entry.log.reserveToFailure === null || entry.log.reserveToFailure === undefined || entry.log.reserveToFailure === "" ? null : Number(entry.log.reserveToFailure);
+        if (!isDuration && value > 0 && reserve !== null && Number.isFinite(reserve) && reserve >= 0 && reserve <= 30 && weight === 0) metrics.estimatedReps = setHighest(metrics.estimatedReps, { ...createMetric(value + reserve, "rep"), estimated: true });
         if (weight <= 0) return;
         const weightKg = convertWeight(weight, entry.log.weightUnit, "kg");
         if (weightKg === null) return;
         metrics.maxWeight = setHighest(metrics.maxWeight, { value: weight, weight, unit: entry.log.weightUnit, compareValue: weightKg });
+        if (!isDuration && value > 0 && reserve !== null && Number.isFinite(reserve) && reserve >= 0 && value + reserve <= 12) {
+            const estimateKg = weightKg * (1 + (value + reserve) / 30);
+            metrics.estimated1RM = setHighest(metrics.estimated1RM, { value: convertWeight(estimateKg, "kg", entry.log.weightUnit), unit: entry.log.weightUnit, compareValue: estimateKg, estimated: true });
+        }
         if (isDuration || value <= 0) return;
 
         const volumeKg = weightKg * value * multiplier;
@@ -92,28 +101,61 @@ function getExerciseSessionMetrics(record) {
     return metrics;
 }
 
+// Estimation descriptive individuelle : charge = a + b × ln(durée).
+// N'utilise que les durées corrigées par la réserve déclarée et plusieurs charges;
+// ceci n'est PAS une équation physiologique validée.
+function estimateFiveSecondLoad(samples) {
+    const valid = samples.filter(item => item.duration >= 5 && item.duration <= 60 && item.weightKg > 0);
+    if (valid.length < 3 || new Set(valid.map(item => Math.round(item.weightKg * 100))).size < 2 || new Set(valid.map(item => Math.round(item.duration))).size < 2) return null;
+    const near = valid.some(item => item.duration <= 12);
+    if (!near) return null; // Refuse les extrapolations lointaines.
+    const xs = valid.map(item => Math.log(item.duration)), ys = valid.map(item => item.weightKg);
+    const meanX = xs.reduce((a, b) => a + b, 0) / xs.length, meanY = ys.reduce((a, b) => a + b, 0) / ys.length;
+    const variance = xs.reduce((sum, x) => sum + (x - meanX) ** 2, 0);
+    if (variance < 0.01) return null;
+    const slope = xs.reduce((sum, x, i) => sum + (x - meanX) * (ys[i] - meanY), 0) / variance;
+    if (slope >= 0) return null;
+    const estimateKg = meanY + slope * (Math.log(5) - meanX), observedMax = Math.max(...ys);
+    if (!Number.isFinite(estimateKg) || estimateKg < observedMax * 0.8 || estimateKg > observedMax * 1.35) return null;
+    return estimateKg;
+}
+function getExerciseMetricTimeline(historyRecords) {
+    const samples = [];
+    return [...historyRecords].reverse().map(record => {
+        const metrics = getExerciseSessionMetrics(record);
+        record.entries.forEach(entry => {
+            const log = entry.log, weightKg = convertWeight(log.weight, log.weightUnit, "kg");
+            const reserve = log.reserveToFailure === null || log.reserveToFailure === undefined || log.reserveToFailure === "" ? null : Number(log.reserveToFailure);
+            if (log.valueUnit === "sec" && weightKg > 0 && Number(log.value) > 0 && reserve !== null && Number.isFinite(reserve) && reserve >= 0) samples.push({ duration: Number(log.value) + reserve, weightKg });
+        });
+        const estimateKg = estimateFiveSecondLoad(samples);
+        if (estimateKg !== null) {
+            const lastUnit = [...record.entries].reverse().find(entry => Number(entry.log.weight) > 0)?.log.weightUnit ?? "kg";
+            metrics.estimatedFiveSeconds = { value: convertWeight(estimateKg, "kg", lastUnit), unit: lastUnit, compareValue: estimateKg, estimated: true };
+        }
+        return { record, metrics };
+    });
+}
 function getExerciseRecords(historyRecords) {
     const records = Object.fromEntries(EXERCISE_RECORD_ORDER.map(key => [key, null]));
-    historyRecords.forEach(record => {
-        const metrics = getExerciseSessionMetrics(record);
-        EXERCISE_RECORD_ORDER.forEach(key => {
-            const metric = metrics[key];
-            if (!metric || (records[key] && metric.compareValue <= records[key].compareValue)) return;
-            records[key] = { ...metric, session: record.session };
-        });
-    });
+    getExerciseMetricTimeline(historyRecords).forEach(({ record, metrics }) => EXERCISE_RECORD_ORDER.forEach(key => {
+        const metric = metrics[key];
+        if (metric && (!records[key] || metric.compareValue > records[key].compareValue)) records[key] = { ...metric, session: record.session };
+    }));
     return records;
 }
-
 function getExerciseRecordAchievements(historyRecords, session) {
-    const target = historyRecords.find(record => String(record.session.id) === String(session?.id));
-    if (!target) return [];
-    const targetMetrics = getExerciseSessionMetrics(target);
-    const previousRecords = getExerciseRecords(historyRecords.filter(record => Number(record.session.startedAt) < Number(target.session.startedAt)));
-    return EXERCISE_RECORD_ORDER.filter(key => {
-        const metric = targetMetrics[key];
-        return metric && (!previousRecords[key] || metric.compareValue > previousRecords[key].compareValue);
-    }).map(key => ({ key, label: EXERCISE_RECORD_LABELS[key], ...targetMetrics[key], session: target.session }));
+    const timeline = getExerciseMetricTimeline(historyRecords);
+    const targetIndex = timeline.findIndex(item => String(item.record.session.id) === String(session?.id));
+    if (targetIndex < 0) return [];
+    const { record, metrics } = timeline[targetIndex];
+    const previousRecords = Object.fromEntries(EXERCISE_RECORD_ORDER.map(key => [key, null]));
+    timeline.slice(0, targetIndex).forEach(item => EXERCISE_RECORD_ORDER.forEach(key => {
+        const metric = item.metrics[key];
+        if (metric && (!previousRecords[key] || metric.compareValue > previousRecords[key].compareValue)) previousRecords[key] = metric;
+    }));
+    return EXERCISE_RECORD_ORDER.filter(key => !key.startsWith("estimated") && metrics[key] && (!previousRecords[key] || metrics[key].compareValue > previousRecords[key].compareValue))
+        .map(key => ({ key, label: EXERCISE_RECORD_LABELS[key], ...metrics[key], session: record.session }));
 }
 
-export { EXERCISE_RECORD_ORDER, EXERCISE_RECORD_LABELS, getExerciseKey, getExerciseHistory, getExerciseSessionMetrics, getExerciseRecords, getExerciseRecordAchievements, groupEntriesBySeries };
+export { EXERCISE_RECORD_ORDER, EXERCISE_RECORD_LABELS, getExerciseKey, getExerciseHistory, getExerciseSessionMetrics, getExerciseMetricTimeline, getExerciseRecords, getExerciseRecordAchievements, groupEntriesBySeries };
