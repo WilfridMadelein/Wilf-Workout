@@ -470,6 +470,7 @@ function validateWorkout(result, pool) {
 // CHARGEMENT
 // ============================================================
 
+const exerciseSources = await Promise.all(["data/cali-focus.js", "data/gym-focus.js"].map(file => readFile(resolve(rootDir, file), "utf8")));
 const exercisesModule =
     await loadModule(
         resolve(
@@ -477,7 +478,7 @@ const exercisesModule =
             "data/exercises.js"
         ),
         code =>
-            `${code}\nexport { exercises };`
+            `${exerciseSources.join("\n")}\n${code}\nexport { exercises };`
     );
 
 const settingsModule =
