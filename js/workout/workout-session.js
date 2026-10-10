@@ -1,3 +1,4 @@
+import { getAutomaticWeightEquipment } from "../equipment/weight-equipment.js";
 import { normalizeSupersetRest } from "../plans/plan-rest.js";
 import { isIsometricExercise } from "../exercises/exercise-search.js";
 import { normalizeReserveToFailure } from "../training/reserve-to-failure.js";
@@ -36,6 +37,8 @@ function createWorkoutSeries(workoutExercise, number) {
         value: workoutExercise.value,
         valueUnit: workoutExercise.valueUnit,
         weight: workoutExercise.weight,
+        weightEquipment: workoutExercise.weightEquipment ?? null,
+        bandResistance: workoutExercise.bandResistance ?? null,
         weightUnit: workoutExercise.weightUnit,
         tempo: cloneTempo(workoutExercise.tempo),
         rest: workoutExercise.rest,
@@ -51,6 +54,8 @@ function clonePendingSeries(series) {
         value: series.value,
         valueUnit: series.valueUnit,
         weight: series.weight,
+        weightEquipment: series.weightEquipment ?? null,
+        bandResistance: series.bandResistance ?? null,
         weightUnit: series.weightUnit,
         tempo: cloneTempo(series.tempo),
         rest: series.rest,
@@ -147,6 +152,8 @@ function createWorkoutExercise(planExercise, planExerciseIndex) {
         value: planExercise.value,
         valueUnit: planExercise.valueUnit,
         weight: planExercise.weight,
+        weightEquipment: planExercise.weightEquipment ?? (planExercise.weightEquipmentExplicitlyRemoved ? null : getAutomaticWeightEquipment(planExercise.exercise)),
+        bandResistance: planExercise.bandResistance ?? null,
         weightUnit: planExercise.weightUnit,
         tempo: cloneTempo(planExercise.tempo),
         rest: planExercise.rest,
@@ -326,6 +333,8 @@ return {
     value: log?.value ?? target.series.value,
     valueUnit: log?.valueUnit ?? target.series.valueUnit,
     weight: log?.weight ?? target.series.weight,
+    weightEquipment: log && Object.hasOwn(log, "weightEquipment") ? log.weightEquipment : target.series.weightEquipment ?? null,
+    bandResistance: log && Object.hasOwn(log, "bandResistance") ? log.bandResistance : target.series.bandResistance ?? null,
     weightUnit: log?.weightUnit ?? target.series.weightUnit,
     tempo: cloneTempo(log?.tempo ?? target.series.tempo),
     rest: target.series.rest,
@@ -345,6 +354,8 @@ target.series.logs[target.sideKey] = {
     value: values.value,
     valueUnit: values.valueUnit,
     weight: values.weight,
+    weightEquipment: values.weightEquipment ?? null,
+    bandResistance: values.bandResistance ?? null,
     weightUnit: values.weightUnit,
     tempo: cloneTempo(values.tempo),
     rest: target.series.rest,
@@ -370,6 +381,8 @@ function saveWorkoutTargetDraft(target, values) {
     target.series.value = values.value;
     target.series.valueUnit = values.valueUnit;
     target.series.weight = values.weight;
+    target.series.weightEquipment = values.weightEquipment ?? null;
+    target.series.bandResistance = values.bandResistance ?? null;
     target.series.weightUnit = values.weightUnit;
     target.series.tempo = cloneTempo(values.tempo);
     target.series.notes = values.notes ?? "";
@@ -385,13 +398,18 @@ function applyWorkoutLogToFollowingSeries(target, values) {
     workoutExercise.value = values.value;
     workoutExercise.valueUnit = values.valueUnit;
     workoutExercise.weight = values.weight;
+    workoutExercise.weightEquipment = values.weightEquipment ?? null;
+    workoutExercise.bandResistance = values.bandResistance ?? null;
     workoutExercise.weightUnit = values.weightUnit;
     workoutExercise.tempo = cloneTempo(values.tempo);
 
     workoutExercise.series.slice(currentIndex).forEach(series => {
         series.value = values.value;
         series.valueUnit = values.valueUnit;
+        if (hasWorkoutSeriesLogs(series)) return;
         series.weight = values.weight;
+        series.weightEquipment = values.weightEquipment ?? null;
+        series.bandResistance = values.bandResistance ?? null;
         series.weightUnit = values.weightUnit;
         series.tempo = cloneTempo(values.tempo);
         series.notes = values.notes ?? "";

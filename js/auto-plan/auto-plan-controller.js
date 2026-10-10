@@ -1,3 +1,4 @@
+import { getWeightEquipmentOptions } from "../equipment/weight-equipment.js";
 import {
     AUTO_PLAN_GOALS,
     AUTO_PLAN_GOAL_LABELS,
@@ -319,7 +320,8 @@ function renderEquipment() {
     });
 
     const container = getElement("auto-plan-equipment");
-    if (!container.childElementCount) {
+    if (container.querySelectorAll("button").length !== options.length) {
+        container.replaceChildren();
         renderChoiceGroup("auto-plan-equipment", options, draft.equipment, null, value => {
             preferredEquipmentPreset = null;
             toggleListValue("equipment", value);
@@ -327,6 +329,7 @@ function renderEquipment() {
         });
     }
     container.querySelectorAll("button").forEach((button, index) => {
+        button.classList.toggle("wilf-weight-filter", getWeightEquipmentOptions().includes(options[index]));
         const selected = draft.equipment.includes(options[index]);
         button.classList.toggle("active", selected);
         button.setAttribute("aria-pressed", String(selected));

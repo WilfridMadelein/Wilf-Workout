@@ -1,3 +1,5 @@
+import { getSuggestedWeightEquipment } from "../equipment/weight-equipment.js";
+
 import {
     createProgressionPreferenceSelect
 } from "../training/progression-preferences.js";
@@ -15,6 +17,10 @@ let getExerciseCount = () => null;
 let getIsPlanContext = () => false;
 
 let getSelectedTypes = () => new Set();
+let getSelectedEquipment = () => new Set();
+let getEquipmentOptions = () => [];
+let getAppSettings = () => ({});
+let scheduleAppSettingsSave = () => {};
 
 let getCurrentDetailContext = () => "search";
 let setCurrentDetailContext = () => {};
@@ -54,6 +60,15 @@ function configureExerciseList(dependencies) {
     getExerciseCount = dependencies.getExerciseCount;
 
     getIsPlanContext = dependencies.getIsPlanContext;
+    getSelectedEquipment = dependencies.getSelectedEquipment;
+    getEquipmentOptions = dependencies.getEquipmentOptions;
+    getAppSettings = dependencies.getAppSettings;
+    scheduleAppSettingsSave = dependencies.scheduleAppSettingsSave;
+    const toggle = document.getElementById("exercise-weight-separation");
+    if (toggle) {
+        toggle.checked = getAppSettings().equipmentWeightSeparation === true;
+        toggle.addEventListener("change", () => { const settings = getAppSettings(); settings.equipmentWeightSeparation = toggle.checked; scheduleAppSettingsSave(settings); displayExercises(); });
+    }
 
     getSelectedTypes = dependencies.getSelectedTypes;
 
@@ -117,6 +132,11 @@ function displayExercises() {
 
     updateFilterSummaries();
     updateMuscleRoleFilter();
+    const selectedEquipment = getSelectedEquipment();
+    const equipmentFilterActive = selectedEquipment.size > 0 && selectedEquipment.size < getEquipmentOptions().length;
+    const separateWeight = equipmentFilterActive && getAppSettings()?.equipmentWeightSeparation === true;
+    const weightToggle = document.getElementById("exercise-weight-separation-row");
+    if (weightToggle) weightToggle.hidden = !equipmentFilterActive;
 
     if (isPlanContext) {
         updatePlanFilterSummaries();
@@ -198,6 +218,7 @@ function displayExercises() {
         rankedExercises.sort((first, second) => Number(second.primaryMuscleMatch) - Number(first.primaryMuscleMatch));
     }
 
+    if (separateWeight) rankedExercises.sort((a, b) => (groupByMuscle ? Number(b.primaryMuscleMatch) - Number(a.primaryMuscleMatch) : 0) || Number(!!b.exercise.variantEquipment) - Number(!!a.exercise.variantEquipment));
     // Compteur
     if (exerciseCount) {
         exerciseCount.textContent =
@@ -211,7 +232,7 @@ function displayExercises() {
 
     exerciseList.innerHTML = "";
     let resultContainer = exerciseList;
-    let currentMuscleRole = null;
+    let currentMuscleRole = null, currentWeightRole = null, roleContainer = exerciseList;
 
     rankedExercises.forEach(item => {
         if (groupByMuscle && currentMuscleRole !== item.primaryMuscleMatch) {
@@ -223,8 +244,18 @@ function displayExercises() {
             heading.textContent = currentMuscleRole ? "Primaire" : "Secondaire";
             resultContainer.appendChild(heading);
             exerciseList.appendChild(resultContainer);
+            roleContainer = resultContainer; currentWeightRole = null;
         }
         const exercise = item.exercise;
+        if (separateWeight) {
+            const role = exercise.variantEquipment ? "utilisé" : "suggéré";
+            if (role !== currentWeightRole) {
+                currentWeightRole = role;
+                resultContainer = document.createElement("section"); resultContainer.className = "exercise-weight-section";
+                const heading = document.createElement("h4"); heading.className = "exercise-weight-section-title"; heading.textContent = role === "utilisé" ? "Poids utilisé" : "Poids suggéré";
+                resultContainer.appendChild(heading); roleContainer.appendChild(resultContainer);
+            }
+        } else if (!groupByMuscle) resultContainer = exerciseList;
 
         const element =
             document.createElement("div");

@@ -1,3 +1,5 @@
+import { WEIGHT_EQUIPMENT, getSuggestedWeightEquipment, getSupportingEquipmentGroups, isWeightRequirementGroup, getWeightEquipmentOptions } from "../equipment/weight-equipment.js";
+
 // ============================================================
 // FILTRES DES EXERCICES
 // ============================================================
@@ -363,16 +365,15 @@ function createEquipmentButtons() {
         getSelectedEquipment();
 
     equipmentOptions.forEach(equipment => {
+        if (Array.from(equipmentFilters.querySelectorAll("[data-equipment]")).some(button => button.dataset.equipment === equipment)) return;
         const button =
             document.createElement("button");
 
-        button.classList.add(
-            "filter-button",
-            "active"
-        );
-
+        button.classList.add("filter-button");
+        button.classList.toggle("active", selectedEquipment.has(equipment));
         button.textContent = equipment;
         button.dataset.equipment = equipment;
+        button.classList.toggle("wilf-weight-filter", getWeightEquipmentOptions().includes(equipment));
 
         button.addEventListener("click", () => {
             if (
@@ -537,12 +538,17 @@ function exerciseHasRequiredEquipment(
     );
 }
 
-function exerciseMatchesEquipmentFilter(
-    exercise
-) {
-    return exerciseHasRequiredEquipment(
-        exercise
-    );
+function exerciseMatchesEquipmentFilter(exercise) {
+    const selected = getSelectedEquipment();
+    if (exercise.variantEquipment) {
+        if (!selected.has(exercise.variantEquipment)) return false;
+        return getSupportingEquipmentGroups(exercise).every(group => group.some(item => item === "Aucun" || selected.has(item)));
+    }
+    const standard = getSupportingEquipmentGroups(exercise).every(group => group.some(name => name === "Aucun" || selected.has(name)));
+    const suggested = getSuggestedWeightEquipment(exercise);
+    if (suggested.some(name => selected.has(name))) return getSupportingEquipmentGroups(exercise).every(group => group.some(item => item === "Aucun" || selected.has(item)));
+    const weightGroups = (exercise.equipement ?? []).filter(group => isWeightRequirementGroup(group));
+    return standard && weightGroups.every(group => group.some(name => selected.has(name)));
 }
 
 // ------------------------------------------------------------
@@ -686,9 +692,7 @@ function getRelevantEquipment(
             exercise.equipement?.forEach(
                 group => {
                     group.forEach(equipment => {
-                        if (
-                            equipment !== "Aucun"
-                        ) {
+                        if (equipment !== "Aucun" && equipment !== "poids") {
                             relevantEquipment.add(
                                 equipment
                             );
@@ -723,12 +727,7 @@ function updateEquipmentRelevance() {
                 return;
             }
 
-            button.classList.toggle(
-                "equipment-irrelevant",
-                !relevantEquipment.has(
-                    equipment
-                )
-            );
+            button.classList.remove("equipment-irrelevant");
         });
 }
 

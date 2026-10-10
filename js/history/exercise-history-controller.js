@@ -89,7 +89,7 @@ function renderHistoryExerciseList() {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "history-exercise-search-item";
-        if (selectedHistoryExercise && String(selectedHistoryExercise.ID) === String(exercise.ID)) button.classList.add("is-selected");
+        if (selectedHistoryExercise && selectedHistoryExercise.ID === exercise.ID && selectedHistoryExercise.variantEquipment === exercise.variantEquipment) button.classList.add("is-selected");
         const name = document.createElement("span");
         name.textContent = exercise.nom;
         const progression = document.createElement("span");

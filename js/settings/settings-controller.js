@@ -1,3 +1,5 @@
+import { getPersonalWeightEquipment, getEquipmentPreference, setEquipmentPreference, addPersonalWeightEquipment, removePersonalWeightEquipment } from "../equipment/weight-equipment.js";
+
 import {
     setupNumberInput,
     updateNumberInputWidth
@@ -82,6 +84,27 @@ function configureSettingsController(dependencies) {
     } = dependencies);
 }
 
+function renderPersonalEquipmentSettings() {
+    const host = document.getElementById("settings-weight-equipment-list");
+    if (!host) return;
+    host.replaceChildren();
+    const catalog = typeof equipmentOptions !== "undefined" ? equipmentOptions : [];
+    catalog.forEach(name => {
+        const row = document.createElement("div"); row.className = "wilf-equipment-settings-row";
+        const label = document.createElement("span"); label.textContent = name; label.classList.toggle("wilf-settings-weight-name", getPersonalWeightEquipment().includes(name) || ["Dumbbell", "Barbell", "Kettlebell", "Plate", "Cable", "Machine", "Élastique", "Weight vest", "Sandbag"].includes(name));
+        const select = document.createElement("select"); select.setAttribute("aria-label", `Préférence pour ${name}`);
+        [["more", "Plus souvent"], ["neutral", "Neutre"], ["less", "Moins souvent"], ["never", "Jamais"]].forEach(([value, text]) => select.add(new Option(text, value)));
+        select.value = getEquipmentPreference(name); select.addEventListener("change", () => setEquipmentPreference(name, select.value));
+        row.append(label, select);
+        if (getPersonalWeightEquipment().includes(name)) {
+            const remove = document.createElement("button"); remove.type = "button"; remove.textContent = "−"; remove.setAttribute("aria-label", `Supprimer l’équipement ${name}`);
+            remove.addEventListener("click", () => { if (!confirm(`Supprimer « ${name} » de votre liste personnelle ? Les anciens historiques et plans conserveront leurs références à cet équipement.`)) return; removePersonalWeightEquipment(name); renderPersonalEquipmentSettings(); });
+            row.appendChild(remove);
+        }
+        host.appendChild(row);
+    });
+}
+
 // ============================================================
 // APPARENCE
 // ============================================================
@@ -126,6 +149,7 @@ function refreshSettingsInterface() {
     if (!settings) return;
 
     const defaults = settings.planDefaults;
+    renderPersonalEquipmentSettings();
 
     autoAddCategoriesCheckbox.checked = defaults.includeCategories;
     autoAddEquipmentCheckbox.checked = defaults.includeEquipment;
@@ -207,6 +231,13 @@ function updateAdvancedPanel(open) {
 // ============================================================
 
 function setupSettingsController() {
+    document.getElementById("settings-weight-equipment-add")?.addEventListener("click", () => {
+        const value = prompt("Nom du nouvel équipement de poids :");
+        if (!value) return;
+        try { addPersonalWeightEquipment(value); renderPersonalEquipmentSettings(); }
+        catch (error) { alert(error.message); }
+    });
+    renderPersonalEquipmentSettings();
     const bind = (input, options, save) => {
         const control = setupNumberInput(input, {
             ...options,

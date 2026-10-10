@@ -1,4 +1,5 @@
 import { normalizeSupersetRest } from "../../plans/plan-rest.js";
+import { chooseAutoWeightEquipment } from "../../equipment/weight-equipment.js";
 import { getPlanExerciseDetailsLines } from "../../exercises/exercise-details.js";
 import { getProgressionName } from "../../exercises/exercise-search.js";
 import { normalizeSplitOrder } from "../../exercises/exercise-split.js";
@@ -71,12 +72,14 @@ function createGeneratedPlanExercises(workout, planDefaults, request, defaultSpl
 
         return {
             exercise,
+            weightEquipment: chooseAutoWeightEquipment(exercise, request?.equipment ?? []),
+            bandResistance: null,
             sets: prescription.sets,
             value: prescription.value,
             valueUnit: prescription.valueUnit,
             rest: prescription.rest,
             tempo: { ...prescription.tempo },
-            weight: planDefaults.weight,
+            weight: chooseAutoWeightEquipment(exercise, request?.equipment ?? []) ? planDefaults.weight : 0,
             weightUnit: planDefaults.weightUnit,
             splitOrder: normalizeSplitOrder(defaultSplitOrder),
             details: { instructions: includeInstructions ? getPlanExerciseDetailsLines(exercise).join("\n") : "" },

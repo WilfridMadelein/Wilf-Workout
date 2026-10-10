@@ -1,4 +1,5 @@
 import { AUTO_PLAN_BODY_PARTS } from "../auto-plan-settings.js";
+import { chooseAutoWeightEquipment, isGymOnlyExercise, getSupportingEquipmentGroups } from "../../equipment/weight-equipment.js";
 
 // ============================================================
 // CONTRAINTES DU PLAN AUTOMATIQUE
@@ -58,8 +59,11 @@ function exerciseMatchesCategories(exercise, request) {
 function exerciseMatchesEquipment(exercise, request) {
     const selected = new Set(request?.equipment ?? []);
     const groups = Array.isArray(exercise?.equipement) ? exercise.equipement : [];
+    if (isGymOnlyExercise(exercise)) {
+        if (!chooseAutoWeightEquipment(exercise, [...selected])) return false;
+        return getSupportingEquipmentGroups(exercise).every(group => group.some(name => name === "Aucun" || selected.has(name)));
+    }
     if (!groups.length) return true;
-
     return groups.every(group => Array.isArray(group) && group.some(equipment => equipment === "Aucun" || selected.has(equipment)));
 }
 

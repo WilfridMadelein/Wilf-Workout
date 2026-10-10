@@ -1,3 +1,4 @@
+import { getSuggestedWeightEquipment, getSupportingEquipmentGroups, isGymOnlyExercise, getWeightEquipmentOptions } from "../equipment/weight-equipment.js";
 import {
     refreshFilterSummaryCollapse,
     updateFilterSummaryCollapse
@@ -497,8 +498,8 @@ equipmentOptions.forEach(
         button.textContent =
             equipment;
 
-        button.dataset.equipment =
-            equipment;
+        button.dataset.equipment = equipment;
+        button.classList.toggle("wilf-weight-filter", getWeightEquipmentOptions().includes(equipment));
 
         button.addEventListener(
             "click",
@@ -590,12 +591,7 @@ function updatePlanEquipmentRelevance() {
                 return;
             }
 
-            button.classList.toggle(
-                "equipment-irrelevant",
-                !relevantEquipment.has(
-                    equipment
-                )
-            );
+            button.classList.remove("equipment-irrelevant");
         });
 }
 
@@ -896,16 +892,9 @@ function exerciseMatchesPlanEquipment(
         return true;
     }
 
-    return exercise.equipement.every(
-        group =>
-            group.some(
-                equipment =>
-                    equipment === "Aucun" ||
-                    selectedPlanEquipment.has(
-                        equipment
-                    )
-            )
-    );
+    const supported = getSupportingEquipmentGroups(exercise).every(group => group.some(name => name === "Aucun" || selectedPlanEquipment.has(name)));
+    if (isGymOnlyExercise(exercise)) return supported && getSuggestedWeightEquipment(exercise).some(name => selectedPlanEquipment.has(name));
+    return supported && (exercise.equipement ?? []).filter(group => Array.isArray(group) && group.some(name => getWeightEquipmentOptions().includes(name))).every(group => group.some(name => selectedPlanEquipment.has(name)));
 }
 
 // ------------------------------------------------------------

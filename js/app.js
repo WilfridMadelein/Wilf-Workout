@@ -1,4 +1,5 @@
 import { setupTimerNotifications } from "./workout/workout-timer-notifications.js";
+import { configureWeightEquipment, getPersonalWeightEquipment, getUsedExerciseVariants } from "./equipment/weight-equipment.js";
 
 // ============================================================
 // MODULES
@@ -520,6 +521,8 @@ import {
 let appSettings = createDefaultAppSettings();
 
 let workoutHistory = [];
+configureWeightEquipment({ settings: () => appSettings, save: scheduleAppSettingsSave, history: () => workoutHistory });
+const getBrowsableExercises = () => [...exercises, ...getUsedExerciseVariants(exercises, workoutHistory)];
 let historySummaryReturnScrollY = 0;
 
 function inspectWilfAutoPlanData(request = appSettings?.autoPlanLastRequest) {
@@ -796,6 +799,7 @@ async function applySplitOrderToAllPlans(order) {
 
 async function reloadSyncedAppData() {
     appSettings = await loadAppSettings();
+    getPersonalWeightEquipment().forEach(name => { if (!equipmentOptions.includes(name)) equipmentOptions.push(name); });
     applyAppTheme(appSettings.theme);
     refreshSettingsInterface();
     refreshDefaultPlanFilters();
@@ -922,7 +926,7 @@ configureExerciseHistoryController({
     historyExerciseName: historyExerciseDetailsName,
     historyExerciseDetails: historyExerciseDetailsContent,
     historyExerciseHistoryHost,
-    getExercises: () => exercises,
+    getExercises: getBrowsableExercises,
     getWorkoutHistory: () => workoutHistory,
     onOpenWorkout: openWorkoutSummaryFromExerciseHistory
 });
@@ -1136,7 +1140,7 @@ configureExerciseFilters({
 });
 
 configureExerciseDisplay({
-    getExercises: () => exercises,
+    getExercises: getBrowsableExercises,
 
     getSelectedPlanCategories:
         () => selectedPlanCategories,
@@ -1156,7 +1160,7 @@ configureExerciseDisplay({
 configureExerciseList({
     shouldGroupExercisesByMuscle,
     updateMuscleRoleFilter,
-    getExercises: () => exercises,
+    getExercises: getBrowsableExercises,
 
     getSearchInput: () => searchInput,
     getExerciseList: () => exerciseList,
@@ -1168,6 +1172,10 @@ configureExerciseList({
         planEditor.style.display === "block",
 
     getSelectedTypes: () => selectedTypes,
+    getSelectedEquipment: () => selectedEquipment,
+    getEquipmentOptions: () => equipmentOptions,
+    getAppSettings: () => appSettings,
+    scheduleAppSettingsSave,
 
     setCurrentDetailContext,
 
@@ -1531,6 +1539,7 @@ workoutHistory = result.workoutHistory;
 setWorkoutHistory(workoutHistory);
 
 appSettings = await loadAppSettings();
+getPersonalWeightEquipment().forEach(name => { if (!equipmentOptions.includes(name)) equipmentOptions.push(name); });
 refreshSettingsInterface();
 refreshDefaultPlanFilters();
 refreshProgressionPreferenceControls();
@@ -1586,6 +1595,7 @@ async function initializeApp() {
         appSettings = createDefaultAppSettings();
     }
 
+    getPersonalWeightEquipment().forEach(name => { if (!equipmentOptions.includes(name)) equipmentOptions.push(name); });
     applyAppTheme(appSettings.theme);
 
     try {
@@ -1628,6 +1638,16 @@ async function initializeApp() {
 
     createMuscleButtons();
     createEquipmentButtons();
+    document.addEventListener("wilf:equipment-changed", () => {
+        const known = new Set(equipmentOptions);
+        equipmentFilters.querySelectorAll("[data-equipment]").forEach(button => {
+            if (!["all", "none"].includes(button.dataset.equipment) && !known.has(button.dataset.equipment)) button.remove();
+        });
+        getPersonalWeightEquipment().forEach(name => { if (!selectedEquipment.has(name)) selectedEquipment.add(name); });
+        createEquipmentButtons(); updateEquipmentAllButton(); updateEquipmentRelevance(); displayExercises();
+        createPlanFilterRows();
+        refreshSettingsInterface(); refreshDefaultPlanFilters();
+    });
     setupEquipmentAllButton();
     setupTypeButtons();
     setupCategoryButtons();

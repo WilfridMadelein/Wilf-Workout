@@ -21,7 +21,7 @@ import {
 // ============================================================
 
 const APP_SETTINGS_ID = "app";
-const SETTINGS_SCHEMA_VERSION = 4;
+const SETTINGS_SCHEMA_VERSION = 5;
 
 let saveTimer = null;
 
@@ -78,10 +78,16 @@ function createDefaultAppSettings() {
         theme: "light",
         bodyModel: "male",
         muscleFilterRole: "primary",
+        equipmentWeightSeparation: false,
         alwaysShowInstructions: false,
         splitOrder: "left-right",
         lastWorkoutCompletionMessageId: null,
         progressionPreferences: {},
+        customWeightEquipment: [],
+        customBandResistances: [],
+        bandResistanceOrder: [],
+        equipmentPreferences: {},
+        equipmentProgressionPreferences: {},
         autoPlanLastRequest: null,
         planDefaults: normalizePlanDefaults()
     };
@@ -95,6 +101,7 @@ function normalizeAppSettings(settings = {}) {
         theme: settings.theme === "dark" ? "dark" : "light",
         bodyModel: settings.bodyModel === "female" ? "female" : "male",
         muscleFilterRole: settings.muscleFilterRole === "primary-secondary" ? "primary-secondary" : "primary",
+        equipmentWeightSeparation: settings.equipmentWeightSeparation === true,
         alwaysShowInstructions: settings.alwaysShowInstructions === true,
         splitOrder: normalizeSplitOrder(settings.splitOrder),
 
@@ -103,6 +110,11 @@ lastWorkoutCompletionMessageId:
         ? settings.lastWorkoutCompletionMessageId
         : null,
 
+customWeightEquipment: Array.isArray(settings.customWeightEquipment) ? [...new Set(settings.customWeightEquipment.filter(item => typeof item === "string" && item.trim()).map(item => item.trim().slice(0, 48)))].slice(0, 100) : [],
+bandResistanceOrder: Array.isArray(settings.bandResistanceOrder) ? settings.bandResistanceOrder.filter(item => typeof item === "string" && item.length <= 40).slice(0, 105) : [],
+customBandResistances: Array.isArray(settings.customBandResistances) ? [...new Set(settings.customBandResistances.filter(item => typeof item === "string" && item.trim()).map(item => item.trim().slice(0, 40)))].slice(0, 100) : [],
+equipmentPreferences: Object.fromEntries(Object.entries(settings.equipmentPreferences ?? {}).filter(([name, value]) => name.length <= 48 && ["more", "neutral", "less", "never"].includes(value))),
+equipmentProgressionPreferences: Object.fromEntries(Object.entries(settings.equipmentProgressionPreferences ?? {}).filter(([key, value]) => key.length <= 150 && ["more", "neutral", "less", "never"].includes(value))),
 progressionPreferences: normalizeProgressionPreferences(settings.progressionPreferences),
 autoPlanLastRequest: normalizeAutoPlanLastRequest(settings.autoPlanLastRequest),
 planDefaults: normalizePlanDefaults(settings.planDefaults)

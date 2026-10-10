@@ -1,3 +1,4 @@
+import { getWeightVariantKey } from "../equipment/weight-equipment.js";
 import { getWorkoutExerciseSides, getWorkoutSeriesLog, getWorkoutSideLabel } from "../workout/workout-session.js";
 import { convertWeight } from "../training/weight-estimation.js";
 
@@ -19,7 +20,7 @@ const EXERCISE_RECORD_LABELS = {
     estimatedFiveSeconds: "Charge théorique sur 5 s (expérimental)"
 };
 
-function getExerciseKey(exercise) { return String(exercise?.ID ?? exercise?.nom ?? "exercise"); }
+function getExerciseKey(exercise) { return getWeightVariantKey(exercise, exercise?.variantEquipment); }
 
 function getExerciseHistory(workoutHistory, exercise) {
     const exerciseKey = getExerciseKey(exercise);
@@ -27,10 +28,11 @@ function getExerciseHistory(workoutHistory, exercise) {
     (workoutHistory ?? []).forEach(session => {
         const entries = [];
         (session.sets ?? []).forEach(set => (set.exercises ?? []).forEach(workoutExercise => {
-            if (getExerciseKey(workoutExercise.exercise) !== exerciseKey) return;
+            if (String(workoutExercise.exercise?.baseExerciseId ?? workoutExercise.exercise?.ID) !== String(exercise.baseExerciseId ?? exercise.ID)) return;
             (workoutExercise.series ?? []).forEach(series => getWorkoutExerciseSides(workoutExercise).forEach(side => {
                 const log = getWorkoutSeriesLog(series, side.key);
                 if (!log?.completedAt) return;
+                if (getWeightVariantKey(workoutExercise.exercise, Object.hasOwn(log, "weightEquipment") ? log.weightEquipment : workoutExercise.weightEquipment) !== exerciseKey) return;
                 entries.push({ series, setNumber: set.group, seriesNumber: series.number, sideKey: side.key, sideLabel: getWorkoutSideLabel(side.key), splitType: workoutExercise.splitType, log });
             }));
         }));
@@ -62,7 +64,7 @@ function getExerciseSessionMetrics(record) {
 
     record.entries.forEach(entry => {
         const value = Math.max(0, Number(entry.log.value) || 0);
-        const weight = Math.max(0, Number(entry.log.weight) || 0);
+        const weight = entry.log.weightUnit === "Res" || !entry.log.weightEquipment && entry.log.weightUnit === "Res" ? 0 : Math.max(0, Number(entry.log.weight) || 0);
         const multiplier = getEntryMultiplier(entry);
         const isDuration = entry.log.valueUnit === "sec";
 

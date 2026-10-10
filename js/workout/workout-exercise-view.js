@@ -1,4 +1,5 @@
 import { createWorkoutDurationTimer } from "./workout-duration-timer.js";
+import { createWeightEquipmentPicker, getWeightedExerciseName, getLastEquipmentPerformance, createBandResistanceControl, getAutomaticWeightEquipment } from "../equipment/weight-equipment.js";
 
 import { createProgressionPreferenceSelect } from "../training/progression-preferences.js";
 import { setupNumberInput, normalizeNumber } from "../ui/ui.js";
@@ -278,7 +279,7 @@ name.classList.add(
 );
 
 name.textContent =
-    `S${target.set.group} - ${exercise.nom}`;
+    `S${target.set.group} - ${getWeightedExerciseName(exercise, draft.weightEquipment)}`;
 
 if (
     target.set?.isSuperset &&
@@ -429,7 +430,40 @@ heading.appendChild(seriesContext);
         }
     );
 
+    const resistanceControl = document.createElement("div"); resistanceControl.className = "wilf-weight-resistance-host";
+    if (!draft.weightEquipment && !workoutExercise.weightEquipmentExplicitlyRemoved) draft.weightEquipment = getAutomaticWeightEquipment(exercise);
+    const weightPicker = createWeightEquipmentPicker(exercise, {
+        getValue: () => draft.weightEquipment,
+        onChange: value => {
+            const logged = workoutExercise.series?.some(series => Object.values(series.logs ?? {}).some(log => log?.completedAt));
+            if (value && draft.weightEquipment && value !== draft.weightEquipment && draft.weightEquipment !== "Machine" && logged && !confirm("Les séries déjà enregistrées conserveront leur équipement et leur charge. Changer l'équipement pour les prochaines séries ?")) return;
+            draft.weightEquipment = value || null;
+            if (!value) { draft.weight = 0; draft.bandResistance = null; weightNumber.querySelector("input").value = 0; }
+            if (value) {
+                const recent = getLastEquipmentPerformance(exercise, value);
+                if (recent) { draft.weight = recent.weight; draft.weightUnit = recent.weightUnit; draft.bandResistance = recent.bandResistance; weightNumber.querySelector("input").value = recent.weight; }
+            }
+            if (value === "Élastique" && !getLastEquipmentPerformance(exercise, value)) { draft.weight = 0; draft.weightUnit = "Res"; weightNumber.querySelector("input").value = 0; }
+            if (value !== "Élastique" && draft.weightUnit === "Res") draft.weightUnit = "lbs";
+            refreshWorkoutWeight();
+        }
+    });
     weight.append(weightNumber, weightUnit);
+    function refreshWorkoutWeight() {
+        const selected = !!draft.weightEquipment, elasticRes = draft.weightEquipment === "Élastique" && draft.weightUnit === "Res";
+        weightNumber.hidden = !selected || elasticRes;
+        weightNumber.style.display = selected && !elasticRes ? "" : "none";
+        weightUnit.hidden = !selected || elasticRes;
+        weightUnit.style.display = selected && !elasticRes ? "" : "none";
+        weightUnit.replaceChildren();
+        (draft.weightEquipment === "Élastique" ? [["Res", "Res"], ["kg", "kg"], ["lbs", "lbs"]] : [["lbs", "lbs"], ["kg", "kg"]]).forEach(([value, label]) => weightUnit.add(new Option(label, value)));
+        weightUnit.value = draft.weightUnit;
+        resistanceControl.replaceChildren();
+        if (elasticRes) resistanceControl.append(createBandResistanceControl({ inline: true, getValue: () => draft.bandResistance, onChange: value => { draft.bandResistance = value; } }));
+        name.textContent = `S${target.set.group} - ${getWeightedExerciseName(exercise, draft.weightEquipment)}`;
+    }
+    weightUnit.addEventListener("change", () => { draft.weightUnit = weightUnit.value; if (draft.weightUnit === "Res") { draft.weight = 0; weightNumber.querySelector("input").value = 0; } refreshWorkoutWeight(); });
+    refreshWorkoutWeight();
 
     // Tempo
 
@@ -438,9 +472,15 @@ heading.appendChild(seriesContext);
         () => {}
     );
 
+    const weightRow = createControlRow("Poids", weight);
+    const weightNameRow = document.createElement("div"); weightNameRow.className = "wilf-workout-weight-equipment-row"; weightNameRow.append(weightPicker, resistanceControl);
+    const oldRefresh = refreshWorkoutWeight;
+    refreshWorkoutWeight = () => { oldRefresh(); const elasticRes = draft.weightEquipment === "Élastique" && draft.weightUnit === "Res"; weightRow.hidden = !draft.weightEquipment || elasticRes; weightRow.style.display = draft.weightEquipment && !elasticRes ? "" : "none"; };
+    refreshWorkoutWeight();
     controls.append(
         createControlRow("Volume", volume),
-        createControlRow("Poids", weight),
+        weightNameRow,
+        weightRow,
         createControlRow("Tempo", tempo)
     );
 
@@ -609,7 +649,9 @@ return {
         ...structuredClone(draft),
         exerciseTimer: durationTimer?.snapshot() ?? null,
         value: normalizeNumber(volumeNumber.querySelector("input").value, { min: 1, max: 999, decimals: 0 }),
-        weight: normalizeNumber(weightNumber.querySelector("input").value, { min: 0, max: 9999.9, decimals: 1 }),
+        weight: draft.weightEquipment && draft.weightUnit !== "Res" ? normalizeNumber(weightNumber.querySelector("input").value, { min: 0, max: 9999.9, decimals: 1 }) : 0,
+        weightEquipment: draft.weightEquipment ?? null,
+        bandResistance: draft.bandResistance ?? null,
         tempo: Object.fromEntries(["first", "second", "third", "fourth"].map((key, index) => [
             key, Math.max(0, Math.min(999, Number(tempo.querySelectorAll("input")[index].value) || 0))
         ]))

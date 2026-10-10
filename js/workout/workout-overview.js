@@ -1,3 +1,4 @@
+import { getWeightedExerciseName } from "../equipment/weight-equipment.js";
 import { createProgressionPreferenceSelect } from "../training/progression-preferences.js";
 import { createPlanDragController } from "../plans/plan-drag.js";
 
@@ -965,7 +966,7 @@ add.addEventListener(
             );
 
         name.textContent =
-            exercise.nom;
+            getWeightedExerciseName(exercise, workoutExercise.weightEquipment);
 
         progressionName.textContent =
             getProgressionName(exercise) ||

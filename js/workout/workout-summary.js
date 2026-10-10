@@ -1,4 +1,5 @@
 import { createProgressionPreferenceSelect } from "../training/progression-preferences.js";
+import { getWeightedExerciseName, getWeightVariantKey } from "../equipment/weight-equipment.js";
 import { getProgressionId, getProgressionName } from "../exercises/exercise-search.js";
 
 import {
@@ -108,12 +109,9 @@ function formatSeriesVolume(log) {
     const volume =
         `${log.value} ${unit}`;
 
-    const weight =
-        Number(log.weight) || 0;
-
-    if (weight <= 0) {
-        return volume;
-    }
+    const weight = Number(log.weight) || 0;
+    if (log.weightEquipment === "Élastique" && log.weightUnit === "Res") return `${volume} | Élastique : ${log.bandResistance || "—"}`;
+    if (weight <= 0) return log.weightEquipment ? `${volume} | ${log.weightEquipment} (0)` : volume;
 
     return (
         `${volume} x ` +
@@ -220,23 +218,17 @@ function getCompletedWorkoutEntries(session) {
     return entries;
 }
 
-function getExerciseKey(exercise) {
-    return String(
-        exercise?.ID ??
-        exercise?.nom ??
-        "exercise"
-    );
-}
+function getExerciseKey(exercise) { return getWeightVariantKey(exercise, exercise?.variantEquipment); }
 
 function groupCompletedEntriesByExercise(entries) {
     const groups = new Map();
 
     entries.forEach(entry => {
-        const exercise =
-            entry.workoutExercise.exercise;
-
-        const key =
-            getExerciseKey(exercise);
+        const source = entry.workoutExercise.exercise;
+        const equipment = Object.hasOwn(entry.log, "weightEquipment") ? entry.log.weightEquipment : entry.workoutExercise.weightEquipment;
+        const base = source.variantEquipment ? { ...source, nom: source.baseExerciseName ?? source.nom, variantEquipment: null } : source;
+        const exercise = equipment ? { ...base, baseExerciseId: base.baseExerciseId ?? base.ID, baseExerciseName: base.baseExerciseName ?? base.nom, variantEquipment: equipment, nom: getWeightedExerciseName(base, equipment) } : base;
+        const key = getExerciseKey(exercise);
 
         if (!groups.has(key)) {
             groups.set(key, {

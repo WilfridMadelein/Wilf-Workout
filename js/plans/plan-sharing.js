@@ -1,5 +1,6 @@
 import { hydratePlan, serializePlan, savePlanNow } from "../storage/plan-storage.js";
 import { encodePlanShareV3, decodePlanShareV3 } from "./plan-sharing-codec.js";
+import { WEIGHT_EQUIPMENT, addPersonalWeightEquipment, addBandResistance } from "../equipment/weight-equipment.js";
 
 // ============================================================
 // PARTAGE DE PLANS
@@ -253,22 +254,57 @@ async function shortestEncodedToken(raw, modes) {
     return shortest;
 }
 
+// Extension de variantes v4 : séparée du codec ultra-compact existant pour préserver les anciens liens.
+// Les équipements publics utilisent un entier de 1 à 9; les personnalisés voyagent par nom.
+function encodeWeightShareExtension(plan) {
+    const entries = (plan.exercises ?? []).flatMap((item, index) => {
+        if (!item.weightEquipment && !item.bandResistance && item.weightUnit !== "Res") return [];
+        const code = WEIGHT_EQUIPMENT.indexOf(item.weightEquipment) + 1;
+        return [[index, code || String(item.weightEquipment ?? "").slice(0, 48), item.weightUnit === "Res" ? String(item.bandResistance ?? "").slice(0, 40) : null]];
+    });
+    return entries.length ? `.${bytesToBase64Url(new TextEncoder().encode(JSON.stringify(entries)))}` : "";
+}
+function applyWeightShareExtension(plan, extension) {
+    if (!extension) return plan;
+    const bytes = base64UrlToBytes(extension);
+    if (bytes.length > 32000) throw new Error("Équipements partagés trop volumineux.");
+    const entries = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+    if (!Array.isArray(entries) || entries.length > (plan.exercises ?? []).length) throw new Error("Variantes de poids partagées invalides.");
+    const seen = new Set();
+    entries.forEach(entry => {
+        if (!Array.isArray(entry) || entry.length !== 3) throw new Error("Format de variante invalide.");
+        const [index, code, resistance] = entry;
+        if (!Number.isInteger(index) || index < 0 || index >= plan.exercises.length || seen.has(index)) throw new Error("Index de variante invalide.");
+        seen.add(index);
+        const name = Number.isInteger(code) && code >= 1 && code <= 9 ? WEIGHT_EQUIPMENT[code - 1] : typeof code === "string" && code.length <= 48 ? code.trim() : null;
+        if (!name) throw new Error("Équipement de poids invalide.");
+        if (resistance !== null && (typeof resistance !== "string" || resistance.length > 40 || name !== "Élastique")) throw new Error("Résistance partagée invalide.");
+        plan.exercises[index].weightEquipment = name;
+        plan.exercises[index].bandResistance = resistance;
+        if (resistance !== null) plan.exercises[index].weightUnit = "Res";
+    });
+    return plan;
+}
+
 async function encodeSharePayload(payload) {
     const normalized = JSON.parse(JSON.stringify(payload));
+    const extension = encodeWeightShareExtension(normalized.plan);
+    const core = JSON.parse(JSON.stringify(normalized));
+    core.plan.exercises.forEach(item => { delete item.weightEquipment; delete item.bandResistance; if (item.weightUnit === "Res") { item.weightUnit = "lbs"; item.weight = 0; } });
     if (JSON.stringify(normalized).length > MAX_SHARE_JSON_LENGTH) throw new Error("Le plan partagé est trop volumineux.");
 
     if (normalized.plan.defaults?.supersetRest == null) {
         try {
-            const compactV3 = encodePlanShareV3(normalized.plan, getExercises());
+            const compactV3 = encodePlanShareV3(core.plan, getExercises());
             const token = await shortestEncodedToken(compactV3, { raw: "m", rawDeflate: "n", deflate: "o", gzip: "q" });
-            if (token.length > MAX_SHARE_TOKEN_LENGTH) throw new Error("Le plan partagé est trop volumineux.");
-            return token;
+            if (token.length + extension.length > MAX_SHARE_TOKEN_LENGTH) throw new Error("Le plan partagé est trop volumineux.");
+            return token + extension;
         } catch (error) {
             console.warn("Codec de partage V3 indisponible pour ce plan, utilisation du format V2.", error);
         }
     }
 
-    const packed = [2, packShareRecord(normalized.plan, "plan")], compact = JSON.stringify(packed);
+    const packed = [2, packShareRecord(core.plan, "plan")], compact = JSON.stringify(packed);
     const candidates = [{ raw: new TextEncoder().encode(compact), plain: "p", modes: { rawDeflate: "r", deflate: "d", gzip: "c" } }];
     try { candidates.push({ raw: encodeShareBinary(packed), plain: "b", modes: { rawDeflate: "s", deflate: "e", gzip: "z" } }); }
     catch { /* Preserver toutes les chaines et extensions avec le format JSON. */ }
@@ -278,18 +314,22 @@ async function encodeSharePayload(payload) {
         if (shortest === null || token.length < shortest.length) shortest = token;
     }
     if (shortest.length > MAX_SHARE_TOKEN_LENGTH) throw new Error("Le plan partagé est trop volumineux.");
-    return shortest;
+    return shortest + extension;
 }
 
 async function decodeSharePayload(token) {
     if (typeof token !== "string" || token.length < 2 || token.length > MAX_SHARE_TOKEN_LENGTH) throw new Error("Lien de partage invalide ou trop volumineux.");
+    const separator = token.indexOf(".");
+    const extension = separator >= 0 ? token.slice(separator + 1) : null;
+    if (extension && !/^[A-Za-z0-9_-]+$/.test(extension)) throw new Error("Extension de partage invalide.");
+    token = separator >= 0 ? token.slice(0, separator) : token;
     const mode = token[0], bytes = base64UrlToBytes(token.slice(1));
     const v3Formats = { n: "deflate-raw", o: "deflate", q: "gzip" };
     if (mode === "m" || Object.hasOwn(v3Formats, mode)) {
         const output = mode === "m" ? bytes : await decompressShareBytes(bytes, v3Formats[mode]);
         const settings = getAppSettings?.() ?? {};
         const plan = decodePlanShareV3(output, getExercises(), { splitOrder: settings.splitOrder, autoAddDefaultInstructions: settings.planDefaults?.autoAddDefaultInstructions });
-        return { format: PLAN_SHARE_FORMAT, version: PLAN_SHARE_VERSION, plan };
+        return { format: PLAN_SHARE_FORMAT, version: PLAN_SHARE_VERSION, plan: applyWeightShareExtension(plan, extension) };
     }
 
     const formats = { c: "gzip", d: "deflate", r: "deflate-raw", s: "deflate-raw", e: "deflate", z: "gzip" };
@@ -299,7 +339,7 @@ async function decodeSharePayload(token) {
     const decoded = binary ? decodeShareBinary(output) : JSON.parse(new TextDecoder().decode(output));
     if (JSON.stringify(decoded).length > MAX_SHARE_JSON_LENGTH) throw new Error("Le plan partagé est trop volumineux.");
     if (!Array.isArray(decoded) || decoded.length !== 2 || decoded[0] !== 2) throw new Error("Version du plan compact inconnue.");
-    return { format: PLAN_SHARE_FORMAT, version: PLAN_SHARE_VERSION, plan: unpackShareRecord(decoded[1], "plan") };
+    return { format: PLAN_SHARE_FORMAT, version: PLAN_SHARE_VERSION, plan: applyWeightShareExtension(unpackShareRecord(decoded[1], "plan"), extension) };
 }
 
 function createSharedPlanRecord(plan) {
@@ -386,6 +426,11 @@ function clearCurrentShareHash() {
 }
 
 async function importSharedPlan(sharedRecord, name, existing = null) {
+    (sharedRecord.exercises ?? []).forEach(item => {
+        const name = item.weightEquipment;
+        if (name && !WEIGHT_EQUIPMENT.includes(name) && name !== "Non précisé") addPersonalWeightEquipment(name);
+        if (name === "Élastique" && item.bandResistance) addBandResistance(item.bandResistance);
+    });
     const imported = buildImportedPlan(sharedRecord, name, existing);
     await savePlanNow(imported, { touch: false });
     const target = existing ? replacePlanContents(existing, imported) : imported;

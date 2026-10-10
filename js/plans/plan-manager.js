@@ -1,6 +1,9 @@
+import { getAutomaticWeightEquipment, getLastEquipmentPerformance } from "../equipment/weight-equipment.js";
 // ============================================================
 // GESTION DES EXERCICES DU PLAN
 // ============================================================
+
+import { getWeightedExerciseName } from "../equipment/weight-equipment.js";
 
 import { 
     isIsometricExercise,
@@ -159,8 +162,10 @@ function addExerciseToCurrentPlan(exercise) {
             fourth: currentPlan.defaults.tempo.fourth
         },
 
-        weight: currentPlan.defaults.weight,
-        weightUnit: currentPlan.defaults.weightUnit,
+        weight: getLastEquipmentPerformance(exercise, exercise.variantEquipment)?.weight ?? 0,
+        weightEquipment: exercise.variantEquipment ?? getAutomaticWeightEquipment(exercise),
+        bandResistance: getLastEquipmentPerformance(exercise, exercise.variantEquipment)?.bandResistance ?? null,
+        weightUnit: getLastEquipmentPerformance(exercise, exercise.variantEquipment)?.weightUnit ?? currentPlan.defaults.weightUnit,
 
         splitOrder: normalizeSplitOrder(getDefaultSplitOrder()),
 

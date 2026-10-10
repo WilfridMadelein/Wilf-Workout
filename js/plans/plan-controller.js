@@ -1,3 +1,4 @@
+import { isGymOnlyExercise, getAutomaticWeightEquipment } from "../equipment/weight-equipment.js";
 import { normalizeSupersetRest } from "./plan-rest.js";
 import { refreshPlanRestControls } from "./plan-render.js";
 import {
@@ -809,6 +810,24 @@ function renderAutoPlanGeneration(plan) {
 // Ouvrir un plan
 // ------------------------------------------------------------
 
+function validateWorkoutWeightEquipment(plan) {
+    (plan.exercises ?? []).forEach(item => {
+        if (item.weightEquipment || item.weightEquipmentExplicitlyRemoved) return;
+        const automatic = getAutomaticWeightEquipment(item.exercise);
+        if (automatic) { item.weightEquipment = automatic; schedulePlanSave(plan); }
+    });
+    const missing = (plan.exercises ?? []).filter(item => isGymOnlyExercise(item.exercise) && (!item.weightEquipment || item.weightEquipment === "Non précisé"));
+    if (!missing.length) return true;
+    const names = [...new Set(missing.map(item => item.exercise.nom))];
+    alert(`${names.length > 1 ? "Les exercices suivants nécessitent" : "L’exercice suivant nécessite"} un équipement de poids avant de lancer l'entraînement :\n\n${names.join("\n")}\n\nVeuillez sélectionner un équipement pour chaque exercice indiqué en orange.`);
+    if (getCurrentPlan() !== plan || planEditor.style.display !== "block") openPlan(plan);
+    const indices = new Set(plan.exercises.flatMap((item, index) => missing.includes(item) ? [String(index)] : []));
+    const cards = [...planEditor.querySelectorAll(".plan-exercise-shell[data-plan-exercise-index]")];
+    cards.forEach(element => element.classList.toggle("wilf-weight-missing", indices.has(element.dataset.planExerciseIndex)));
+    cards.find(element => indices.has(element.dataset.planExerciseIndex))?.scrollIntoView({ behavior: "smooth", block: "center" });
+    return false;
+}
+
 export function openPlan(plan) {
     const previousPlan = getCurrentPlan();
 
@@ -996,7 +1015,7 @@ export function renderPlansList() {
 
         startWorkoutButton.addEventListener("click", event => {
             event.stopPropagation();
-            startWorkout(plan);
+            if (validateWorkoutWeightEquipment(plan)) startWorkout(plan);
         });
 
         card.append(footer, startWorkoutButton);
@@ -1365,7 +1384,7 @@ startPlanWorkoutButton.addEventListener(
         finishPlanNameEditing();
         saveCurrentPlanFilters();
 
-        startWorkout(plan);
+        if (validateWorkoutWeightEquipment(plan)) startWorkout(plan);
     }
 );
 

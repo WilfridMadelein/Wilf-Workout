@@ -26,7 +26,8 @@ function formatExerciseRecordValue(record) {
 function formatSeriesVolume(log) {
     const unit = log.valueUnit === "sec" ? "sec" : "rep";
     const volume = `${log.value} ${unit}`;
-    return Number(log.weight) > 0 ? `${volume} x ${log.weight} ${log.weightUnit}` : volume;
+    if (log.weightEquipment === "Élastique" && log.weightUnit === "Res") return `${volume} | Élastique : ${log.bandResistance || "—"}`;
+    return Number(log.weight) > 0 ? `${volume} x ${log.weight} ${log.weightUnit}` : log.weightEquipment ? `${volume} | ${log.weightEquipment} (0)` : volume;
 }
 function formatSeriesEntry(entry) {
     const side = entry.sideKey === "left" ? "G: " : entry.sideKey === "right" ? "D: " : "";

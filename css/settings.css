@@ -694,11 +694,7 @@ html[data-theme="dark"] button.filter-button.active * {
     color: inherit;
 }
 
-html[data-theme="dark"] button.filter-button.active.equipment-irrelevant {
-    background: #e6bcbc;
-    color: #3c1c1c;
-    border-color: #ca9292;
-}
+
 
 /* Survol des filtres */
 

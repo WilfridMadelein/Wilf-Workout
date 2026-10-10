@@ -120,6 +120,9 @@ function serializePlanExercise(planExercise) {
         },
 
         weight: planExercise.weight ?? 0,
+        weightEquipment: planExercise.weightEquipment ?? (Number(planExercise.weight) > 0 ? "Non précisé" : null),
+        weightEquipmentExplicitlyRemoved: planExercise.weightEquipmentExplicitlyRemoved === true,
+        bandResistance: planExercise.bandResistance ?? null,
         weightUnit: planExercise.weightUnit ?? "lbs",
         
         splitOrder: normalizeSplitOrder(planExercise.splitOrder),
@@ -173,6 +176,9 @@ function hydratePlanExercise(savedExercise, exercisesById, exercisesByName) {
         },
 
         weight: savedExercise.weight ?? 0,
+        weightEquipment: typeof savedExercise.weightEquipment === "string" ? savedExercise.weightEquipment : Number(savedExercise.weight) > 0 ? "Non précisé" : null,
+        weightEquipmentExplicitlyRemoved: savedExercise.weightEquipmentExplicitlyRemoved === true,
+        bandResistance: typeof savedExercise.bandResistance === "string" ? savedExercise.bandResistance : null,
         weightUnit: savedExercise.weightUnit ?? "lbs",
 
         splitOrder: normalizeSplitOrder(savedExercise.splitOrder),

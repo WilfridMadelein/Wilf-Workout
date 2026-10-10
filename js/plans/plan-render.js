@@ -1,4 +1,5 @@
 import { getPlanExerciseRest, usesSupersetRest } from "./plan-rest.js";
+import { createWeightEquipmentPicker, getWeightedExerciseName, getLastEquipmentPerformance, createBandResistanceControl, getAutomaticWeightEquipment } from "../equipment/weight-equipment.js";
 import { createPlanDragController } from "./plan-drag.js";
 
 import {
@@ -433,6 +434,7 @@ setBlock.appendChild(setExercises);
 
                 const cached = previousCards.get(planExercise);
                 if (cached) {
+                    cached.shell.dataset.planExerciseIndex = String(plan.exercises.indexOf(planExercise));
                     cached.shell.querySelector(".plan-exercise-number").textContent = `${planIndex} -`;
                     cached.shell.querySelector(".plan-combination-button").textContent = `S${group}`;
                     cached.setsInput.value = planExercise.sets;
@@ -453,6 +455,8 @@ setBlock.appendChild(setExercises);
                 shell.classList.add(
                     "plan-exercise-shell"
                 );
+                shell.dataset.exerciseId = String(exercise.ID);
+                shell.dataset.planExerciseIndex = String(plan.exercises.indexOf(planExercise));
 
 
 // ------------------------------------------------
@@ -612,8 +616,7 @@ muscleMapToggle.addEventListener(
                     "plan-exercise-name"
                 );
 
-                exerciseName.textContent =
-                    exercise.nom;
+                exerciseName.textContent = getWeightedExerciseName(exercise, planExercise.weightEquipment);
 
                 exerciseName.addEventListener("click", () => {
                     displayExerciseDetails(planExercise.exercise, "plan");
@@ -740,7 +743,7 @@ muscles.textContent = getPlanExerciseMetaText(exercise);
                     "plan-weight-unit"
                 );
 
-                ["lbs", "kg"].forEach(unit => {
+                (planExercise.weightEquipment === "Élastique" ? ["Res", "kg", "lbs"] : ["lbs", "kg"]).forEach(unit => {
                     const option =
                         document.createElement(
                             "option"
@@ -757,21 +760,61 @@ muscles.textContent = getPlanExerciseMetaText(exercise);
                 weightUnit.value =
                     planExercise.weightUnit;
 
-                weightUnit.addEventListener("change", () => {
-                        planExercise.weightUnit = weightUnit.value;
-                        schedulePlanSave(getCurrentPlan());
+                const resistance = document.createElement("div"); resistance.className = "wilf-weight-resistance-host";
+                function renderResistance() {
+                    resistance.replaceChildren();
+                    if (planExercise.weightEquipment !== "Élastique" || planExercise.weightUnit !== "Res") return;
+                    resistance.append(createBandResistanceControl({ inline: true, getValue: () => planExercise.bandResistance, onChange: value => { planExercise.bandResistance = value; schedulePlanSave(getCurrentPlan()); } }));
+                }
+                function refreshWeightEquipment() {
+                    const selected = !!planExercise.weightEquipment, elasticRes = planExercise.weightEquipment === "Élastique" && planExercise.weightUnit === "Res";
+                    weight.hidden = !selected;
+                    weight.style.display = selected ? "" : "none";
+                    if (typeof weightRow !== "undefined") { weightRow.hidden = !selected || elasticRes; weightRow.style.display = selected && !elasticRes ? "" : "none"; }
+                    weightUnit.querySelectorAll('option[value="Res"]').forEach(option => option.remove());
+                    if (planExercise.weightEquipment === "Élastique") weightUnit.insertBefore(new Option("Res", "Res"), weightUnit.firstChild);
+                    if (planExercise.weightUnit === "Res" && planExercise.weightEquipment !== "Élastique") planExercise.weightUnit = "lbs";
+                    weightUnit.value = planExercise.weightUnit;
+                    const weightInput = weight.querySelector(".plan-number-input");
+                    if (weightInput) weightInput.value = planExercise.weight ?? 0;
+                    const numeric = weight.querySelector(".plan-number-control");
+                    numeric.hidden = elasticRes;
+                    numeric.style.display = elasticRes ? "none" : "";
+                    weightUnit.hidden = elasticRes;
+                    weightUnit.style.display = elasticRes ? "none" : "";
+                    renderResistance();
+                    exerciseName.textContent = getWeightedExerciseName(exercise, planExercise.weightEquipment);
+                    shell.classList.toggle("wilf-weight-missing", !selected && (exercise.catégorie ?? []).some(name => name.startsWith("Gym")) && !(exercise.catégorie ?? []).some(name => name.startsWith("Cali")));
+                }
+                weightUnit.addEventListener("change", () => { planExercise.weightUnit = weightUnit.value; if (weightUnit.value === "Res") planExercise.weight = 0; renderResistance(); refreshWeightEquipment(); schedulePlanSave(getCurrentPlan()); });
+
+
+                weight.append(weightUnit);
+                if (!planExercise.weightEquipment && !planExercise.weightEquipmentExplicitlyRemoved) planExercise.weightEquipment = getAutomaticWeightEquipment(exercise);
+                if (planExercise.weightEquipment && !planExercise.bandResistance && Number(planExercise.weight) === 0 && exercise.variantEquipment) {
+                    const recent = getLastEquipmentPerformance(exercise, planExercise.weightEquipment);
+                    if (recent) { planExercise.weight = recent.weight; planExercise.bandResistance = recent.bandResistance; planExercise.weightUnit = recent.weightUnit; }
+                }
+                const picker = createWeightEquipmentPicker(exercise, {
+                    getValue: () => planExercise.weightEquipment,
+                    onChange: value => {
+                        planExercise.weightEquipment = value || null;
+                        planExercise.weightEquipmentExplicitlyRemoved = !value;
+                        if (!value) { planExercise.weight = 0; planExercise.bandResistance = null; }
+                        if (value) {
+                            const recent = getLastEquipmentPerformance(exercise, value);
+                            if (recent) { planExercise.weight = recent.weight; planExercise.weightUnit = recent.weightUnit; planExercise.bandResistance = recent.bandResistance; }
+                        }
+                        if (value === "Élastique" && !getLastEquipmentPerformance(exercise, value)) { planExercise.weightUnit = "Res"; planExercise.weight = 0; }
+                        if (value && value !== "Élastique" && planExercise.weightUnit === "Res") planExercise.weightUnit = "lbs";
+                        refreshWeightEquipment(); schedulePlanSave(getCurrentPlan());
                     }
-                );
+                });
 
-
-                weight.appendChild(weightUnit);
-
-                const weightRow =
-                    createExerciseControlRow(
-                        "Poids", weight,"plan-exercise-weight-row");
-
-                line2.append(
-                    muscles, weightRow);
+                const equipmentRow = document.createElement("div"); equipmentRow.className = "wilf-weight-equipment-row"; equipmentRow.append(picker, resistance);
+                const weightRow = createExerciseControlRow("Poids", weight, "plan-exercise-weight-row");
+                line2.append(muscles, equipmentRow, weightRow);
+                refreshWeightEquipment();
 
 
                 // =================================================
@@ -1155,7 +1198,7 @@ if (getAlwaysShowInstructions()) {
                 });
 
 function refreshProgressionCard(newExercise) {
-    exerciseName.textContent = newExercise.nom;
+    exerciseName.textContent = getWeightedExerciseName(newExercise, planExercise.weightEquipment);
     progressionName.textContent = getProgressionName(newExercise) || "—";
 
     const progressionArrows = progressionButtons.querySelectorAll(

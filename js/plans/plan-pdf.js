@@ -1,3 +1,4 @@
+import { getWeightedExerciseName } from "../equipment/weight-equipment.js";
 import { getPlanExerciseRest } from "./plan-rest.js";
 import { getProgressionName } from "../exercises/exercise-search.js";
 import { getPlanExerciseDetailsLines } from "../exercises/exercise-details.js";
@@ -1073,7 +1074,7 @@ function getExerciseCardLayout(
 
     const titleLines =
         doc.splitTextToSize(
-            `${index + 1} - ${exercise.nom ?? "Exercice"}`,
+            `${index + 1} - ${getWeightedExerciseName(exercise, planExercise.weightEquipment)}`,
             titleWidth
         );
 

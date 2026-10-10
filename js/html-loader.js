@@ -1,4 +1,4 @@
-const APP_ASSET_VERSION = "2026-10-08-history-charts-v2";
+const APP_ASSET_VERSION = "2026-10-10-weight-adjustments";
 
 async function loadHTML() {
     const pages = {

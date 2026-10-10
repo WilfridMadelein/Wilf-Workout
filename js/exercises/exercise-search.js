@@ -1,3 +1,5 @@
+import { getWeightEquipmentSuffix } from "../equipment/weight-equipment.js";
+
 // ============================================================
 // RECHERCHE DES EXERCICES
 // ============================================================
@@ -37,7 +39,7 @@ function getProgressionDisplay(exercise) {
         ordre !== null &&
         ordre !== ""
     ) {
-        return `${progression} ${ordre}`;
+        return `${progression} ${ordre}${getWeightEquipmentSuffix(exercise.variantEquipment)}`;
     }
 
     return progression;
@@ -387,11 +389,12 @@ function compareExercisesBySearch(a, b) {
             }
         }
 
-        return a.exercise.nom.localeCompare(
-            b.exercise.nom,
-            "fr",
-            { sensitivity: "base" }
-        );
+        if (String(a.exercise.baseExerciseId ?? a.exercise.ID) === String(b.exercise.baseExerciseId ?? b.exercise.ID)) {
+            const rank = exercise => { const suffix = getWeightEquipmentSuffix(exercise.variantEquipment); return !suffix ? 0 : suffix.startsWith(".a") ? 9 + (Number(suffix.slice(2)) || 101) : Number(suffix.slice(1)) || 200; };
+            const weightOrder = rank(a.exercise) - rank(b.exercise);
+            if (weightOrder) return weightOrder;
+        }
+        return a.exercise.nom.localeCompare(b.exercise.nom, "fr", { sensitivity: "base" });
     }
 
     /*

@@ -1,0 +1,77 @@
+/* Variantes de charge et contrôles partagés */
+.wilf-weight-equipment-picker { position:relative; display:inline-flex; align-items:center; gap:6px; min-width:0; flex-wrap:wrap; }
+.wilf-weight-equipment-picker button,.wilf-weight-equipment-picker select { border:1px solid var(--accent-color,#f59b27); border-radius:7px; padding:6px 9px; font:inherit; background:transparent; color:inherit; cursor:pointer; }
+.wilf-weight-equipment-picker .wilf-weight-add { color:#d87b06; border-color:#ed951f; font-weight:650; }
+.wilf-weight-equipment-picker .wilf-weight-remove { color:#bb3026; border-color:#c96758; font-weight:700; }
+.wilf-weight-equipment-picker select option.wilf-weight-used { background:#fff0d5; color:#493019; }
+.wilf-weight-equipment-picker .wilf-weight-name { font-size:.85em; font-weight:600; white-space:normal; }
+.wilf-weight-resistance { display:inline-flex; align-items:center; gap:5px; flex-wrap:wrap; }
+.wilf-weight-resistance select { max-width:155px; }
+.wilf-weight-missing { border:2px solid #df8c16!important; box-shadow:0 0 0 2px #f9a83b33; }
+.wilf-weight-separation-toggle { display:flex; gap:8px; align-items:center; padding:9px 5px; font-size:.86rem; }
+.exercise-weight-section { margin:6px 0 11px; padding-left:6px; border-left:2px solid #f4ac65; }
+.exercise-weight-section-title { font-size:.86rem; color:#ba731b; margin:4px 0 8px; }
+.wilf-weight-missing-label { color:#c16d00; font-size:.82em; font-weight:700; }
+.wilf-equipment-settings-row { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin:7px 0; }
+.wilf-equipment-settings-row select { padding:5px; max-width:170px; }
+.wilf-equipment-settings-row button { border:1px solid #c65b4c; color:#c65b4c; background:none; border-radius:6px; }
+
+/* Équipement en haut, charge/résistance sur la ligne Poids. */
+.wilf-weight-equipment-row { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:5px 0 2px; width:100%; }
+.wilf-workout-weight-equipment-row { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:4px 0; }
+.wilf-weight-equipment-picker { justify-content:flex-start; }
+.wilf-weight-choice-row { display:flex; align-items:center; gap:6px; width:100%; }
+.wilf-weight-choice-row .wilf-weight-dropdown-option { flex:1; text-align:left; }
+.wilf-weight-choice-row .wilf-weight-used { background:#fff1d9; border-color:#eaa34c; color:#1f1f1f; }
+.wilf-weight-preference-dot { flex:none; width:17px; height:17px; min-width:17px; padding:0!important; border-radius:50%!important; border:1px solid #7f7f7f!important; background:#999!important; }
+.wilf-weight-preference-dot[data-preference="more"] { background:#44a666!important; }
+.wilf-weight-preference-dot[data-preference="less"] { background:#e3ae42!important; }
+.wilf-weight-preference-dot[data-preference="never"] { background:#d05252!important; }
+.wilf-weight-resistance-host { display:flex; align-items:center; min-width:0; flex:0 0 auto; }
+.wilf-weight-resistance { flex-wrap:nowrap; }
+.wilf-weight-resistance.is-inline { justify-content:flex-end; max-width:100%; }
+.wilf-weight-resistance select { color:inherit; }
+.wilf-resistance-unit { font-size:.86rem; min-width:fit-content; }
+.wilf-resistance-arrows { display:flex; flex-direction:column; flex:none; gap:0; }
+.wilf-resistance-arrows button { border:0; background:transparent; color:inherit; font-size:.75rem; padding:0 4px; line-height:1.15; cursor:pointer; }
+.wilf-band-order-backdrop { position:fixed; inset:0; z-index:100000; display:flex; justify-content:center; align-items:center; background:#0009; padding:14px; }
+.wilf-band-order-dialog { background:var(--background-color,#fff); color:var(--text-color,#222); box-shadow:0 12px 35px #0003; border-radius:12px; padding:20px; max-width:400px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.wilf-band-order-dialog strong { width:100%; }
+.wilf-band-order-dialog select,.wilf-band-order-dialog button { padding:8px; border-radius:7px; }
+.filter-button.wilf-weight-filter:not(.active), #plan-equipment-filter-options .filter-button.wilf-weight-filter:not(.active) { background:#e8f4ff; border-color:#9bc9ee; color:inherit; }
+.filter-button.wilf-weight-filter.active { background:#315f99; border-color:#315f99; color:#fff; }
+html[data-theme="dark"] .filter-button.wilf-weight-filter:not(.active) { background:#20384c; color:inherit; border-color:#426b8e; }
+
+/* Les cartes du plan possèdent une zone dédiée au nom d'équipement au-dessus du poids. */
+.plan-exercise-card .wilf-weight-equipment-row { grid-area:equipment; display:flex; justify-self:stretch; align-items:center; width:100%; min-width:0; margin:0; }
+.wilf-weight-actions-menu { display:flex; flex-direction:column; align-items:stretch; gap:3px; min-width:150px; }
+.wilf-weight-actions-menu button { text-align:left; }
+
+
+.wilf-settings-weight-name { background:#e8f4ff; color:#235b88; border-radius:6px; padding:3px 7px; }
+html[data-theme="dark"] .wilf-settings-weight-name { background:#20384c; color:#b9dcf7; }
+
+
+.wilf-weight-dropdown { position:absolute; top:calc(100% + 6px); left:0; z-index:2000; min-width:215px; max-width:min(280px,80vw); background:var(--surface-color,var(--background-color,#fff)); border:1px solid var(--accent-color,#f59b27); border-radius:10px; box-shadow:0 12px 28px rgba(0,0,0,.22); padding:8px; display:flex; flex-direction:column; gap:6px; }
+.wilf-weight-dropdown-header { display:flex; align-items:center; gap:8px; }
+.wilf-weight-dropdown-header strong { font-size:.88rem; }
+.wilf-weight-dropdown-back { border:0!important; background:transparent!important; color:inherit!important; padding:2px 4px!important; font-size:1rem; }
+.wilf-weight-dropdown-list { display:flex; flex-direction:column; gap:4px; max-height:240px; overflow-y:auto; padding-right:2px; }
+.wilf-weight-dropdown-option { width:100%; text-align:left; border:1px solid #d6d6d6; background:var(--surface-color,var(--background-color,#fff)); color:inherit; border-radius:8px; padding:8px 10px; }
+.wilf-weight-dropdown-option.wilf-weight-suggested { background:#e8f4ff; border-color:#9bc9ee; color:#1f1f1f; }
+.wilf-weight-dropdown-option.wilf-weight-used { background:#fff1d9; border-color:#eaa34c; color:#1f1f1f; }
+.wilf-weight-dropdown-option.wilf-weight-other { font-weight:600; }
+.wilf-weight-dropdown-option.wilf-weight-remove-option { color:#9b2f24; }
+html[data-theme="dark"] .wilf-weight-dropdown { background:#252525; }
+html[data-theme="dark"] .wilf-weight-dropdown-option.wilf-weight-suggested, html[data-theme="dark"] .wilf-weight-dropdown-option.wilf-weight-used { color:#111; }
+
+/* Équipement sur la première ligne, résistance en dessous */
+.wilf-workout-weight-equipment-row,
+.plan-exercise-card .wilf-weight-equipment-row {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 5px;
+}
+.wilf-weight-equipment-picker { flex-wrap: nowrap; }
+.wilf-weight-resistance.is-inline { justify-content: flex-start; }
