@@ -1,3 +1,4 @@
+import { setupAppUpdates } from "./updates/app-updates.js";
 import { setupTimerNotifications } from "./workout/workout-timer-notifications.js";
 import { configureWeightEquipment, getPersonalWeightEquipment, getUsedExerciseVariants } from "./equipment/weight-equipment.js";
 
@@ -1681,6 +1682,7 @@ async function initializeApp() {
     restoreLastPage();
     offerWorkoutResume();
     await handleInitialPlanShare();
+    setupAppUpdates();
 }
 
 initializeApp();

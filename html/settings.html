@@ -62,6 +62,24 @@
     </section>
 
     <!-- =========================================================
+         MISES À JOUR DE L'APPLICATION
+    ========================================================== -->
+    <section id="settings-app-updates" class="settings-section" hidden>
+        <h3>Mises à jour de l'application</h3>
+        <p id="settings-update-current" class="settings-help">Version installée : vérification...</p>
+        <div class="settings-row settings-update-row">
+            <label for="settings-update-auto-check">Vérifier les mises à jour au démarrage</label>
+            <input id="settings-update-auto-check" type="checkbox" checked>
+        </div>
+        <p id="settings-update-status" class="settings-help" role="status" aria-live="polite">Aucune vérification effectuée.</p>
+        <div class="settings-update-actions">
+            <button id="settings-update-check" type="button">Vérifier maintenant</button>
+            <button id="settings-update-open" type="button" hidden>Voir la mise à jour</button>
+        </div>
+        <p class="settings-help">Les nouvelles versions s'installent depuis la page officielle de Wilf. Aucun téléchargement ou installation ne démarre sans votre action.</p>
+    </section>
+
+    <!-- =========================================================
          DONNÉES
     ========================================================== -->
     <section class="settings-section">

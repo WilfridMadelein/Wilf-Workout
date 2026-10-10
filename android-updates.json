@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "latestBuild": 2,
+  "latestVersion": "1.1",
+  "minSupportedBuild": 1,
+  "importance": "feature",
+  "summary": "Vérification des mises à jour dans Wilf Workout.",
+  "publishedAt": "2026-10-10"
+}

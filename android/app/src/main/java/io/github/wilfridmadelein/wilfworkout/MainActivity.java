@@ -11,6 +11,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(WilfStoragePlugin.class);
         registerPlugin(WilfTimerNotificationsPlugin.class);
         registerPlugin(WilfSharePlugin.class);
+        registerPlugin(WilfUpdatesPlugin.class);
         super.onCreate(savedInstanceState);
     }
     @Override
