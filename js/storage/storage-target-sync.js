@@ -2,6 +2,8 @@ import { subscribeStorageChanges } from './storage-change-events.js';
 import { SYNC_METADATA_ID } from './sync-metadata.js';
 import { SYNC_CONFIG_ID, loadSyncConfig } from './sync-config.js';
 import { syncStorageBidirectionalNow } from './storage-sync-merge.js';
+import { hasPendingPlanSaves } from './plan-storage.js';
+import { hasPendingAppSettingsSave } from './settings-storage.js';
 
 // ============================================================
 // SYNCHRONISATION AUTOMATIQUE
@@ -30,8 +32,13 @@ async function syncStorageTargetNow({ force = false } = {}) {
         if (!config.target) return { status: 'no-target', imported: 0, exported: 0, conflicts: [] };
         if (!config.initialized) return { status: 'pairing-required', imported: 0, exported: 0, conflicts: [] };
         if (!force && config.mode !== 'automatic') return { status: 'manual-mode', imported: 0, exported: 0, conflicts: [] };
+        if (hasPendingPlanSaves() || hasPendingAppSettingsSave()) {
+            if (config.mode === 'automatic') scheduleStorageTargetSync(850);
+            return { status: 'local-write-pending', imported: 0, exported: 0, conflicts: [] };
+        }
 
         const result = await syncStorageBidirectionalNow({ conflictPolicy: 'preserve' });
+        if (result?.status === 'local-changed-during-sync') scheduleStorageTargetSync(1200);
         if ((result?.imported ?? 0) > 0) await onDataImported(result);
         await onSyncComplete(result);
         return result;

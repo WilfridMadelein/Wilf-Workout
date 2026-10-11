@@ -19,6 +19,7 @@ import {
 
 const PLAN_SCHEMA_VERSION = 4;
 const saveTimers = new Map();
+let activePlanSaves = 0;
 
 function normalizeAutoPlanGeneration(value) {
     if (!value || typeof value !== "object" || Array.isArray(value)) return null;
@@ -397,7 +398,9 @@ async function savePlanNow(plan, { touch = true } = {}) {
 
     if (touch || !plan.updatedAt) plan.updatedAt = Date.now();
 
-    await putStoredPlan(serializePlan(plan));
+    activePlanSaves += 1;
+    try { await putStoredPlan(serializePlan(plan)); }
+    finally { activePlanSaves -= 1; }
 }
 
 function schedulePlanSave(plan, delay = 250) {
@@ -438,7 +441,10 @@ async function deletePlanFromStorage(id) {
     }
 }
 
+function hasPendingPlanSaves() { return saveTimers.size > 0 || activePlanSaves > 0; }
+
 export {
+    hasPendingPlanSaves,
     PLAN_SCHEMA_VERSION,
     migratePlanRecord,
     serializePlan,

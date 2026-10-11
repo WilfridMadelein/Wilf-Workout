@@ -30,16 +30,6 @@
         <h1>Wilf-Workout</h1>
     </header>
 
-    <!-- MISE À JOUR APK -->
-    <section id="wilf-update-banner" class="wilf-update-banner" aria-live="polite" hidden>
-        <strong id="wilf-update-banner-title">Mise à jour disponible</strong>
-        <p id="wilf-update-banner-description"></p>
-        <div class="wilf-update-banner-actions">
-            <button id="wilf-update-banner-open" type="button">Voir la mise à jour</button>
-            <button id="wilf-update-banner-dismiss" type="button">Plus tard</button>
-        </div>
-    </section>
-
     <!-- ONGLETS -->
     <nav class="app-header" aria-label="Navigation principale">
         <button id="tab-exercises" class="main-tab active" type="button" aria-current="page"><span class="main-tab-icon" aria-hidden="true">🔍︎</span><span class="main-tab-label">Exercices</span></button>
@@ -47,6 +37,8 @@
         <button id="tab-history" class="main-tab" type="button"><span class="main-tab-icon" aria-hidden="true">🗄</span><span class="main-tab-label">Historique</span></button>
         <button id="tab-settings" class="main-tab" type="button"><span class="main-tab-icon" aria-hidden="true">⚙</span><span class="main-tab-label">Paramètres</span></button>
     </nav>
+
+    <p id="wilf-startup-status" class="wilf-startup-status" role="status" aria-live="polite">Ouverture de Wilf…</p>
 
     <!-- PAGES -->
     <div id="page-exercises"></div>
@@ -67,10 +59,8 @@
 <script src="data/muscles.js"></script>
 <script src="data/equipement.js"></script>
 
-<!-- CRÉER PDF -->
-<script src="js/vendor/jspdf.umd.min.js"></script>
-<!-- CHARGEMENT DE L'INTERFACE -->
-<script src="js/html-loader.js?v=2026-10-10-weight-adjustments"></script>
+<!-- CHARGEMENT DE L’INTERFACE — PDF chargé seulement à la demande -->
+<script type="module" src="js/html-loader.js?v=2026-10-10-performance-abc"></script>
 
 </body>
 </html>

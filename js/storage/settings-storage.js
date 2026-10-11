@@ -24,6 +24,7 @@ const APP_SETTINGS_ID = "app";
 const SETTINGS_SCHEMA_VERSION = 5;
 
 let saveTimer = null;
+let activeSettingsSaves = 0;
 
 function normalizeDefaultFilterList(value) {
     if (value == null) return null;
@@ -138,7 +139,9 @@ async function saveAppSettingsNow(settings, { touch = true } = {}) {
     const record = normalizeAppSettings(settings);
     record.updatedAt = settings.updatedAt;
 
-    await putStoredSetting(record);
+    activeSettingsSaves += 1;
+    try { await putStoredSetting(record); }
+    finally { activeSettingsSaves -= 1; }
 }
 
 function scheduleAppSettingsSave(settings, delay = 250) {
@@ -156,7 +159,10 @@ function scheduleAppSettingsSave(settings, delay = 250) {
     }, delay);
 }
 
+function hasPendingAppSettingsSave() { return Boolean(saveTimer) || activeSettingsSaves > 0; }
+
 export {
+    hasPendingAppSettingsSave,
     createDefaultAppSettings,
     normalizeAppSettings,
     loadAppSettings,

@@ -306,6 +306,17 @@ async function runStorageSync(conflictPolicy) {
     }
 
     // --------------------------------------------------------
+    // Protection de la copie locale pendant une synchronisation en arrière-plan
+    // --------------------------------------------------------
+
+    if (localChanges.length || externalDirty) {
+        const currentLocalState = await createSyncBaseline(await createStorageSnapshot());
+        if (!baselinesEqual(currentLocalState, localState)) {
+            return { status: "local-changed-during-sync", policy: conflictPolicy, imported: 0, exported: 0, conflicts: [] };
+        }
+    }
+
+    // --------------------------------------------------------
     // Appliquer les changements
     // --------------------------------------------------------
 

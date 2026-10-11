@@ -1,4 +1,3 @@
-import { setupAppUpdates } from "./updates/app-updates.js";
 import { setupTimerNotifications } from "./workout/workout-timer-notifications.js";
 import { configureWeightEquipment, getPersonalWeightEquipment, getUsedExerciseVariants } from "./equipment/weight-equipment.js";
 
@@ -1101,12 +1100,6 @@ configurePlanFilters({
     addEquipmentToCurrentPlan
 });
 
-createPlanFilterRows();
-planAutoExcludeProgressions.addEventListener(
-    "change",
-    saveCurrentPlanFilters
-);
-
 configureExerciseFilters({
     getAppSettings: () => appSettings,
     scheduleAppSettingsSave,
@@ -1580,15 +1573,20 @@ alert(
 // INITIALISATION
 // ============================================================
 
-async function initializeApp() {
-    // Synchronisation automatique avant le chargement de l’interface.
-    try {
-        const syncResult = await syncStorageTargetNow();
-        if (!["no-target", "manual-mode", "pairing-required", "same"].includes(syncResult.status)) console.info("Synchronisation Wilf :", syncResult);
-    } catch (error) {
-        console.error("Impossible de synchroniser les données au démarrage :", error);
-    }
+// La synchronisation réseau ne doit pas bloquer l'affichage des données locales.
+function syncAfterFirstPaint() {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+        setTimeout(async () => {
+            try {
+                const result = await syncStorageTargetNow();
+                if (!["no-target", "manual-mode", "pairing-required", "same"].includes(result?.status)) console.info("Synchronisation Wilf :", result);
+            } catch (error) { console.error("Synchronisation au démarrage impossible :", error); }
+        }, 700);
+    }));
+}
 
+async function initializeApp() {
+    // Données locales d'abord : l'interface reste utilisable même sans Google Drive.
     try {
         appSettings = await loadAppSettings();
     } catch (error) {
@@ -1656,10 +1654,7 @@ async function initializeApp() {
     setupFilterRows();
 
     setupSettingsController();
-    await setupTimerNotifications();
-    await setupStorageSyncController();
     setupStorageTargetSync();
-    await setupSyncLifecycle();
     window.inspectWilfStorageSync = inspectStorageSync;
     window.inspectWilfAutoPlanData = inspectWilfAutoPlanData;
     window.inspectWilfAutoPlanCandidates = inspectWilfAutoPlanCandidates;
@@ -1678,11 +1673,23 @@ async function initializeApp() {
     setupAppController();
     await setupPlanSharing();
 
-    displayExercises();
+    // Le clic de restauration affiche lui-même les exercices ou les plans.
     restoreLastPage();
+    performance.mark("wilf:interactive");
+    document.getElementById("wilf-startup-status")?.setAttribute("hidden", "");
+    try { performance.measure("wilf:startup", "wilf:html-start", "wilf:interactive"); } catch {}
+
     offerWorkoutResume();
     await handleInitialPlanShare();
-    setupAppUpdates();
+    // Travaux non critiques : n'attendent plus sur le chemin de démarrage.
+    void setupTimerNotifications().catch(error => console.warn("Notifications indisponibles :", error));
+    void setupStorageSyncController().catch(error => console.error("Interface de synchronisation indisponible :", error));
+    void setupSyncLifecycle().catch(error => console.warn("Écoute du cycle de vie indisponible :", error));
+    syncAfterFirstPaint();
 }
 
-initializeApp();
+initializeApp().catch(error => {
+    console.error("Démarrage de Wilf impossible :", error);
+    const status = document.getElementById("wilf-startup-status");
+    if (status) { status.hidden = false; status.textContent = "Impossible de terminer le démarrage de Wilf. Rechargez l’application."; }
+});

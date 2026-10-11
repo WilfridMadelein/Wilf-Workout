@@ -409,6 +409,22 @@ function getPlanGroups(plan) {
 // PDF
 // ============================================================
 
+let jsPdfLoadPromise = null;
+
+function loadJsPdf() {
+    if (window.jspdf?.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+    if (!jsPdfLoadPromise) {
+        jsPdfLoadPromise = new Promise((resolve, reject) => {
+            const script = document.createElement("script");
+            script.src = new URL("../vendor/jspdf.umd.min.js", import.meta.url).href;
+            script.onload = () => window.jspdf?.jsPDF ? resolve(window.jspdf.jsPDF) : reject(new Error("jsPDF indisponible après le chargement."));
+            script.onerror = () => reject(new Error("Impossible de charger jsPDF."));
+            document.head.appendChild(script);
+        }).catch(error => { jsPdfLoadPromise = null; throw error; });
+    }
+    return jsPdfLoadPromise;
+}
+
 async function downloadSelectedPlans() {
     const selectedPlans =
         getSelectedPlansInOrder();
@@ -418,11 +434,7 @@ async function downloadSelectedPlans() {
     confirmPlanPdfButton.disabled = true;
 
     try {
-        await generatePlansPdf(
-            selectedPlans
-        );
-
-        closePlanPdfModal();
+        if (await generatePlansPdf(selectedPlans)) closePlanPdfModal();
     } finally {
         updatePlanPdfControls();
     }
@@ -431,15 +443,12 @@ async function downloadSelectedPlans() {
 async function generatePlansPdf(
     selectedPlans
 ) {
-    const JsPdf =
-        window.jspdf?.jsPDF;
-
-    if (!JsPdf) {
-        alert(
-            "Le générateur PDF n'est pas disponible."
-        );
-
-        return;
+    let JsPdf;
+    try { JsPdf = await loadJsPdf(); }
+    catch (error) {
+        console.error("Impossible de charger jsPDF :", error);
+        alert("Le générateur PDF n'est pas disponible.");
+        return false;
     }
 
     await preparePdfMuscleMapImages(
@@ -481,9 +490,8 @@ async function generatePlansPdf(
             "en-CA"
         ).format(new Date());
 
-    doc.save(
-        `wilf-workout-plans-${fileDate}.pdf`
-    );
+    doc.save(`wilf-workout-plans-${fileDate}.pdf`);
+    return true;
 }
 
 // ============================================================
